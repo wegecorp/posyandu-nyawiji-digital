@@ -167,14 +167,16 @@ export const Header: React.FC<HeaderProps> = ({
             <FileSpreadsheet className="w-4.5 h-4.5 text-[#10b981]" />
           </button>
 
-          {/* Register Patient Button (Cobalt Pill Primary CTA per DESIGN.md) */}
-          <button
-            onClick={onOpenRegister}
-            className="flex items-center gap-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold px-4 py-2 rounded-full text-xs shadow-xs transition-all touch-press"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span className="hidden xs:inline">Daftar</span> Pasien
-          </button>
+          {/* Register Patient Button (Cobalt Pill Primary CTA per DESIGN.md) — Only for Posyandu role or default */}
+          {(!user || user.role === 'POSYANDU') && (
+            <button
+              onClick={onOpenRegister}
+              className="flex items-center gap-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold px-4 py-2 rounded-full text-xs shadow-xs transition-all touch-press"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span className="hidden xs:inline">Daftar</span> Pasien
+            </button>
+          )}
         </div>
       </div>
     </header>

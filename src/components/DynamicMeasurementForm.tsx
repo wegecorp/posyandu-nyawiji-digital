@@ -120,8 +120,12 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
     loadData();
   }, [patient.id]);
 
+  const isReadOnly = user?.role === 'PUSKESMAS' || user?.role === 'DINKES';
+
   // Handle live field change with instant auto-save
   const handleFieldChange = (fieldName: string, value: string) => {
+    if (isReadOnly) return;
+
     switch (fieldName) {
       case 'weight':
         setWeight(value);

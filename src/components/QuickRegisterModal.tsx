@@ -65,7 +65,10 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
     try {
       const res = await fetch('/api/patients', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-role': user.role,
+        },
         body: JSON.stringify({
           name: name.trim(),
           birthDate,

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { PatientData } from '@/lib/types';
+import { useAuth } from '@/lib/auth-context';
 import { X, Trash2, AlertTriangle } from 'lucide-react';
 
 interface DeletePatientConfirmModalProps {
@@ -17,6 +18,7 @@ export const DeletePatientConfirmModal: React.FC<DeletePatientConfirmModalProps>
   onClose,
   onSuccess,
 }) => {
+  const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -29,6 +31,9 @@ export const DeletePatientConfirmModal: React.FC<DeletePatientConfirmModalProps>
     try {
       const res = await fetch(`/api/patients/${patient.id}`, {
         method: 'DELETE',
+        headers: {
+          'x-user-role': user?.role || '',
+        },
       });
 
       const data = await res.json();

@@ -14,6 +14,8 @@ import {
   X,
   Lock,
   AlertTriangle,
+  Key,
+  Check,
 } from 'lucide-react';
 
 interface DinkesDashboardProps {
@@ -30,13 +32,25 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // New Puskesmas Form
+  // New Puskesmas Form State
   const [pkmName, setPkmName] = useState('');
   const [kapanewon, setKapanewon] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Reset Password State for Dinkes
+  const [resetTarget, setResetTarget] = useState<{
+    accountName: string;
+    userId: string;
+    username: string;
+    roleName: string;
+  } | null>(null);
+  const [resetNewPass, setResetNewPass] = useState('');
+  const [resetIsSubmitting, setResetIsSubmitting] = useState(false);
+  const [resetErrorMsg, setResetErrorMsg] = useState('');
+  const [resetSuccessMsg, setResetSuccessMsg] = useState('');
 
   const fetchPuskesmas = async () => {
     setIsLoading(true);
@@ -94,6 +108,53 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({
       setErrorMsg(err.message || 'Terjadi kesalahan');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetTarget || !resetNewPass.trim()) {
+      setResetErrorMsg('Password baru wajib diisi');
+      return;
+    }
+
+    if (resetNewPass.trim().length < 4) {
+      setResetErrorMsg('Password baru minimal 4 karakter');
+      return;
+    }
+
+    setResetIsSubmitting(true);
+    setResetErrorMsg('');
+    setResetSuccessMsg('');
+
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requesterId: user?.id,
+          targetUserId: resetTarget.userId,
+          newPassword: resetNewPass.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Gagal mereset password');
+      }
+
+      setResetSuccessMsg(data.message || 'Password berhasil direset!');
+      setResetNewPass('');
+
+      setTimeout(() => {
+        setResetSuccessMsg('');
+        setResetTarget(null);
+        fetchPuskesmas();
+      }, 1500);
+    } catch (err: any) {
+      setResetErrorMsg(err.message || 'Terjadi kesalahan');
+    } finally {
+      setResetIsSubmitting(false);
     }
   };
 
@@ -169,11 +230,34 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({
                   <p className="text-xs text-[#64748b] font-medium mt-0.5">Kapanewon {pkm.kapanewon}</p>
                 </div>
 
-                {pkm.users?.[0]?.username && (
-                  <span className="text-[11px] font-mono bg-[#f0f7ff] text-[#0f172a] px-2.5 py-1 rounded-full border border-[#e2e8f0]">
-                    user: <strong>{pkm.users[0].username}</strong>
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {pkm.users?.[0] && (
+                    <button
+                      onClick={() => {
+                        setResetTarget({
+                          accountName: pkm.name,
+                          userId: pkm.users[0].id,
+                          username: pkm.users[0].username,
+                          roleName: 'Akun Puskesmas',
+                        });
+                        setResetNewPass('');
+                        setResetErrorMsg('');
+                        setResetSuccessMsg('');
+                      }}
+                      className="px-3 py-1.5 bg-[#f0f7ff] hover:bg-[#e2e8f0] text-[#8b5cf6] border border-[#cbd5e1] rounded-full text-xs font-bold transition-all flex items-center gap-1.5 touch-press"
+                      title="Reset Password Akun Puskesmas ini"
+                    >
+                      <Key className="w-3.5 h-3.5" />
+                      <span>Reset Pass</span>
+                    </button>
+                  )}
+
+                  {pkm.users?.[0]?.username && (
+                    <span className="text-[11px] font-mono bg-[#f0f7ff] text-[#0f172a] px-2.5 py-1 rounded-full border border-[#e2e8f0]">
+                      user: <strong>{pkm.users[0].username}</strong>
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Posyandu sub-units */}
@@ -184,14 +268,34 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({
 
                 <div className="flex flex-wrap gap-2">
                   {pkm.posyandus?.map((pos: any) => (
-                    <button
-                      key={pos.id}
-                      onClick={() => onEnterPosyandu(pos.id, pos.name, pos.code)}
-                      className="px-3 py-1 bg-white hover:bg-[#0284c7] text-[#0f172a] hover:text-white border border-[#cbd5e1] rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs"
-                    >
-                      <span>{pos.name}</span>
-                      <ArrowRight className="w-3 h-3 text-[#94a3b8]" />
-                    </button>
+                    <div key={pos.id} className="flex items-center gap-1 bg-white border border-[#cbd5e1] rounded-full p-1 shadow-xs">
+                      <button
+                        onClick={() => onEnterPosyandu(pos.id, pos.name, pos.code)}
+                        className="px-2.5 py-0.5 text-[#0f172a] hover:text-[#0284c7] text-xs font-bold transition-all flex items-center gap-1"
+                      >
+                        <span>{pos.name}</span>
+                        <ArrowRight className="w-3 h-3 text-[#94a3b8]" />
+                      </button>
+                      {pos.users?.[0] && (
+                        <button
+                          onClick={() => {
+                            setResetTarget({
+                              accountName: pos.name,
+                              userId: pos.users[0].id,
+                              username: pos.users[0].username,
+                              roleName: 'Akun Posyandu',
+                            });
+                            setResetNewPass('');
+                            setResetErrorMsg('');
+                            setResetSuccessMsg('');
+                          }}
+                          className="p-1 text-[#94a3b8] hover:text-[#0284c7] rounded-full hover:bg-[#f0f7ff]"
+                          title={`Reset password ${pos.name}`}
+                        >
+                          <Key className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -305,6 +409,83 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({
                   className="flex-2 py-3 bg-[#8b5cf6] hover:bg-[#8b5cf6]/90 text-white font-bold rounded-full text-xs shadow-xs transition-all"
                 >
                   {isSubmitting ? 'Mendaftarkan...' : 'Simpan & Terbitkan Akun'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Reset Password Dinkes (Super Admin) */}
+      {resetTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-md rounded-[28px] shadow-2xl overflow-hidden border border-[#e2e8f0] flex flex-col">
+            <div className="bg-[#0f172a] text-white p-4.5 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Key className="w-5 h-5 text-[#8b5cf6]" />
+                <div>
+                  <h2 className="font-extrabold text-sm">Reset Password Akun ({resetTarget.roleName})</h2>
+                  <p className="text-[11px] text-[#cbd5e1]">{resetTarget.accountName} (@{resetTarget.username})</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setResetTarget(null)}
+                className="p-1.5 rounded-full hover:bg-white/10 text-white/80"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleResetPasswordSubmit} className="p-5 space-y-4">
+              {resetErrorMsg && (
+                <div className="p-3 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl text-xs text-[#ef4444] font-bold flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-[#ef4444]" />
+                  <span>{resetErrorMsg}</span>
+                </div>
+              )}
+
+              {resetSuccessMsg && (
+                <div className="p-3 bg-[#10b981]/10 border border-[#10b981]/30 rounded-2xl text-xs text-[#10b981] font-bold flex items-center gap-2">
+                  <Check className="w-4 h-4 shrink-0 text-[#10b981]" />
+                  <span>{resetSuccessMsg}</span>
+                </div>
+              )}
+
+              <div className="bg-[#f0f7ff] p-3 rounded-2xl border border-[#cbd5e1] text-xs text-[#0f172a]">
+                <p className="font-medium text-[#64748b]">
+                  Sebagai Admin Dinkes, Anda berwenang mereset password akun Puskesmas & Posyandu manapun secara langsung.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#0f172a] mb-1">
+                  Password Baru <span className="text-[#ef4444]">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={resetNewPass}
+                  onChange={(e) => setResetNewPass(e.target.value)}
+                  placeholder="Masukkan password baru"
+                  required
+                  className="w-full px-3.5 py-2.5 text-xs bg-[#f8fafc] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#8b5cf6] font-mono"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setResetTarget(null)}
+                  className="flex-1 py-3 bg-[#f0f7ff] hover:bg-[#e2e8f0] text-[#0f172a] font-bold rounded-full text-xs border border-[#cbd5e1]"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={resetIsSubmitting}
+                  className="flex-2 py-3 bg-[#8b5cf6] hover:bg-[#8b5cf6]/90 text-white font-extrabold rounded-full text-xs shadow-xs transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Lock className="w-4 h-4" />
+                  <span>{resetIsSubmitting ? 'Simpan...' : 'Reset Password Now'}</span>
                 </button>
               </div>
             </form>

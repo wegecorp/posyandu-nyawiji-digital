@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { hashPassword } from '@/lib/password';
 
 // POST /api/auth/signup
 // Handles signup for PUSKESMAS and POSYANDU institutional accounts
@@ -37,6 +38,20 @@ async function signupPuskesmas(body: Record<string, any>) {
     );
   }
 
+  if (typeof password !== 'string' || password.trim().length < 8) {
+    return NextResponse.json(
+      { error: 'Password minimal 8 karakter' },
+      { status: 400 }
+    );
+  }
+
+  if (typeof name !== 'string' || name.trim().length > 200) {
+    return NextResponse.json(
+      { error: 'Nama Puskesmas maksimal 200 karakter' },
+      { status: 400 }
+    );
+  }
+
   const cleanUsername = username.toLowerCase().trim();
 
   // Check username uniqueness
@@ -44,6 +59,9 @@ async function signupPuskesmas(body: Record<string, any>) {
   if (existing) {
     return NextResponse.json({ error: 'Username sudah digunakan. Pilih username lain.' }, { status: 400 });
   }
+
+  // Hash password before storing
+  const hashedPassword = await hashPassword(password.trim());
 
   // Generate code
   const count = await prisma.healthCenter.count();
@@ -61,7 +79,7 @@ async function signupPuskesmas(body: Record<string, any>) {
     const user = await tx.user.create({
       data: {
         username: cleanUsername,
-        password: password.trim(),
+        password: hashedPassword,
         name: name.trim(),
         role: 'PUSKESMAS',
         healthCenterId: healthCenter.id,
@@ -91,6 +109,20 @@ async function signupPosyandu(body: Record<string, any>) {
     );
   }
 
+  if (typeof password !== 'string' || password.trim().length < 8) {
+    return NextResponse.json(
+      { error: 'Password minimal 8 karakter' },
+      { status: 400 }
+    );
+  }
+
+  if (typeof name !== 'string' || name.trim().length > 200) {
+    return NextResponse.json(
+      { error: 'Nama Posyandu maksimal 200 karakter' },
+      { status: 400 }
+    );
+  }
+
   const cleanUsername = username.toLowerCase().trim();
 
   // Check username uniqueness
@@ -104,6 +136,9 @@ async function signupPosyandu(body: Record<string, any>) {
   if (!hc) {
     return NextResponse.json({ error: 'Puskesmas Pembina tidak ditemukan.' }, { status: 404 });
   }
+
+  // Hash password before storing
+  const hashedPassword = await hashPassword(password.trim());
 
   // Generate code
   const count = await prisma.posyandu.count();
@@ -123,7 +158,7 @@ async function signupPosyandu(body: Record<string, any>) {
     const user = await tx.user.create({
       data: {
         username: cleanUsername,
-        password: password.trim(),
+        password: hashedPassword,
         name: name.trim(),
         role: 'POSYANDU',
         posyanduId: posyandu.id,

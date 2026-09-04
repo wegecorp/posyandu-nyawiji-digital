@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { PatientData } from '@/lib/types';
+import { useAuth } from '@/lib/auth-context';
 import { X, Edit3, Calendar, User, Home, Phone, Heart, Check, AlertTriangle, Lock } from 'lucide-react';
 import { calculateAge, getPatientCategory, getCategoryBadge } from '@/lib/utils';
 
@@ -18,6 +19,7 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { user } = useAuth();
   const [name, setName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [gender, setGender] = useState<'L' | 'P'>('L');
@@ -79,7 +81,10 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
     try {
       const res = await fetch(`/api/patients/${patient.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-role': user?.role || '',
+        },
         body: JSON.stringify({
           name: name.trim(),
           birthDate,

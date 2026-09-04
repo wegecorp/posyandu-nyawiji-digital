@@ -2,20 +2,41 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import * as XLSX from 'xlsx';
 import { calculateAge, getPatientCategory } from '@/lib/utils';
+import { getAuthSession } from '@/lib/api-auth';
 
 export async function GET(req: Request) {
   try {
+    const session = await getAuthSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Tidak terautentikasi' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
-    const posyanduId = searchParams.get('posyanduId');
-    const healthCenterId = searchParams.get('healthCenterId');
+    const requestedPosyanduId = searchParams.get('posyanduId');
+    const requestedHealthCenterId = searchParams.get('healthCenterId');
 
     const whereClause: any = {};
-    if (posyanduId) {
-      whereClause.posyanduId = posyanduId;
-    } else if (healthCenterId) {
-      whereClause.posyandu = {
-        healthCenterId,
-      };
+
+    if (session.role === 'POSYANDU') {
+      whereClause.posyanduId = session.posyanduId;
+    } else if (session.role === 'PUSKESMAS') {
+      if (requestedPosyanduId) {
+        const posyandu = await prisma.posyandu.findUnique({
+          where: { id: requestedPosyanduId },
+        });
+        if (!posyandu || posyandu.healthCenterId !== session.healthCenterId) {
+          return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 });
+        }
+        whereClause.posyanduId = requestedPosyanduId;
+      } else {
+        whereClause.posyandu = { healthCenterId: session.healthCenterId };
+      }
+    } else if (session.role === 'DINKES') {
+      if (requestedPosyanduId) {
+        whereClause.posyanduId = requestedPosyanduId;
+      } else if (requestedHealthCenterId) {
+        whereClause.posyandu = { healthCenterId: requestedHealthCenterId };
+      }
     }
 
     const measurements = await prisma.measurement.findMany({

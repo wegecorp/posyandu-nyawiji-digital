@@ -15,6 +15,7 @@ import { DinkesDashboard } from '@/components/DinkesDashboard';
 import { AuthPage } from '@/components/AuthPage';
 import { EditPatientModal } from '@/components/EditPatientModal';
 import { DeletePatientConfirmModal } from '@/components/DeletePatientConfirmModal';
+import { ChangePasswordModal } from '@/components/ChangePasswordModal';
 import {
   Search,
   UserPlus,
@@ -31,6 +32,7 @@ import {
   User,
   Heart,
   LayoutGrid,
+  ShieldAlert,
 } from 'lucide-react';
 
 export default function PosyanduApp() {
@@ -54,8 +56,11 @@ export default function PosyanduApp() {
   const [qrPatientTarget, setQrPatientTarget] = useState<PatientData | null>(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isChangePassOpen, setIsChangePassOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<PatientData | null>(null);
   const [deletingPatient, setDeletingPatient] = useState<PatientData | null>(null);
+
+  const isReadOnly = user?.role === 'PUSKESMAS' || user?.role === 'DINKES';
 
   // Fetch patients for active Posyandu
   const fetchPatients = useCallback(async () => {
@@ -68,11 +73,10 @@ export default function PosyanduApp() {
       if (result.success && Array.isArray(result.data)) {
         setPatients(result.data);
 
-        // Keep selectedPatient reference updated if already selected
-        if (selectedPatient) {
-          const updated = result.data.find((p: PatientData) => p.id === selectedPatient.id);
-          if (updated) setSelectedPatient(updated);
-        }
+        setSelectedPatient((prev) => {
+          if (!prev) return null;
+          return result.data.find((p: PatientData) => p.id === prev.id) || prev;
+        });
       }
     } catch (e) {
       console.error('Error fetching patients:', e);
@@ -218,6 +222,18 @@ export default function PosyanduApp() {
         ) : (
           /* VIEW 4: PATIENT LIST & QUEUE FOR POSYANDU */
           <div className="space-y-3.5 animate-in fade-in duration-150 pb-20">
+            {isReadOnly && (
+              <div className="bg-[#0f172a] text-white p-3.5 rounded-2xl border border-[#cbd5e1] flex items-center gap-3 shadow-xs">
+                <ShieldAlert className="w-5 h-5 text-[#fbbf24] shrink-0" />
+                <div className="text-xs">
+                  <span className="font-extrabold text-[#fbbf24] block">Mode Lihat Data Ringkasan (Read-Only)</span>
+                  <span className="text-[#cbd5e1]">
+                    Akun <strong>{user?.role}</strong> hanya memiliki akses tinjauan. Hak tambah, edit, dan hapus pasien dikhususkan untuk Kader Posyandu.
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Search Input Bar (Search Pill per DESIGN.md) */}
             <div className="bg-white rounded-[24px] p-2 shadow-xs border border-[#e2e8f0] flex items-center gap-2">
               <div className="relative flex-1">
@@ -324,13 +340,15 @@ export default function PosyanduApp() {
                       : 'Belum ada pasien terdaftar di posyandu ini'}
                   </p>
                 </div>
-                <button
-                  onClick={() => setIsRegisterOpen(true)}
-                  className="py-3 px-6 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold rounded-full text-xs shadow-md transition-all inline-flex items-center gap-2 touch-press"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  <span>Daftarkan Pasien Sekarang</span>
-                </button>
+                {!isReadOnly && (
+                  <button
+                    onClick={() => setIsRegisterOpen(true)}
+                    className="py-3 px-6 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold rounded-full text-xs shadow-md transition-all inline-flex items-center gap-2 touch-press"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span>Daftarkan Pasien Sekarang</span>
+                  </button>
+                )}
               </div>
             ) : (
               <div className="space-y-2.5">
@@ -344,8 +362,8 @@ export default function PosyanduApp() {
                       e.stopPropagation();
                       showPatientQR(p);
                     }}
-                    onEdit={(p) => setEditingPatient(p)}
-                    onDelete={(p) => setDeletingPatient(p)}
+                    onEdit={isReadOnly ? undefined : (p) => setEditingPatient(p)}
+                    onDelete={isReadOnly ? undefined : (p) => setDeletingPatient(p)}
                   />
                 ))}
               </div>
@@ -391,9 +409,16 @@ export default function PosyanduApp() {
           setIsLoginOpen(false);
           fetchPatients();
         }}
+        onChangePassword={() => setIsChangePassOpen(true)}
       />
 
-      {/* 6. Edit Patient Modal */}
+      {/* 6. Change Password Modal (Self Service) */}
+      <ChangePasswordModal
+        isOpen={isChangePassOpen}
+        onClose={() => setIsChangePassOpen(false)}
+      />
+
+      {/* 7. Edit Patient Modal */}
       <EditPatientModal
         isOpen={Boolean(editingPatient)}
         patient={editingPatient}
@@ -401,7 +426,7 @@ export default function PosyanduApp() {
         onSuccess={handleEditSuccess}
       />
 
-      {/* 7. Delete Patient Confirmation Modal */}
+      {/* 8. Delete Patient Confirmation Modal */}
       <DeletePatientConfirmModal
         isOpen={Boolean(deletingPatient)}
         patient={deletingPatient}

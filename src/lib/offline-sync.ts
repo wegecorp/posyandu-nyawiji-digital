@@ -137,7 +137,9 @@ export function useAutoSave(patientId: string, posyanduId: string, recordedBy?: 
         try {
           const res = await fetch('/api/measurements/autosave', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+            },
             body: JSON.stringify(payload),
           });
 

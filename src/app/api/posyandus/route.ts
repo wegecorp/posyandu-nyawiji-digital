@@ -1,13 +1,29 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getAuthSession } from '@/lib/api-auth';
+import { hashPassword } from '@/lib/password';
 
 export async function GET(req: Request) {
   try {
+    const session = await getAuthSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Tidak terautentikasi' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const healthCenterId = searchParams.get('healthCenterId');
 
     const whereClause: any = {};
-    if (healthCenterId) {
+
+    if (session.role === 'PUSKESMAS') {
+      whereClause.id = session.healthCenterId;
+    } else if (session.role === 'POSYANDU') {
+      if (session.posyanduId) {
+        whereClause.posyandus = {
+          some: { id: session.posyanduId }
+        };
+      }
+    } else if (healthCenterId) {
       whereClause.id = healthCenterId;
     }
 
@@ -37,13 +53,28 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const session = await getAuthSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Tidak terautentikasi' }, { status: 401 });
+    }
+
+    if (session.role !== 'DINKES' && session.role !== 'PUSKESMAS') {
+      return NextResponse.json({ error: 'Hanya Admin Dinkes/Puskesmas yang dapat mendaftarkan Posyandu' }, { status: 403 });
+    }
+
     const { name, kalurahan, padukuhan, healthCenterId, username, password } = await req.json();
 
-    if (!name || !healthCenterId || !username || !password) {
+    const targetHealthCenterId = session.role === 'PUSKESMAS' ? session.healthCenterId : healthCenterId;
+
+    if (!name || !targetHealthCenterId || !username || !password) {
       return NextResponse.json(
         { error: 'Nama Posyandu, Puskesmas Pembina, Username, dan Password wajib diisi' },
         { status: 400 }
       );
+    }
+
+    if (typeof password !== 'string' || password.length < 8) {
+      return NextResponse.json({ error: 'Password minimal 8 karakter' }, { status: 400 });
     }
 
     // Generate unique sequential Posyandu Code
@@ -61,6 +92,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Username posyandu ini sudah digunakan' }, { status: 400 });
     }
 
+    const hashedPassword = await hashPassword(password.trim());
+
     // Create Posyandu and its Posyandu institutional account in a transaction
     const result = await prisma.$transaction(async (tx) => {
       const posyandu = await tx.posyandu.create({
@@ -69,26 +102,26 @@ export async function POST(req: Request) {
           name: name.trim(),
           kalurahan: kalurahan ? kalurahan.trim() : '-',
           padukuhan: padukuhan ? padukuhan.trim() : '-',
-          healthCenterId,
+          healthCenterId: targetHealthCenterId!,
         },
       });
 
       const user = await tx.user.create({
         data: {
           username: cleanUsername,
-          password: password.trim(),
+          password: hashedPassword,
           name: name.trim(),
           role: 'POSYANDU',
           posyanduId: posyandu.id,
         },
       });
 
-      return { posyandu, user };
+      return { posyandu, user: { id: user.id, username: user.username, name: user.name, role: user.role } };
     });
 
     return NextResponse.json({ success: true, data: result });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error registering posyandu:', error);
-    return NextResponse.json({ error: error.message || 'Gagal mendaftarkan Posyandu' }, { status: 500 });
+    return NextResponse.json({ error: 'Gagal mendaftarkan Posyandu' }, { status: 500 });
   }
 }

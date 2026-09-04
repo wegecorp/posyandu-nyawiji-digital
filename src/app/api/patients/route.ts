@@ -1,18 +1,41 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateAge, getPatientCategory } from '@/lib/utils';
+import { getAuthSession } from '@/lib/api-auth';
 
 export async function GET(req: Request) {
   try {
+    const session = await getAuthSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Tidak terautentikasi' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
-    const posyanduId = searchParams.get('posyanduId');
+    const requestedPosyanduId = searchParams.get('posyanduId');
     const query = searchParams.get('q') || '';
     const categoryFilter = searchParams.get('category'); // optional
 
     const whereClause: any = {};
 
-    if (posyanduId) {
-      whereClause.posyanduId = posyanduId;
+    if (session.role === 'POSYANDU') {
+      whereClause.posyanduId = session.posyanduId;
+    } else if (session.role === 'PUSKESMAS') {
+      if (requestedPosyanduId) {
+        // Verify posyandu belongs to this puskesmas
+        const posyandu = await prisma.posyandu.findUnique({
+          where: { id: requestedPosyanduId },
+        });
+        if (!posyandu || posyandu.healthCenterId !== session.healthCenterId) {
+          return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 });
+        }
+        whereClause.posyanduId = requestedPosyanduId;
+      } else {
+        whereClause.posyandu = { healthCenterId: session.healthCenterId };
+      }
+    } else if (session.role === 'DINKES') {
+      if (requestedPosyanduId) {
+        whereClause.posyanduId = requestedPosyanduId;
+      }
     }
 
     if (query.trim()) {
@@ -70,10 +93,29 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const session = await getAuthSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Tidak terautentikasi' }, { status: 401 });
+    }
+
+    if (session.role !== 'POSYANDU') {
+      return NextResponse.json(
+        { error: 'Akun Puskesmas/Dinkes bersifat Read-Only (tidak dapat menambah pasien)' },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const { name, birthDate, posyanduId, gender, address, guardianName, phone, isPregnant } = body;
 
-    if (!name || !birthDate || !posyanduId) {
+    const targetPosyanduId = posyanduId || session.posyanduId;
+
+    // Strict ownership check for POSYANDU role
+    if (targetPosyanduId !== session.posyanduId) {
+      return NextResponse.json({ error: 'Akses ditolak ke posyandu ini' }, { status: 403 });
+    }
+
+    if (!name || !birthDate || !targetPosyanduId) {
       return NextResponse.json(
         { error: 'Nama, Tanggal Lahir, dan Posyandu wajib diisi' },
         { status: 400 }
@@ -81,7 +123,7 @@ export async function POST(req: Request) {
     }
 
     const posyandu = await prisma.posyandu.findUnique({
-      where: { id: posyanduId },
+      where: { id: targetPosyanduId },
     });
 
     if (!posyandu) {
@@ -91,7 +133,7 @@ export async function POST(req: Request) {
     // Generate unique sequential registration number: e.g. POS-WNS-01-2026-0042
     const currentYear = new Date().getFullYear();
     const totalPatientsInPosyandu = await prisma.patient.count({
-      where: { posyanduId },
+      where: { posyanduId: targetPosyanduId },
     });
 
     const nextSeq = String(totalPatientsInPosyandu + 1).padStart(4, '0');
@@ -117,8 +159,7 @@ export async function POST(req: Request) {
         guardianName: guardianName ? guardianName.trim() : null,
         phone: phone ? phone.trim() : null,
         isPregnant: gender === 'L' ? false : Boolean(isPregnant),
-        posyanduId,
-
+        posyanduId: targetPosyanduId,
       },
       include: {
         posyandu: true,

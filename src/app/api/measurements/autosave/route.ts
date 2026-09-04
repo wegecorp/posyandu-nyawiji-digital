@@ -1,13 +1,25 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateAge } from '@/lib/utils';
+import { getAuthSession } from '@/lib/api-auth';
 
 export async function POST(req: Request) {
   try {
+    const session = await getAuthSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Tidak terautentikasi' }, { status: 401 });
+    }
+
+    if (session.role !== 'POSYANDU') {
+      return NextResponse.json(
+        { error: 'Akun Puskesmas/Dinkes bersifat Read-Only (tidak dapat mencatat pengukuran)' },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const {
       patientId,
-      posyanduId,
       recordedBy,
       weight,
       height,
@@ -33,6 +45,11 @@ export async function POST(req: Request) {
 
     if (!patient) {
       return NextResponse.json({ error: 'Pasien tidak ditemukan' }, { status: 404 });
+    }
+
+    // Verify patient belongs to user's posyandu
+    if (patient.posyanduId !== session.posyanduId) {
+      return NextResponse.json({ error: 'Akses ditolak (bukan pasien posyandu Anda)' }, { status: 403 });
     }
 
     const startOfToday = new Date();
@@ -96,7 +113,7 @@ export async function POST(req: Request) {
       savedRecord = await prisma.measurement.create({
         data: {
           patientId,
-          posyanduId: posyanduId || patient.posyanduId,
+          posyanduId: session.posyanduId!,
           sessionDate: new Date(),
           ageInMonths: age.totalMonths,
           ...fieldData,

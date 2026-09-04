@@ -9,14 +9,16 @@ import {
   LogOut,
   Building2,
   Building,
+  KeyRound,
 } from 'lucide-react';
 
 interface AccountModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onChangePassword?: () => void;
 }
 
-export const LoginModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) => {
+export const LoginModal: React.FC<AccountModalProps> = ({ isOpen, onClose, onChangePassword }) => {
   const { user, logout } = useAuth();
 
   // Handle ESC key press to close modal
@@ -131,15 +133,31 @@ export const LoginModal: React.FC<AccountModalProps> = ({ isOpen, onClose }) => 
             )}
           </div>
 
-          {/* Logout Action Button */}
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="w-full py-3 px-4 bg-[#ef4444] hover:bg-[#dc2626] text-white font-bold rounded-full text-xs transition-all shadow-sm flex items-center justify-center gap-2 touch-press"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Keluar Akun (Logout)</span>
-          </button>
+          {/* Account Actions */}
+          <div className="space-y-2">
+            {onChangePassword && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onChangePassword();
+                }}
+                className="w-full py-2.5 px-4 bg-[#f0f7ff] hover:bg-[#e2e8f0] text-[#0284c7] font-extrabold rounded-full text-xs border border-[#cbd5e1] transition-all shadow-xs flex items-center justify-center gap-2 touch-press"
+              >
+                <KeyRound className="w-4 h-4" />
+                <span>Ubah Password Saya</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="w-full py-2.5 px-4 bg-[#ef4444] hover:bg-[#dc2626] text-white font-bold rounded-full text-xs transition-all shadow-xs flex items-center justify-center gap-2 touch-press"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Keluar Akun (Logout)</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

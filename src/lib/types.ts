@@ -34,6 +34,10 @@ export interface MeasurementData {
   systolic?: number | null;
   diastolic?: number | null;
   gestationalAge?: number | null;
+  bloodSugar?: number | null;
+  cholesterol?: number | null;
+  uricAcid?: number | null;
+  hemoglobin?: number | null;
   notes?: string | null;
   recordedBy?: string | null;
   createdAt?: string;

@@ -34,8 +34,12 @@ export function calculateAge(birthDateString: string | Date, targetDate: Date = 
   };
 }
 
-export function getPatientCategory(birthDateString: string | Date, isPregnant: boolean = false): PatientCategory {
-  if (isPregnant) return 'BUMIL';
+export function getPatientCategory(
+  birthDateString: string | Date,
+  isPregnant: boolean = false,
+  gender?: string | null
+): PatientCategory {
+  if (isPregnant && gender !== 'L') return 'BUMIL';
 
   const { years } = calculateAge(birthDateString);
 
@@ -44,6 +48,7 @@ export function getPatientCategory(birthDateString: string | Date, isPregnant: b
   if (years >= 10 && years < 18) return 'REMAJA';
   return 'DEWASA_LANSIA';
 }
+
 
 export function getCategoryBadge(category: PatientCategory) {
   switch (category) {

@@ -116,8 +116,9 @@ export async function POST(req: Request) {
         address: address ? address.trim() : null,
         guardianName: guardianName ? guardianName.trim() : null,
         phone: phone ? phone.trim() : null,
-        isPregnant: Boolean(isPregnant),
+        isPregnant: gender === 'L' ? false : Boolean(isPregnant),
         posyanduId,
+
       },
       include: {
         posyandu: true,

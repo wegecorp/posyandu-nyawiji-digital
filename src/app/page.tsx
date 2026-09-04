@@ -13,6 +13,8 @@ import { LoginModal } from '@/components/LoginModal';
 import { PuskesmasDashboard } from '@/components/PuskesmasDashboard';
 import { DinkesDashboard } from '@/components/DinkesDashboard';
 import { AuthPage } from '@/components/AuthPage';
+import { EditPatientModal } from '@/components/EditPatientModal';
+import { DeletePatientConfirmModal } from '@/components/DeletePatientConfirmModal';
 import {
   Search,
   UserPlus,
@@ -52,6 +54,8 @@ export default function PosyanduApp() {
   const [qrPatientTarget, setQrPatientTarget] = useState<PatientData | null>(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [editingPatient, setEditingPatient] = useState<PatientData | null>(null);
+  const [deletingPatient, setDeletingPatient] = useState<PatientData | null>(null);
 
   // Fetch patients for active Posyandu
   const fetchPatients = useCallback(async () => {
@@ -110,6 +114,22 @@ export default function PosyanduApp() {
     setSelectedPatient(newPatient);
   };
 
+  // Handle Edit Patient Success
+  const handleEditSuccess = (updatedPatient: PatientData) => {
+    setPatients((prev) => prev.map((p) => (p.id === updatedPatient.id ? updatedPatient : p)));
+    if (selectedPatient?.id === updatedPatient.id) {
+      setSelectedPatient(updatedPatient);
+    }
+  };
+
+  // Handle Delete Patient Success
+  const handleDeleteSuccess = (deletedPatientId: string) => {
+    setPatients((prev) => prev.filter((p) => p.id !== deletedPatientId));
+    if (selectedPatient?.id === deletedPatientId) {
+      setSelectedPatient(null);
+    }
+  };
+
   // Handle QR Camera scan result
   const handleQRScanResult = (decodedRegNumber: string) => {
     const found = patients.find((p) => p.regNumber.trim().toUpperCase() === decodedRegNumber.trim().toUpperCase());
@@ -117,26 +137,6 @@ export default function PosyanduApp() {
       setSelectedPatient(found);
     } else {
       setSearchQuery(decodedRegNumber);
-    }
-  };
-
-  // Fast Patient Switcher: jumps to next patient
-  const handleNextPatient = () => {
-    if (!patients.length) return;
-
-    // Find next unmeasured patient if available
-    const unmeasured = patients.find((p) => !p.todayMeasurement && p.id !== selectedPatient?.id);
-    if (unmeasured) {
-      setSelectedPatient(unmeasured);
-      return;
-    }
-
-    // Otherwise pick the next patient in list
-    const currentIndex = patients.findIndex((p) => p.id === selectedPatient?.id);
-    if (currentIndex >= 0 && currentIndex < patients.length - 1) {
-      setSelectedPatient(patients[currentIndex + 1]);
-    } else if (patients.length > 0) {
-      setSelectedPatient(patients[0]);
     }
   };
 
@@ -210,7 +210,7 @@ export default function PosyanduApp() {
             {/* Dynamic Age-Adaptive Measurement Form */}
             <DynamicMeasurementForm
               patient={selectedPatient}
-              onNextPatient={handleNextPatient}
+              onBackToList={() => setSelectedPatient(null)}
               onShowQR={(p) => showPatientQR(p)}
               onMeasurementUpdated={fetchPatients}
             />
@@ -344,6 +344,8 @@ export default function PosyanduApp() {
                       e.stopPropagation();
                       showPatientQR(p);
                     }}
+                    onEdit={(p) => setEditingPatient(p)}
+                    onDelete={(p) => setDeletingPatient(p)}
                   />
                 ))}
               </div>
@@ -389,6 +391,22 @@ export default function PosyanduApp() {
           setIsLoginOpen(false);
           fetchPatients();
         }}
+      />
+
+      {/* 6. Edit Patient Modal */}
+      <EditPatientModal
+        isOpen={Boolean(editingPatient)}
+        patient={editingPatient}
+        onClose={() => setEditingPatient(null)}
+        onSuccess={handleEditSuccess}
+      />
+
+      {/* 7. Delete Patient Confirmation Modal */}
+      <DeletePatientConfirmModal
+        isOpen={Boolean(deletingPatient)}
+        patient={deletingPatient}
+        onClose={() => setDeletingPatient(null)}
+        onSuccess={handleDeleteSuccess}
       />
     </div>
   );

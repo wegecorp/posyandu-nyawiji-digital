@@ -16,6 +16,10 @@ export async function POST(req: Request) {
       systolic,
       diastolic,
       gestationalAge,
+      bloodSugar,
+      cholesterol,
+      uricAcid,
+      hemoglobin,
       notes,
     } = body;
 
@@ -67,6 +71,14 @@ export async function POST(req: Request) {
     if (gestationalAge !== undefined)
       fieldData.gestationalAge =
         gestationalAge === '' || gestationalAge === null ? null : parseInt(gestationalAge, 10);
+    if (bloodSugar !== undefined)
+      fieldData.bloodSugar = bloodSugar === '' || bloodSugar === null ? null : parseFloat(bloodSugar);
+    if (cholesterol !== undefined)
+      fieldData.cholesterol = cholesterol === '' || cholesterol === null ? null : parseFloat(cholesterol);
+    if (uricAcid !== undefined)
+      fieldData.uricAcid = uricAcid === '' || uricAcid === null ? null : parseFloat(uricAcid);
+    if (hemoglobin !== undefined)
+      fieldData.hemoglobin = hemoglobin === '' || hemoglobin === null ? null : parseFloat(hemoglobin);
     if (notes !== undefined) fieldData.notes = notes;
     if (recordedBy) fieldData.recordedBy = recordedBy;
 

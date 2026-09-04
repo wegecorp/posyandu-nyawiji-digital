@@ -12,7 +12,7 @@ import {
   Activity,
   Calendar,
   Clock,
-  ArrowRight,
+  ArrowLeft,
   CheckCircle2,
   AlertCircle,
   QrCode,
@@ -21,19 +21,20 @@ import {
   History,
   ChevronRight,
   RefreshCw,
+  TestTube,
 } from 'lucide-react';
 import { getCategoryBadge, formatIndoDate } from '@/lib/utils';
 
 interface DynamicMeasurementFormProps {
   patient: PatientData;
-  onNextPatient: () => void;
+  onBackToList: () => void;
   onShowQR: (patient: PatientData) => void;
   onMeasurementUpdated?: () => void;
 }
 
 export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   patient,
-  onNextPatient,
+  onBackToList,
   onShowQR,
   onMeasurementUpdated,
 }) => {
@@ -49,6 +50,10 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   const [systolic, setSystolic] = useState<string>('');
   const [diastolic, setDiastolic] = useState<string>('');
   const [gestationalAge, setGestationalAge] = useState<string>('');
+  const [bloodSugar, setBloodSugar] = useState<string>('');
+  const [cholesterol, setCholesterol] = useState<string>('');
+  const [uricAcid, setUricAcid] = useState<string>('');
+  const [hemoglobin, setHemoglobin] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
 
   const [activeTab, setActiveTab] = useState<'form' | 'history'>('form');
@@ -72,6 +77,10 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
     setSystolic('');
     setDiastolic('');
     setGestationalAge('');
+    setBloodSugar('');
+    setCholesterol('');
+    setUricAcid('');
+    setHemoglobin('');
     setNotes('');
 
     // Fetch fresh patient data + today measurement + history
@@ -93,6 +102,10 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
             if (tm.diastolic !== null && tm.diastolic !== undefined) setDiastolic(String(tm.diastolic));
             if (tm.gestationalAge !== null && tm.gestationalAge !== undefined)
               setGestationalAge(String(tm.gestationalAge));
+            if (tm.bloodSugar !== null && tm.bloodSugar !== undefined) setBloodSugar(String(tm.bloodSugar));
+            if (tm.cholesterol !== null && tm.cholesterol !== undefined) setCholesterol(String(tm.cholesterol));
+            if (tm.uricAcid !== null && tm.uricAcid !== undefined) setUricAcid(String(tm.uricAcid));
+            if (tm.hemoglobin !== null && tm.hemoglobin !== undefined) setHemoglobin(String(tm.hemoglobin));
             if (tm.notes) setNotes(tm.notes);
           }
           if (p.measurements) {
@@ -130,6 +143,18 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
         break;
       case 'gestationalAge':
         setGestationalAge(value);
+        break;
+      case 'bloodSugar':
+        setBloodSugar(value);
+        break;
+      case 'cholesterol':
+        setCholesterol(value);
+        break;
+      case 'uricAcid':
+        setUricAcid(value);
+        break;
+      case 'hemoglobin':
+        setHemoglobin(value);
         break;
       case 'notes':
         setNotes(value);
@@ -559,6 +584,92 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
             </div>
           )}
 
+          {/* F. LABORATORIUM SEDERHANA (Gula Darah, Kolesterol, Asam Urat, HB) */}
+          <div className="bg-white rounded-[24px] p-4.5 border border-red-200 shadow-xs space-y-3 animate-in fade-in duration-200">
+            <h3 className="text-xs font-bold text-red-600 uppercase tracking-wider flex items-center gap-2">
+              <TestTube className="w-4 h-4 text-red-500" />
+              <span>Pemeriksaan Laboratorium Sederhana</span>
+            </h3>
+
+            <div className="grid grid-cols-2 gap-3">
+              {/* Gula Darah */}
+              <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
+                <label className="block text-xs font-bold text-[#0a1317] mb-1">
+                  Gula Darah (GDS)
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    step="1"
+                    inputMode="numeric"
+                    value={bloodSugar}
+                    onChange={(e) => handleFieldChange('bloodSugar', e.target.value)}
+                    placeholder="0"
+                    className="w-full text-base font-extrabold text-[#0a1317] bg-transparent outline-none"
+                  />
+                  <span className="text-[10px] font-bold text-[#5d6c7b]">mg/dL</span>
+                </div>
+              </div>
+
+              {/* Kolesterol */}
+              <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
+                <label className="block text-xs font-bold text-[#0a1317] mb-1">
+                  Kolesterol Total
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    step="1"
+                    inputMode="numeric"
+                    value={cholesterol}
+                    onChange={(e) => handleFieldChange('cholesterol', e.target.value)}
+                    placeholder="0"
+                    className="w-full text-base font-extrabold text-[#0a1317] bg-transparent outline-none"
+                  />
+                  <span className="text-[10px] font-bold text-[#5d6c7b]">mg/dL</span>
+                </div>
+              </div>
+
+              {/* Asam Urat */}
+              <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
+                <label className="block text-xs font-bold text-[#0a1317] mb-1">
+                  Asam Urat
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    step="0.1"
+                    inputMode="decimal"
+                    value={uricAcid}
+                    onChange={(e) => handleFieldChange('uricAcid', e.target.value)}
+                    placeholder="0.0"
+                    className="w-full text-base font-extrabold text-[#0a1317] bg-transparent outline-none"
+                  />
+                  <span className="text-[10px] font-bold text-[#5d6c7b]">mg/dL</span>
+                </div>
+              </div>
+
+              {/* Hemoglobin (HB) */}
+              <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
+                <label className="block text-xs font-bold text-[#0a1317] mb-1">
+                  Hemoglobin (HB)
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    step="0.1"
+                    inputMode="decimal"
+                    value={hemoglobin}
+                    onChange={(e) => handleFieldChange('hemoglobin', e.target.value)}
+                    placeholder="0.0"
+                    className="w-full text-base font-extrabold text-[#0a1317] bg-transparent outline-none"
+                  />
+                  <span className="text-[10px] font-bold text-[#5d6c7b]">g/dL</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Notes Card */}
           <div className="bg-white rounded-[24px] p-4.5 border border-[#dee3e9] shadow-xs space-y-2">
             <label className="block text-xs font-bold text-[#0a1317] flex items-center gap-2">
@@ -626,6 +737,26 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                       Tensi: <strong>{hist.systolic}/{hist.diastolic}</strong> mmHg
                     </span>
                   )}
+                  {hist.bloodSugar && (
+                    <span className="bg-red-50 text-red-600 px-2.5 py-1 rounded-full border border-red-200 font-medium">
+                      Gula Darah: <strong>{hist.bloodSugar} mg/dL</strong>
+                    </span>
+                  )}
+                  {hist.cholesterol && (
+                    <span className="bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full border border-amber-200 font-medium">
+                      Kolesterol: <strong>{hist.cholesterol} mg/dL</strong>
+                    </span>
+                  )}
+                  {hist.uricAcid && (
+                    <span className="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full border border-purple-200 font-medium">
+                      Asam Urat: <strong>{hist.uricAcid} mg/dL</strong>
+                    </span>
+                  )}
+                  {hist.hemoglobin && (
+                    <span className="bg-rose-50 text-rose-700 px-2.5 py-1 rounded-full border border-rose-200 font-medium">
+                      HB: <strong>{hist.hemoglobin} g/dL</strong>
+                    </span>
+                  )}
                 </div>
 
                 {hist.notes && (
@@ -648,11 +779,11 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
           </div>
 
           <button
-            onClick={onNextPatient}
+            onClick={onBackToList}
             className="py-3 px-6 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold rounded-full text-xs shadow-md flex items-center gap-2 transition-all touch-press shrink-0"
           >
-            <span>Pasien Berikutnya</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4" />
+            <span>Kembali ke Daftar Pasien</span>
           </button>
         </div>
       </div>

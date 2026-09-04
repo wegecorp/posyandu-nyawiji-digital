@@ -81,6 +81,10 @@ model Measurement {
   systolic          Int?      // Tensi Sistolik (mmHg)
   diastolic         Int?      // Tensi Diastolik (mmHg)
   gestationalAge    Int?      // Usia Kehamilan (Minggu)
+  bloodSugar        Float?    // Gula Darah (mg/dL)
+  cholesterol       Float?    // Kolesterol (mg/dL)
+  uricAcid          Float?    // Asam Urat (mg/dL)
+  hemoglobin        Float?    // Hemoglobin / HB (g/dL)
   notes             String?   // Catatan kader
   
   recordedBy        String?   // Nama / username posyandu/kader

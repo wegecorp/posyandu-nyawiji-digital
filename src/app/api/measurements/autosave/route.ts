@@ -1,0 +1,104 @@
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { calculateAge } from '@/lib/utils';
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const {
+      patientId,
+      posyanduId,
+      recordedBy,
+      weight,
+      height,
+      headCircumference,
+      armCircumference,
+      systolic,
+      diastolic,
+      gestationalAge,
+      notes,
+    } = body;
+
+    if (!patientId) {
+      return NextResponse.json({ error: 'Patient ID wajib disertakan' }, { status: 400 });
+    }
+
+    const patient = await prisma.patient.findUnique({
+      where: { id: patientId },
+    });
+
+    if (!patient) {
+      return NextResponse.json({ error: 'Pasien tidak ditemukan' }, { status: 404 });
+    }
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    // Check if measurement exists for today
+    const existingMeasurement = await prisma.measurement.findFirst({
+      where: {
+        patientId,
+        sessionDate: {
+          gte: startOfToday,
+          lte: endOfToday,
+        },
+      },
+    });
+
+    const age = calculateAge(patient.birthDate);
+
+    // Build update object only for provided fields
+    const fieldData: any = {};
+    if (weight !== undefined) fieldData.weight = weight === '' || weight === null ? null : parseFloat(weight);
+    if (height !== undefined) fieldData.height = height === '' || height === null ? null : parseFloat(height);
+    if (headCircumference !== undefined)
+      fieldData.headCircumference =
+        headCircumference === '' || headCircumference === null ? null : parseFloat(headCircumference);
+    if (armCircumference !== undefined)
+      fieldData.armCircumference =
+        armCircumference === '' || armCircumference === null ? null : parseFloat(armCircumference);
+    if (systolic !== undefined)
+      fieldData.systolic = systolic === '' || systolic === null ? null : parseInt(systolic, 10);
+    if (diastolic !== undefined)
+      fieldData.diastolic = diastolic === '' || diastolic === null ? null : parseInt(diastolic, 10);
+    if (gestationalAge !== undefined)
+      fieldData.gestationalAge =
+        gestationalAge === '' || gestationalAge === null ? null : parseInt(gestationalAge, 10);
+    if (notes !== undefined) fieldData.notes = notes;
+    if (recordedBy) fieldData.recordedBy = recordedBy;
+
+    let savedRecord;
+
+    if (existingMeasurement) {
+      savedRecord = await prisma.measurement.update({
+        where: { id: existingMeasurement.id },
+        data: {
+          ...fieldData,
+          ageInMonths: age.totalMonths,
+        },
+      });
+    } else {
+      savedRecord = await prisma.measurement.create({
+        data: {
+          patientId,
+          posyanduId: posyanduId || patient.posyanduId,
+          sessionDate: new Date(),
+          ageInMonths: age.totalMonths,
+          ...fieldData,
+        },
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: savedRecord,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Error auto-saving measurement:', error);
+    return NextResponse.json({ error: 'Gagal menyimpan data otomatis' }, { status: 500 });
+  }
+}

@@ -1,0 +1,89 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model HealthCenter {
+  id          String     @id @default(cuid())
+  code        String     @unique // e.g. PKM-WONOSARI-1
+  name        String     // e.g. Puskesmas Wonosari I
+  kapanewon   String     // e.g. Wonosari
+  users       User[]
+  posyandus   Posyandu[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Posyandu {
+  id              String        @id @default(cuid())
+  code            String        @unique // e.g. POS-WNS-01
+  name            String        // e.g. Posyandu Melati Padukuhan Purbosari
+  kalurahan       String        // e.g. Wonosari
+  padukuhan       String        // e.g. Purbosari
+  healthCenterId  String
+  healthCenter    HealthCenter  @relation(fields: [healthCenterId], references: [id], onDelete: Cascade)
+  users           User[]
+  patients        Patient[]
+  measurements    Measurement[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model User {
+  id              String        @id @default(cuid())
+  username        String        @unique
+  password        String        // 1 akun 1 password
+  name            String        // Nama entitas / institusi
+  role            String        @default("POSYANDU") // DINKES, PUSKESMAS, POSYANDU
+  healthCenterId  String?
+  healthCenter    HealthCenter? @relation(fields: [healthCenterId], references: [id], onDelete: Cascade)
+  posyanduId      String?
+  posyandu        Posyandu?     @relation(fields: [posyanduId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Patient {
+  id            String        @id @default(cuid())
+  regNumber     String        @unique // e.g. POS-WNS-01-2026-0001
+  name          String
+  birthDate     DateTime      // for auto age calculation
+  gender        String?       // "L" (Laki-laki) / "P" (Perempuan)
+  address       String?       // Text / RT-RW
+  guardianName  String?       // Orang tua / Wali (Teks)
+  phone         String?       // No HP opsional
+  isPregnant    Boolean       @default(false) // Tag bumil
+  posyanduId    String
+  posyandu      Posyandu      @relation(fields: [posyanduId], references: [id], onDelete: Cascade)
+  measurements  Measurement[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Measurement {
+  id                String    @id @default(cuid())
+  patientId         String
+  patient           Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  posyanduId        String
+  posyandu          Posyandu  @relation(fields: [posyanduId], references: [id], onDelete: Cascade)
+  sessionDate       DateTime  @default(now()) // Auto-assigned to today
+  ageInMonths       Int       // Calculated at measurement time
+  
+  // Dynamic fields
+  weight            Float?    // BB (kg)
+  height            Float?    // TB/PB (cm)
+  headCircumference Float?    // Lingkar Kepala (cm)
+  armCircumference  Float?    // LiLA (cm)
+  systolic          Int?      // Tensi Sistolik (mmHg)
+  diastolic         Int?      // Tensi Diastolik (mmHg)
+  gestationalAge    Int?      // Usia Kehamilan (Minggu)
+  notes             String?   // Catatan kader
+  
+  recordedBy        String?   // Nama / username posyandu/kader
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}

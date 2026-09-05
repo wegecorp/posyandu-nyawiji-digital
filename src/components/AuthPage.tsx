@@ -56,7 +56,7 @@ export function AuthPage() {
   // Fetch list of Puskesmas for Posyandu signup dropdown
   useEffect(() => {
     if (view === 'signup_posyandu') {
-      fetch('/api/dinkes/puskesmas')
+      fetch('/api/public/puskesmas')
         .then((r) => r.json())
         .then((data) => {
           if (data.success) {

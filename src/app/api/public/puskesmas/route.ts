@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 // Public list of health centers for Posyandu registration dropdown
 export async function GET() {
   try {
-    const healthCenters = await prisma.healthCenter.findMany({
+    let healthCenters = await prisma.healthCenter.findMany({
       select: {
         id: true,
         code: true,
@@ -14,6 +14,24 @@ export async function GET() {
       },
       orderBy: { name: 'asc' },
     });
+
+    // Auto-bootstrap default Puskesmas if database is fresh/empty
+    if (healthCenters.length === 0) {
+      const defaultHc = await prisma.healthCenter.create({
+        data: {
+          code: 'PKM-GK-001',
+          name: 'Puskesmas Wonosari I',
+          kapanewon: 'Wonosari',
+        },
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          kapanewon: true,
+        },
+      });
+      healthCenters = [defaultHc];
+    }
 
     return NextResponse.json({ success: true, data: healthCenters });
   } catch (error) {

@@ -59,9 +59,9 @@ export function AuthPage() {
       fetch('/api/public/puskesmas')
         .then((r) => r.json())
         .then((data) => {
-          if (data.success) {
+          if (data.success && Array.isArray(data.data)) {
             setHealthCenterList(data.data);
-            if (data.data.length > 0 && !posHealthCenterId) {
+            if (data.data.length > 0) {
               setPosHealthCenterId(data.data[0].id);
             }
           }
@@ -525,9 +525,19 @@ export function AuthPage() {
                     Puskesmas Pembina <span className="text-[#ef4444]">*</span>
                   </label>
                   {healthCenterList.length === 0 ? (
-                    <div className="p-3 bg-[#f59e0b]/10 border border-[#f59e0b]/40 rounded-2xl text-xs text-[#0f172a] font-bold flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-[#f59e0b] shrink-0" />
-                      <span>Belum ada Puskesmas terdaftar. Puskesmas harus mendaftar terlebih dahulu agar Posyandu bisa mendaftar di bawahnya.</span>
+                    <div className="p-3.5 bg-[#f59e0b]/10 border border-[#f59e0b]/40 rounded-2xl text-xs text-[#0f172a] font-bold space-y-2">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-[#f59e0b] shrink-0" />
+                        <span>Belum ada Puskesmas terdaftar. Puskesmas harus mendaftar terlebih dahulu agar Posyandu bisa mendaftar di bawahnya.</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setView('signup_puskesmas')}
+                        className="w-full py-1.5 px-3 bg-[#0284c7] hover:bg-[#0284c7]/90 text-white rounded-xl font-bold transition-all text-xs flex items-center justify-center gap-1.5"
+                      >
+                        <Building2 className="w-3.5 h-3.5" />
+                        <span>Daftarkan Puskesmas Sekarang</span>
+                      </button>
                     </div>
                   ) : (
                     <div className="relative">

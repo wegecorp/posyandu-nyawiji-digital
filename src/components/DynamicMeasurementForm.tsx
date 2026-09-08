@@ -11,7 +11,6 @@ import {
   HeartPulse,
   Activity,
   Calendar,
-  Clock,
   CheckCircle2,
   AlertCircle,
   QrCode,
@@ -149,84 +148,78 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   };
 
   return (
-    <div className="space-y-3.5 max-w-xl mx-auto pb-24">
-      {/* Patient Profile Card (DESIGN.md card pattern) */}
-      <div className="bg-white rounded-[24px] p-4.5 border border-[#dee3e9] shadow-xs relative overflow-hidden">
+    <div className="space-y-3.5 max-w-xl mx-auto pb-28">
+      {/* Profile Card Pasien */}
+      <div className="bg-white rounded-2xl p-4 border border-[#e9edef] shadow-xs">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-3.5">
-            {/* Avatar: Lucide User Icon */}
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-base shadow-xs shrink-0 border ${
+              className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-base shrink-0 border ${
                 patient.gender === 'P'
-                  ? 'bg-pink-50 text-pink-700 border-pink-200'
-                  : 'bg-[#0064e0]/10 text-[#0064e0] border-[#0064e0]/20'
+                  ? 'bg-rose-50 text-rose-600 border-rose-200'
+                  : 'bg-sky-50 text-sky-600 border-sky-200'
               }`}
             >
               <User className="w-6 h-6" />
             </div>
 
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-base font-extrabold text-[#0a1317] leading-tight">
+                <h1 className="text-base font-extrabold text-[#111b21] leading-tight truncate">
                   {patient.name}
                 </h1>
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badge.color}`}>
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${badge.color}`}>
                   {badge.label}
                 </span>
               </div>
 
-              <div className="text-xs text-[#5d6c7b] mt-1 flex items-center gap-2 flex-wrap font-medium">
-                <span className="font-mono bg-[#f1f4f7] px-2 py-0.5 rounded-md text-[11px] text-[#0a1317] font-bold">
+              <div className="flex items-center gap-2 text-xs text-[#54656f] mt-1 font-medium flex-wrap">
+                <span className="font-mono bg-[#f0f2f5] px-2 py-0.5 rounded-md text-[11px] text-[#111b21] font-bold border border-[#e9edef]">
                   {patient.regNumber}
                 </span>
-                <span>• Usia: <strong className="text-[#0a1317]">{patient.ageDisplay}</strong></span>
+                <span>
+                  Usia: <strong className="text-[#111b21]">{patient.ageDisplay}</strong>
+                </span>
               </div>
             </div>
           </div>
 
           <button
             onClick={() => onShowQR(patient)}
-            className="w-10 h-10 flex items-center justify-center text-[#0064e0] bg-[#f1f4f7] hover:bg-[#dee3e9] border border-[#ced0d4] rounded-full transition-all touch-press shrink-0"
+            className="w-10 h-10 flex items-center justify-center text-[#075e54] bg-[#f0f2f5] hover:bg-[#e7fceb] border border-[#e9edef] rounded-full transition-all touch-press shrink-0"
             title="Lihat Kartu / QR Pasien"
           >
-            <QrCode className="w-4.5 h-4.5" />
+            <QrCode className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Additional info snippet */}
         {(patient.guardianName || patient.address) && (
-          <div className="mt-3 pt-2.5 border-t border-[#dee3e9] flex items-center justify-between text-xs text-[#5d6c7b]">
+          <div className="mt-3 pt-3 border-t border-[#f0f2f5] flex items-center justify-between gap-3 text-xs text-[#54656f] flex-wrap">
             {patient.guardianName && (
               <span className="truncate">
-                Wali: <strong className="text-[#0a1317]">{patient.guardianName}</strong>
+                Wali: <strong className="text-[#111b21]">{patient.guardianName}</strong>
               </span>
             )}
-            {patient.address && (
-              <span className="truncate text-[#5d6c7b]">{patient.address}</span>
-            )}
+            {patient.address && <span className="truncate text-[#667781]">{patient.address}</span>}
           </div>
         )}
       </div>
 
-      {/* Mode Tabs: Input Form vs History (Pill Tab Navigation per DESIGN.md) */}
-      <div className="flex bg-[#f1f4f7] p-1.5 rounded-full border border-[#dee3e9]">
+      {/* Tabs: Input vs Riwayat */}
+      <div className="flex bg-white p-1 rounded-xl border border-[#e9edef] text-xs font-semibold text-[#54656f] shadow-xs">
         <button
           onClick={() => setActiveTab('form')}
-          className={`flex-1 py-2 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-            activeTab === 'form'
-              ? 'bg-[#0a1317] text-white shadow-xs'
-              : 'text-[#5d6c7b] hover:text-[#0a1317]'
+          className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+            activeTab === 'form' ? 'bg-[#075e54] text-white shadow-xs' : 'hover:text-[#111b21]'
           }`}
         >
           <Activity className="w-3.5 h-3.5" />
-          <span>Input Pengukuran Hari Ini</span>
+          <span>Input Hari Ini</span>
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`flex-1 py-2 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-            activeTab === 'history'
-              ? 'bg-[#0a1317] text-white shadow-xs'
-              : 'text-[#5d6c7b] hover:text-[#0a1317]'
+          className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+            activeTab === 'history' ? 'bg-[#075e54] text-white shadow-xs' : 'hover:text-[#111b21]'
           }`}
         >
           <History className="w-3.5 h-3.5" />
@@ -234,515 +227,303 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
         </button>
       </div>
 
-      {/* Auto-Save Live Status Banner */}
+      {/* Status Simpan */}
       {activeTab === 'form' && (
-        <div className="flex items-center justify-between px-3.5 py-2 bg-white border border-[#dee3e9] rounded-full text-xs shadow-xs">
-          <div className="flex items-center gap-2">
-            <Clock className="w-3.5 h-3.5 text-[#5d6c7b]" />
-            <span className="text-[#5d6c7b] text-[11px]">
-              Sesi Hari Ini: <strong className="text-[#0a1317]">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</strong>
+        <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-white border border-[#e9edef] rounded-2xl text-xs shadow-xs">
+          <div className="flex items-center gap-2 text-[#54656f] min-w-0">
+            <Calendar className="w-3.5 h-3.5 text-[#128c7e] shrink-0" />
+            <span className="text-[11px] truncate">
+              Sesi: <strong className="text-[#075e54]">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</strong>
             </span>
           </div>
 
-          {/* Realtime Save Badge */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center shrink-0">
             {saveStatus === 'saving' && (
-              <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#0a1317] bg-[#f7b928] px-2.5 py-0.5 rounded-full animate-save-pulse">
+              <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#b45309] bg-[#fef3c7] border border-[#fde68a] px-2.5 py-0.5 rounded-full animate-save-pulse">
                 <RefreshCw className="w-3 h-3 animate-spin" /> Menyimpan...
               </span>
             )}
             {saveStatus === 'saved' && (
-              <span className="flex items-center gap-1.5 text-[11px] font-bold text-white bg-[#31a24c] px-2.5 py-0.5 rounded-full animate-in fade-in duration-150">
+              <span className="flex items-center gap-1.5 text-[11px] font-bold text-white bg-[#075e54] px-2.5 py-0.5 rounded-full animate-in fade-in duration-150">
                 <CheckCircle2 className="w-3 h-3" /> Tersimpan Otomatis
               </span>
             )}
             {saveStatus === 'offline_queued' && (
-              <span className="flex items-center gap-1.5 text-[11px] font-bold text-white bg-[#0064e0] px-2.5 py-0.5 rounded-full">
+              <span className="flex items-center gap-1.5 text-[11px] font-bold text-white bg-[#0ea5e9] px-2.5 py-0.5 rounded-full">
                 <AlertCircle className="w-3 h-3" /> Tersimpan Offline
               </span>
             )}
             {saveStatus === 'idle' && (
-              <span className="text-[11px] text-[#8595a4]">
-                Auto-save aktif
-              </span>
+              <span className="text-[11px] text-[#8696a0] font-medium">Auto-save aktif</span>
             )}
           </div>
         </div>
       )}
 
-      {/* 1. INPUT FORM VIEW */}
+      {/* 1. INPUT FORM */}
       {activeTab === 'form' && (
         <div className="space-y-3.5">
-          {/* Card: Basic Measurements (BB & TB for All Categories) */}
-          <div className="bg-white rounded-2xl p-5 border border-[#e9edef] shadow-sm space-y-4">
-            <h3 className="text-sm font-extrabold text-[#075e54] uppercase tracking-wider flex items-center gap-2">
-              <Scale className="w-5 h-5 text-[#075e54]" />
-              <span>Pengukuran Fisik Utama</span>
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Berat Badan (BB) */}
-              <div className="bg-[#f0f2f5] p-3.5 rounded-2xl border-2 border-[#cbd5e1] focus-within:border-[#075e54] focus-within:bg-white transition-all">
-                <label className="block text-sm font-black text-[#111b21] mb-1">
-                  Berat Badan (BB)
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    step="0.05"
-                    inputMode="decimal"
-                    value={weight}
-                    onChange={(e) => handleFieldChange('weight', e.target.value)}
-                    placeholder="0.0"
-                    className="w-full h-12 text-2xl font-black text-[#111b21] bg-transparent outline-none"
-                  />
-                  <span className="text-sm font-black text-[#075e54] bg-white px-3 py-1.5 rounded-xl border border-[#cbd5e1]">
-                    kg
-                  </span>
-                </div>
-              </div>
-
-              {/* Tinggi / Panjang Badan (TB/PB) */}
-              <div className="bg-[#f0f2f5] p-3.5 rounded-2xl border-2 border-[#cbd5e1] focus-within:border-[#075e54] focus-within:bg-white transition-all">
-                <label className="block text-sm font-black text-[#111b21] mb-1">
-                  {category === 'BALITA' ? 'Panjang / TB' : 'Tinggi Badan (TB)'}
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    step="0.1"
-                    inputMode="decimal"
-                    value={height}
-                    onChange={(e) => handleFieldChange('height', e.target.value)}
-                    placeholder="0.0"
-                    className="w-full h-12 text-2xl font-black text-[#111b21] bg-transparent outline-none"
-                  />
-                  <span className="text-sm font-black text-[#075e54] bg-white px-3 py-1.5 rounded-xl border border-[#cbd5e1]">
-                    cm
-                  </span>
-                </div>
-              </div>
+          {/* A. Ukur Fisik Utama (BB & TB) — semua kategori */}
+          <SectionCard>
+            <SectionHeader
+              icon={Scale}
+              title="Ukur Fisik Utama"
+              hint="Wajib diisi untuk semua pasien"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <MetricField
+                label="Berat Badan (BB)"
+                unit="kg"
+                value={weight}
+                onChange={(v) => handleFieldChange('weight', v)}
+                step="0.05"
+              />
+              <MetricField
+                label={category === 'BALITA' ? 'Panjang / TB' : 'Tinggi Badan (TB)'}
+                unit="cm"
+                value={height}
+                onChange={(v) => handleFieldChange('height', v)}
+                step="0.1"
+              />
             </div>
-          </div>
+          </SectionCard>
 
-          {/* Card: Specific Age-Adaptive Measurements */}
-          {/* A. BALITA (< 5 Tahun): Lingkar Kepala */}
+          {/* B. Ukur Khusus Balita */}
           {category === 'BALITA' && (
-            <div className="bg-white rounded-[24px] p-4.5 border border-[#31a24c]/30 shadow-xs space-y-3 animate-in fade-in duration-200">
-              <h3 className="text-xs font-bold text-[#31a24c] uppercase tracking-wider flex items-center gap-2">
-                <CircleDot className="w-4 h-4 text-[#31a24c]" />
-                <span>Pengukuran Khusus Balita</span>
-              </h3>
-
-              <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
-                <label className="block text-xs font-bold text-[#0a1317] mb-1">
-                  Lingkar Kepala (LK)
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    step="0.1"
-                    inputMode="decimal"
-                    value={headCircumference}
-                    onChange={(e) => handleFieldChange('headCircumference', e.target.value)}
-                    placeholder="0.0"
-                    className="w-full text-xl font-extrabold text-[#0a1317] bg-transparent outline-none"
-                  />
-                  <span className="text-xs font-bold text-[#5d6c7b] bg-white px-2 py-1 rounded-md border border-[#ced0d4]">
-                    cm
-                  </span>
-                </div>
-              </div>
-            </div>
+            <SectionCard>
+              <SectionHeader
+                icon={CircleDot}
+                title="Ukur Khusus Balita"
+                hint="Lingkar kepala (LK) memantau pertumbuhan otak"
+              />
+              <MetricField
+                label="Lingkar Kepala (LK)"
+                unit="cm"
+                value={headCircumference}
+                onChange={(v) => handleFieldChange('headCircumference', v)}
+                step="0.1"
+              />
+            </SectionCard>
           )}
 
-          {/* B. ANAK (5 - 9 Tahun): Lingkar Lengan Atas (LiLA) */}
+          {/* C. Ukur Khusus Anak (5-9 th) */}
           {category === 'ANAK' && (
-            <div className="bg-white rounded-[24px] p-4.5 border border-[#0064e0]/30 shadow-xs space-y-3 animate-in fade-in duration-200">
-              <h3 className="text-xs font-bold text-[#0064e0] uppercase tracking-wider flex items-center gap-2">
-                <Ruler className="w-4 h-4 text-[#0064e0]" />
-                <span>Pengukuran Khusus Anak (5-9 th)</span>
-              </h3>
-
-              <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
-                <label className="block text-xs font-bold text-[#0a1317] mb-1">
-                  Lingkar Lengan Atas (LiLA)
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    step="0.1"
-                    inputMode="decimal"
-                    value={armCircumference}
-                    onChange={(e) => handleFieldChange('armCircumference', e.target.value)}
-                    placeholder="0.0"
-                    className="w-full text-xl font-extrabold text-[#0a1317] bg-transparent outline-none"
-                  />
-                  <span className="text-xs font-bold text-[#5d6c7b] bg-white px-2 py-1 rounded-md border border-[#ced0d4]">
-                    cm
-                  </span>
-                </div>
-              </div>
-            </div>
+            <SectionCard>
+              <SectionHeader
+                icon={Ruler}
+                title="Ukur Khusus Anak (5–9 th)"
+                hint="Lingkar lengan atas (LiLA) deteksi gizi kurang"
+              />
+              <MetricField
+                label="Lingkar Lengan Atas (LiLA)"
+                unit="cm"
+                value={armCircumference}
+                onChange={(v) => handleFieldChange('armCircumference', v)}
+                step="0.1"
+              />
+            </SectionCard>
           )}
 
-          {/* C. REMAJA (10 - 17 Tahun): LiLA + Tensi */}
+          {/* D. Ukur Khusus Remaja (10-17 th) */}
           {category === 'REMAJA' && (
-            <div className="bg-white rounded-[24px] p-4.5 border border-[#0064e0]/30 shadow-xs space-y-3 animate-in fade-in duration-200">
-              <h3 className="text-xs font-bold text-[#0064e0] uppercase tracking-wider flex items-center gap-2">
-                <HeartPulse className="w-4 h-4 text-[#0064e0]" />
-                <span>Pengukuran Remaja (LiLA & Tensi)</span>
-              </h3>
-
+            <SectionCard>
+              <SectionHeader
+                icon={HeartPulse}
+                title="Ukur Khusus Remaja"
+                hint="LiLA + tekanan darah"
+              />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* LiLA */}
-                <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
-                  <label className="block text-xs font-bold text-[#0a1317] mb-1">
-                    Lingkar Lengan (LiLA)
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      step="0.1"
-                      inputMode="decimal"
-                      value={armCircumference}
-                      onChange={(e) => handleFieldChange('armCircumference', e.target.value)}
-                      placeholder="0.0"
-                      className="w-full text-lg font-extrabold text-[#0a1317] bg-transparent outline-none"
-                    />
-                    <span className="text-xs font-bold text-[#5d6c7b] bg-white px-2 py-1 rounded-md border border-[#ced0d4]">
-                      cm
-                    </span>
-                  </div>
-                </div>
-
-                {/* Tensi Darah */}
-                <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
-                  <label className="block text-xs font-bold text-[#0a1317] mb-1">
-                    Tekanan Darah (Tensi)
-                  </label>
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      value={systolic}
-                      onChange={(e) => handleFieldChange('systolic', e.target.value)}
-                      placeholder="Sistol (120)"
-                      className="w-full text-base font-extrabold text-[#0a1317] bg-transparent outline-none"
-                    />
-                    <span className="text-[#8595a4] font-bold">/</span>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      value={diastolic}
-                      onChange={(e) => handleFieldChange('diastolic', e.target.value)}
-                      placeholder="Diastol (80)"
-                      className="w-full text-base font-extrabold text-[#0a1317] bg-transparent outline-none"
-                    />
-                    <span className="text-[10px] font-bold text-[#5d6c7b]">mmHg</span>
-                  </div>
-                </div>
+                <MetricField
+                  label="Lingkar Lengan Atas (LiLA)"
+                  unit="cm"
+                  value={armCircumference}
+                  onChange={(v) => handleFieldChange('armCircumference', v)}
+                  step="0.1"
+                />
+                <BloodPressureField
+                  systolic={systolic}
+                  diastolic={diastolic}
+                  onSystolic={(v) => handleFieldChange('systolic', v)}
+                  onDiastolic={(v) => handleFieldChange('diastolic', v)}
+                />
               </div>
-            </div>
+            </SectionCard>
           )}
 
-          {/* D. DEWASA / LANSIA (>= 18 Tahun): Tensi */}
+          {/* E. Ukur Khusus Dewasa / Lansia */}
           {category === 'DEWASA_LANSIA' && (
-            <div className="bg-white rounded-[24px] p-4.5 border border-[#a121ce]/30 shadow-xs space-y-3 animate-in fade-in duration-200">
-              <h3 className="text-xs font-bold text-[#a121ce] uppercase tracking-wider flex items-center gap-2">
-                <HeartPulse className="w-4 h-4 text-[#a121ce]" />
-                <span>Pengukuran Dewasa / Lansia (Tensi)</span>
-              </h3>
-
-              <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
-                <label className="block text-xs font-bold text-[#0a1317] mb-1">
-                  Tekanan Darah (Tensi)
-                </label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1">
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      value={systolic}
-                      onChange={(e) => handleFieldChange('systolic', e.target.value)}
-                      placeholder="Sistolik (120)"
-                      className="w-full text-lg font-extrabold text-[#0a1317] bg-transparent outline-none"
-                    />
-                  </div>
-                  <span className="text-[#8595a4] font-bold text-lg">/</span>
-                  <div className="flex-1">
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      value={diastolic}
-                      onChange={(e) => handleFieldChange('diastolic', e.target.value)}
-                      placeholder="Diastolik (80)"
-                      className="w-full text-lg font-extrabold text-[#0a1317] bg-transparent outline-none"
-                    />
-                  </div>
-                  <span className="text-xs font-bold text-[#5d6c7b] bg-white px-2 py-1 rounded-md border border-[#ced0d4]">
-                    mmHg
-                  </span>
-                </div>
-              </div>
-            </div>
+            <SectionCard>
+              <SectionHeader
+                icon={HeartPulse}
+                title="Ukur Khusus Dewasa / Lansia"
+                hint="Tekanan darah"
+              />
+              <BloodPressureField
+                systolic={systolic}
+                diastolic={diastolic}
+                onSystolic={(v) => handleFieldChange('systolic', v)}
+                onDiastolic={(v) => handleFieldChange('diastolic', v)}
+              />
+            </SectionCard>
           )}
 
-          {/* E. IBU HAMIL (BUMIL): LiLA, Tensi, Usia Kehamilan */}
+          {/* F. Pemeriksaan Ibu Hamil */}
           {category === 'BUMIL' && (
-            <div className="bg-white rounded-[24px] p-4.5 border border-pink-300 shadow-xs space-y-3 animate-in fade-in duration-200">
-              <h3 className="text-xs font-bold text-pink-700 uppercase tracking-wider flex items-center gap-2">
-                <HeartPulse className="w-4 h-4 text-pink-600" />
-                <span>Pemeriksaan Khusus Ibu Hamil</span>
-              </h3>
-
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  {/* LiLA */}
-                  <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
-                    <label className="block text-xs font-bold text-[#0a1317] mb-1">
-                      LiLA (Lingkar Lengan)
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        step="0.1"
-                        inputMode="decimal"
-                        value={armCircumference}
-                        onChange={(e) => handleFieldChange('armCircumference', e.target.value)}
-                        placeholder="0.0"
-                        className="w-full text-base font-extrabold text-[#0a1317] bg-transparent outline-none"
-                      />
-                      <span className="text-xs font-bold text-[#5d6c7b]">cm</span>
-                    </div>
-                  </div>
-
-                  {/* Usia Kehamilan */}
-                  <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
-                    <label className="block text-xs font-bold text-[#0a1317] mb-1">
-                      Usia Kehamilan
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        value={gestationalAge}
-                        onChange={(e) => handleFieldChange('gestationalAge', e.target.value)}
-                        placeholder="0"
-                        className="w-full text-base font-extrabold text-[#0a1317] bg-transparent outline-none"
-                      />
-                      <span className="text-xs font-bold text-[#5d6c7b]">Minggu</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Tensi Bumil */}
-                <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
-                  <label className="block text-xs font-bold text-[#0a1317] mb-1">
-                    Tekanan Darah (Tensi)
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      value={systolic}
-                      onChange={(e) => handleFieldChange('systolic', e.target.value)}
-                      placeholder="Sistolik (120)"
-                      className="w-full text-base font-extrabold text-[#0a1317] bg-transparent outline-none"
-                    />
-                    <span className="text-[#8595a4] font-bold">/</span>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      value={diastolic}
-                      onChange={(e) => handleFieldChange('diastolic', e.target.value)}
-                      placeholder="Diastolik (80)"
-                      className="w-full text-base font-extrabold text-[#0a1317] bg-transparent outline-none"
-                    />
-                    <span className="text-xs font-bold text-[#5d6c7b]">mmHg</span>
-                  </div>
-                </div>
+            <SectionCard>
+              <SectionHeader
+                icon={HeartPulse}
+                title="Pemeriksaan Ibu Hamil"
+                hint="LiLA, usia kehamilan & tekanan darah"
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <MetricField
+                  label="Lingkar Lengan Atas (LiLA)"
+                  unit="cm"
+                  value={armCircumference}
+                  onChange={(v) => handleFieldChange('armCircumference', v)}
+                  step="0.1"
+                />
+                <MetricField
+                  label="Usia Kehamilan"
+                  unit="minggu"
+                  value={gestationalAge}
+                  onChange={(v) => handleFieldChange('gestationalAge', v)}
+                  step="1"
+                  inputMode="numeric"
+                  placeholder="0"
+                />
               </div>
-            </div>
+              <BloodPressureField
+                systolic={systolic}
+                diastolic={diastolic}
+                onSystolic={(v) => handleFieldChange('systolic', v)}
+                onDiastolic={(v) => handleFieldChange('diastolic', v)}
+              />
+            </SectionCard>
           )}
 
-          {/* F. LABORATORIUM SEDERHANA (Gula Darah, Kolesterol, Asam Urat, HB) */}
-          <div className="bg-white rounded-[24px] p-4.5 border border-red-200 shadow-xs space-y-3 animate-in fade-in duration-200">
-            <h3 className="text-xs font-bold text-red-600 uppercase tracking-wider flex items-center gap-2">
-              <TestTube className="w-4 h-4 text-red-500" />
-              <span>Pemeriksaan Laboratorium Sederhana</span>
-            </h3>
-
+          {/* G. Lab Sederhana */}
+          <SectionCard>
+            <SectionHeader
+              icon={TestTube}
+              title="Laboratorium Sederhana"
+              hint="Opsional — isi hanya jika alat tersedia"
+            />
             <div className="grid grid-cols-2 gap-3">
-              {/* Gula Darah */}
-              <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
-                <label className="block text-xs font-bold text-[#0a1317] mb-1">
-                  Gula Darah (GDS)
-                </label>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="number"
-                    step="1"
-                    inputMode="numeric"
-                    value={bloodSugar}
-                    onChange={(e) => handleFieldChange('bloodSugar', e.target.value)}
-                    placeholder="0"
-                    className="w-full text-base font-extrabold text-[#0a1317] bg-transparent outline-none"
-                  />
-                  <span className="text-[10px] font-bold text-[#5d6c7b]">mg/dL</span>
-                </div>
-              </div>
-
-              {/* Kolesterol */}
-              <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
-                <label className="block text-xs font-bold text-[#0a1317] mb-1">
-                  Kolesterol Total
-                </label>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="number"
-                    step="1"
-                    inputMode="numeric"
-                    value={cholesterol}
-                    onChange={(e) => handleFieldChange('cholesterol', e.target.value)}
-                    placeholder="0"
-                    className="w-full text-base font-extrabold text-[#0a1317] bg-transparent outline-none"
-                  />
-                  <span className="text-[10px] font-bold text-[#5d6c7b]">mg/dL</span>
-                </div>
-              </div>
-
-              {/* Asam Urat */}
-              <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
-                <label className="block text-xs font-bold text-[#0a1317] mb-1">
-                  Asam Urat
-                </label>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="number"
-                    step="0.1"
-                    inputMode="decimal"
-                    value={uricAcid}
-                    onChange={(e) => handleFieldChange('uricAcid', e.target.value)}
-                    placeholder="0.0"
-                    className="w-full text-base font-extrabold text-[#0a1317] bg-transparent outline-none"
-                  />
-                  <span className="text-[10px] font-bold text-[#5d6c7b]">mg/dL</span>
-                </div>
-              </div>
-
-              {/* Hemoglobin (HB) */}
-              <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
-                <label className="block text-xs font-bold text-[#0a1317] mb-1">
-                  Hemoglobin (HB)
-                </label>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="number"
-                    step="0.1"
-                    inputMode="decimal"
-                    value={hemoglobin}
-                    onChange={(e) => handleFieldChange('hemoglobin', e.target.value)}
-                    placeholder="0.0"
-                    className="w-full text-base font-extrabold text-[#0a1317] bg-transparent outline-none"
-                  />
-                  <span className="text-[10px] font-bold text-[#5d6c7b]">g/dL</span>
-                </div>
-              </div>
+              <MetricField
+                label="Gula Darah (GDS)"
+                unit="mg/dL"
+                value={bloodSugar}
+                onChange={(v) => handleFieldChange('bloodSugar', v)}
+                step="1"
+                inputMode="numeric"
+                placeholder="0"
+                size="sm"
+              />
+              <MetricField
+                label="Kolesterol Total"
+                unit="mg/dL"
+                value={cholesterol}
+                onChange={(v) => handleFieldChange('cholesterol', v)}
+                step="1"
+                inputMode="numeric"
+                placeholder="0"
+                size="sm"
+              />
+              <MetricField
+                label="Asam Urat"
+                unit="mg/dL"
+                value={uricAcid}
+                onChange={(v) => handleFieldChange('uricAcid', v)}
+                step="0.1"
+                placeholder="0.0"
+                size="sm"
+              />
+              <MetricField
+                label="Hemoglobin (HB)"
+                unit="g/dL"
+                value={hemoglobin}
+                onChange={(v) => handleFieldChange('hemoglobin', v)}
+                step="0.1"
+                placeholder="0.0"
+                size="sm"
+              />
             </div>
-          </div>
+          </SectionCard>
 
-          {/* Notes Card */}
-          <div className="bg-white rounded-[24px] p-4.5 border border-[#dee3e9] shadow-xs space-y-2">
-            <label className="block text-xs font-bold text-[#0a1317] flex items-center gap-2">
-              <FileText className="w-4 h-4 text-[#5d6c7b]" />
-              <span>Catatan Kader / Keluhan / Pemberian Vitamin</span>
-            </label>
+          {/* H. Catatan */}
+          <SectionCard>
+            <SectionHeader
+              icon={FileText}
+              title="Catatan"
+              hint="Keluhan, vitamin, atau tindak lanjut"
+            />
             <textarea
-              rows={2}
+              rows={3}
               value={notes}
               onChange={(e) => handleFieldChange('notes', e.target.value)}
-              placeholder="Tulis catatan (misal: vitamin A merah diberikan, anak demam 2 hari, dll)..."
-              className="w-full p-3 text-xs bg-[#f1f4f7] border border-[#ced0d4] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#1876f2] transition-all font-medium text-[#1c1e21] resize-none"
+              placeholder="Contoh: vitamin A merah diberikan, anak demam 2 hari, rujuk ke puskesmas..."
+              className="w-full p-3 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-[#128c7e] focus:ring-2 focus:ring-[#128c7e]/15 transition-all font-medium text-[#111b21] placeholder-[#8696a0] resize-none"
             />
-          </div>
+          </SectionCard>
         </div>
       )}
 
-      {/* 2. HISTORY TAB VIEW */}
+      {/* 2. RIWAYAT */}
       {activeTab === 'history' && (
         <div className="space-y-3">
           {historyList.length === 0 ? (
-            <div className="p-8 text-center bg-white rounded-[24px] border border-[#dee3e9] text-[#5d6c7b] text-xs">
+            <div className="p-8 text-center bg-white rounded-2xl border border-[#e9edef] text-[#54656f] text-xs font-medium">
               Belum ada riwayat pengukuran sebelumnya untuk pasien ini.
             </div>
           ) : (
             historyList.map((hist, idx) => (
               <div
                 key={hist.id || idx}
-                className="bg-white rounded-[20px] p-4 border border-[#dee3e9] shadow-xs space-y-2.5"
+                className="bg-white rounded-2xl p-4 border border-[#e9edef] shadow-xs space-y-2.5"
               >
-                <div className="flex items-center justify-between text-xs border-b border-[#dee3e9] pb-2">
-                  <div className="font-bold text-[#0a1317] flex items-center gap-2">
-                    <Calendar className="w-3.5 h-3.5 text-[#0064e0]" />
+                <div className="flex items-center justify-between gap-2 text-xs border-b border-[#f0f2f5] pb-2.5">
+                  <div className="font-bold text-[#111b21] flex items-center gap-2">
+                    <Calendar className="w-3.5 h-3.5 text-[#128c7e]" />
                     <span>{formatIndoDate(hist.sessionDate)}</span>
                   </div>
-                  <span className="text-[11px] text-[#5d6c7b]">
+                  <span className="text-[11px] text-[#667781]">
                     Kader: {hist.recordedBy || '-'}
                   </span>
                 </div>
 
-                {/* Metrics chips */}
-                <div className="flex flex-wrap gap-2 text-xs">
+                <div className="flex flex-wrap gap-1.5 text-[11px]">
                   {hist.weight && (
-                    <span className="bg-[#f1f4f7] px-2.5 py-1 rounded-full text-[#0a1317] font-medium border border-[#dee3e9]">
-                      BB: <strong>{hist.weight} kg</strong>
-                    </span>
+                    <MetricChip label="BB" value={`${hist.weight} kg`} />
                   )}
                   {hist.height && (
-                    <span className="bg-[#f1f4f7] px-2.5 py-1 rounded-full text-[#0a1317] font-medium border border-[#dee3e9]">
-                      TB: <strong>{hist.height} cm</strong>
-                    </span>
+                    <MetricChip label="TB" value={`${hist.height} cm`} />
                   )}
                   {hist.headCircumference && (
-                    <span className="bg-[#31a24c]/10 text-[#31a24c] px-2.5 py-1 rounded-full border border-[#31a24c]/20 font-medium">
-                      LK: <strong>{hist.headCircumference} cm</strong>
-                    </span>
+                    <MetricChip label="LK" value={`${hist.headCircumference} cm`} />
                   )}
                   {hist.armCircumference && (
-                    <span className="bg-[#0064e0]/10 text-[#0064e0] px-2.5 py-1 rounded-full border border-[#0064e0]/20 font-medium">
-                      LiLA: <strong>{hist.armCircumference} cm</strong>
-                    </span>
+                    <MetricChip label="LiLA" value={`${hist.armCircumference} cm`} />
                   )}
                   {hist.systolic && (
-                    <span className="bg-[#a121ce]/10 text-[#a121ce] px-2.5 py-1 rounded-full border border-[#a121ce]/20 font-medium">
-                      Tensi: <strong>{hist.systolic}/{hist.diastolic}</strong> mmHg
-                    </span>
+                    <MetricChip label="Tensi" value={`${hist.systolic}/${hist.diastolic} mmHg`} />
                   )}
                   {hist.bloodSugar && (
-                    <span className="bg-red-50 text-red-600 px-2.5 py-1 rounded-full border border-red-200 font-medium">
-                      Gula Darah: <strong>{hist.bloodSugar} mg/dL</strong>
-                    </span>
+                    <MetricChip label="GDS" value={`${hist.bloodSugar} mg/dL`} />
                   )}
                   {hist.cholesterol && (
-                    <span className="bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full border border-amber-200 font-medium">
-                      Kolesterol: <strong>{hist.cholesterol} mg/dL</strong>
-                    </span>
+                    <MetricChip label="Kolesterol" value={`${hist.cholesterol} mg/dL`} />
                   )}
                   {hist.uricAcid && (
-                    <span className="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full border border-purple-200 font-medium">
-                      Asam Urat: <strong>{hist.uricAcid} mg/dL</strong>
-                    </span>
+                    <MetricChip label="Asam Urat" value={`${hist.uricAcid} mg/dL`} />
                   )}
                   {hist.hemoglobin && (
-                    <span className="bg-rose-50 text-rose-700 px-2.5 py-1 rounded-full border border-rose-200 font-medium">
-                      HB: <strong>{hist.hemoglobin} g/dL</strong>
-                    </span>
+                    <MetricChip label="HB" value={`${hist.hemoglobin} g/dL`} />
                   )}
                 </div>
 
                 {hist.notes && (
-                  <p className="text-[11px] text-[#5d6c7b] italic bg-[#f1f4f7] p-2.5 rounded-xl border border-[#dee3e9]">
+                  <p className="text-[11px] text-[#54656f] italic bg-[#f0f2f5] p-2.5 rounded-xl border border-[#e9edef]">
                     &quot;{hist.notes}&quot;
                   </p>
                 )}
@@ -752,19 +533,150 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
         </div>
       )}
 
-      {/* Floating Bottom Action Bar (Fixed for Mobile - Giant WhatsApp Green Button) */}
-      <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-[#e9edef] z-30 shadow-2xl">
+      {/* Bottom Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-white/95 backdrop-blur-md border-t border-[#e9edef] z-30 shadow-2xl">
         <div className="max-w-xl mx-auto">
           <button
             onClick={onBackToList}
-            className="w-full h-14 bg-[#25d366] hover:bg-[#128c7e] text-white font-black rounded-2xl text-base shadow-lg flex items-center justify-center gap-2 transition-all touch-press active:scale-98"
+            className="w-full h-14 bg-[#25d366] hover:bg-[#128c7e] text-white font-black rounded-2xl text-base shadow-lg flex items-center justify-center gap-2 transition-all touch-press active:scale-[0.98]"
           >
             <CheckCircle2 className="w-6 h-6 text-white" />
-            <span>SIMPAN & KEMBALI KE DAFTAR PASIEN</span>
+            <span>{isReadOnly ? 'Tutup & Kembali ke Daftar' : 'Selesai — Kembali ke Daftar'}</span>
           </button>
+          {!isReadOnly && (
+            <p className="text-center text-[10px] text-[#667781] font-medium mt-1.5">
+              Setiap angka tersimpan otomatis — tidak ada tombol simpan terpisah.
+            </p>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
+/* ---------- Sub Komponen Lokal ---------- */
+
+function SectionCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-2xl border border-[#e9edef] shadow-xs p-4 space-y-3.5">
+      {children}
+    </div>
+  );
+}
+
+function SectionHeader({
+  icon: Icon,
+  title,
+  hint,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  hint?: string;
+}) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <div className="w-9 h-9 rounded-xl bg-[#e7fceb] text-[#075e54] flex items-center justify-center shrink-0">
+        <Icon className="w-5 h-5" />
+      </div>
+      <div className="min-w-0">
+        <h3 className="text-sm font-extrabold text-[#111b21] leading-tight">{title}</h3>
+        {hint && <p className="text-[11px] text-[#667781] font-medium mt-0.5">{hint}</p>}
+      </div>
+    </div>
+  );
+}
+
+const numInputCls =
+  'w-full min-w-0 bg-transparent outline-none text-[#111b21] placeholder-[#8696a0] font-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none';
+
+function MetricField({
+  label,
+  unit,
+  value,
+  onChange,
+  placeholder = '0.0',
+  step = '0.1',
+  inputMode = 'decimal',
+  size = 'lg',
+}: {
+  label: string;
+  unit: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  step?: string;
+  inputMode?: 'decimal' | 'numeric';
+  size?: 'lg' | 'sm';
+}) {
+  return (
+    <div className="flex items-center gap-2 bg-[#f0f2f5] border border-[#e9edef] rounded-2xl px-3.5 py-2.5 focus-within:bg-white focus-within:border-[#128c7e] focus-within:ring-2 focus-within:ring-[#128c7e]/15 transition-all">
+      <div className="min-w-0 flex-1">
+        <label className="block text-[10px] font-bold text-[#667781] uppercase tracking-wide mb-0.5 truncate">
+          {label}
+        </label>
+        <input
+          type="number"
+          step={step}
+          inputMode={inputMode}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className={`${numInputCls} ${size === 'lg' ? 'text-2xl' : 'text-lg'}`}
+        />
+      </div>
+      <span className="text-[10px] font-extrabold text-[#075e54] bg-white border border-[#e9edef] rounded-lg px-2 py-1 shrink-0">
+        {unit}
+      </span>
+    </div>
+  );
+}
+
+function BloodPressureField({
+  systolic,
+  diastolic,
+  onSystolic,
+  onDiastolic,
+}: {
+  systolic: string;
+  diastolic: string;
+  onSystolic: (value: string) => void;
+  onDiastolic: (value: string) => void;
+}) {
+  return (
+    <div className="bg-[#f0f2f5] border border-[#e9edef] rounded-2xl px-3.5 py-2.5 focus-within:bg-white focus-within:border-[#128c7e] focus-within:ring-2 focus-within:ring-[#128c7e]/15 transition-all">
+      <label className="block text-[10px] font-bold text-[#667781] uppercase tracking-wide mb-1">
+        Tekanan Darah (Tensi)
+      </label>
+      <div className="flex items-center gap-1.5">
+        <input
+          type="number"
+          inputMode="numeric"
+          value={systolic}
+          onChange={(e) => onSystolic(e.target.value)}
+          placeholder="Sistolik"
+          className={`${numInputCls} text-xl`}
+        />
+        <span className="text-xl font-bold text-[#8696a0] shrink-0">/</span>
+        <input
+          type="number"
+          inputMode="numeric"
+          value={diastolic}
+          onChange={(e) => onDiastolic(e.target.value)}
+          placeholder="Diastolik"
+          className={`${numInputCls} text-xl`}
+        />
+        <span className="text-[10px] font-extrabold text-[#075e54] bg-white border border-[#e9edef] rounded-lg px-2 py-1 shrink-0">
+          mmHg
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function MetricChip({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="bg-[#f0f2f5] px-2.5 py-1 rounded-full text-[#54656f] font-medium border border-[#e9edef]">
+      {label}: <strong className="font-extrabold text-[#111b21]">{value}</strong>
+    </span>
+  );
+}

@@ -4,11 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import {
   QrCode,
-  Wifi,
   WifiOff,
   FileSpreadsheet,
   ChevronDown,
   LayoutDashboard,
+  RefreshCw,
 } from 'lucide-react';
 import { getSyncQueue } from '@/lib/offline-sync';
 
@@ -17,6 +17,7 @@ interface HeaderProps {
   onOpenExport: () => void;
   onOpenLogin: () => void;
   onBackToDashboard?: () => void;
+  showTools?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -24,6 +25,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenExport,
   onOpenLogin,
   onBackToDashboard,
+  showTools = true,
 }) => {
   const { user } = useAuth();
   const [isOnline, setIsOnline] = useState<boolean>(() =>
@@ -51,13 +53,13 @@ export const Header: React.FC<HeaderProps> = ({
   const getRoleBadge = () => {
     switch (user?.role) {
       case 'DINKES':
-        return { label: 'DINAS KESEHATAN GK', color: 'bg-[#8b5cf6] text-white' };
+        return { label: 'DINAS KESEHATAN GK', color: 'bg-white/15 text-white border border-white/20' };
       case 'PUSKESMAS':
-        return { label: 'PUSKESMAS', color: 'bg-[#0284c7] text-white' };
+        return { label: 'PUSKESMAS', color: 'bg-white/15 text-white border border-white/20' };
       case 'POSYANDU':
-        return { label: 'POSYANDU', color: 'bg-[#10b981] text-white' };
+        return { label: 'POSYANDU', color: 'bg-white/15 text-white border border-white/20' };
       default:
-        return { label: 'TIDAK TERAUTENTIKASI', color: 'bg-[#0f172a] text-white' };
+        return { label: 'TIDAK TERAUTENTIKASI', color: 'bg-white/15 text-white border border-white/20' };
     }
   };
 
@@ -65,30 +67,6 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-[#075e54] text-white shadow-md">
-      {/* Top Banner / Status Bar */}
-      <div className="bg-[#054c44] text-[#8696a0] px-4 py-1 text-xs flex items-center justify-between font-medium border-b border-[#075e54]">
-        <div className="flex items-center gap-2 truncate">
-          <span className={`inline-block w-2 h-2 rounded-full ${isOnline ? 'bg-[#25d366] animate-pulse' : 'bg-[#ef4444]'}`}></span>
-          <span className="truncate text-white font-bold text-xs tracking-wide">Posyandu Digital</span>
-          <span className={`px-2 py-0.5 rounded-md text-[10px] font-black tracking-wider ${roleBadge.color}`}>
-            {roleBadge.label}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2 text-xs shrink-0">
-          <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold ${isOnline ? 'bg-[#25d366]/20 text-[#25d366]' : 'bg-[#ef4444]/20 text-[#f87171]'}`}>
-            {isOnline ? <Wifi className="w-3 h-3 text-[#25d366]" /> : <WifiOff className="w-3 h-3 text-[#f87171]" />}
-            <span>{isOnline ? 'ONLINE' : 'OFFLINE'}</span>
-          </div>
-
-          {unsyncedCount > 0 && (
-            <span className="bg-[#fbbf24] text-[#0b141a] px-2 py-0.5 rounded-full text-[10px] font-black">
-              {unsyncedCount} antrean
-            </span>
-          )}
-        </div>
-      </div>
-
       {/* Main Action Bar */}
       <div className="px-4 py-2.5 flex items-center justify-between gap-3 max-w-2xl mx-auto">
         {/* Account Info Button */}
@@ -103,9 +81,11 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="font-extrabold text-white truncate text-sm leading-tight">
               {user?.name || user?.posyanduName || 'Posyandu Digital'}
             </div>
-            <div className="text-xs text-[#25d366] truncate leading-tight flex items-center gap-1 font-medium">
-              <span>{user?.username || 'Ganti Akun'}</span>
-              <ChevronDown className="w-3.5 h-3.5 inline text-white/70" />
+            <div className="mt-1 flex items-center gap-1.5">
+              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black tracking-wider ${roleBadge.color}`}>
+                {roleBadge.label}
+              </span>
+              <ChevronDown className="w-3.5 h-3.5 text-white/70" />
             </div>
           </div>
         </button>
@@ -124,26 +104,53 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           {/* Scan QR Button */}
-          <button
-            onClick={onOpenScanQR}
-            aria-label="Scan QR Pasien"
-            className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
-            title="Scan QR Code Pasien"
-          >
-            <QrCode className="w-5 h-5 text-white" />
-          </button>
+          {showTools && (
+            <button
+              onClick={onOpenScanQR}
+              aria-label="Scan QR Pasien"
+              className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
+              title="Scan QR Code Pasien"
+            >
+              <QrCode className="w-5 h-5 text-white" />
+            </button>
+          )}
 
           {/* Export Excel Button */}
-          <button
-            onClick={onOpenExport}
-            aria-label="Export Rekap Excel"
-            className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
-            title="Export Excel Rekap Data"
-          >
-            <FileSpreadsheet className="w-5 h-5 text-[#25d366]" />
-          </button>
+          {showTools && (
+            <button
+              onClick={onOpenExport}
+              aria-label="Export Rekap Excel"
+              className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
+              title="Export Excel Rekap Data"
+            >
+              <FileSpreadsheet className="w-5 h-5 text-[#25d366]" />
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Status Alert — muncul hanya saat luring / ada data belum sinkron */}
+      {(!isOnline || unsyncedCount > 0) && (
+        <div
+          className={`px-4 py-1.5 text-xs font-bold border-t flex items-center justify-center gap-2 text-center ${
+            isOnline ? 'bg-[#054c44] text-[#fbbf24] border-[#075e54]' : 'bg-[#b45309] text-white border-[#b45309]'
+          }`}
+        >
+          {!isOnline ? (
+            <>
+              <WifiOff className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                Luring — data disimpan di perangkat{unsyncedCount > 0 ? ` (${unsyncedCount} belum tersinkron)` : ''}. Tersinkron otomatis saat online.
+              </span>
+            </>
+          ) : (
+            <>
+              <RefreshCw className="w-3.5 h-3.5 shrink-0 animate-spin" />
+              <span>{unsyncedCount} catatan menunggu sinkron ke server...</span>
+            </>
+          )}
+        </div>
+      )}
     </header>
   );
 };

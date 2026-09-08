@@ -106,9 +106,9 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] shadow-2xl overflow-hidden max-h-[92vh] flex flex-col border border-[#dee3e9]">
+      <div className="bg-white w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] shadow-2xl overflow-hidden max-h-[92vh] flex flex-col border border-[#e9edef]">
         {/* Header */}
-        <div className="bg-[#075e54] text-white p-4.5 flex items-center justify-between">
+        <div className="bg-[#075e54] text-white p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-white/10 rounded-full">
               <UserPlus className="w-5 h-5 text-[#25d366]" />
@@ -127,7 +127,7 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 flex-1">
+        <form onSubmit={handleSubmit} className="p-4 overflow-y-auto space-y-4 flex-1">
           {errorMsg && (
             <div className="p-3 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl text-xs text-[#ef4444] font-bold flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0 text-[#ef4444]" />
@@ -136,12 +136,14 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
           )}
 
           {/* Posyandu Info Tag */}
-          <div className="bg-[#f0f2f5] border border-[#e9edef] rounded-2xl p-3 text-xs text-[#54656f] flex items-center justify-between font-medium">
+          <div className="bg-[#f0f2f5] border border-[#e9edef] rounded-xl p-3 text-xs text-[#54656f] flex items-center justify-between gap-2 font-medium">
             <span>Posyandu:</span>
-            <span className="font-extrabold text-[#075e54]">{user?.posyanduName || 'Posyandu Terpilih'}</span>
+            <span className="font-extrabold text-[#075e54] truncate">{user?.posyanduName || 'Posyandu Terpilih'}</span>
           </div>
 
-          {/* 1. Nama Pasien (Wajib) */}
+          {/* 1. Identitas Wajib */}
+          <GroupLabel text="1 · Identitas Wajib" />
+
           <div>
             <label className="block text-xs font-bold text-[#111b21] mb-1.5">
               Nama Lengkap Pasien <span className="text-[#ef4444]">*</span>
@@ -154,12 +156,11 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Contoh: Muhammad Arka Pratama"
                 required
-                className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl focus:bg-white focus:border-2 focus:border-[#128c7e] outline-none font-medium text-[#111b21] transition-all"
+                className={fieldClsWithIcon}
               />
             </div>
           </div>
 
-          {/* 2. Tanggal Lahir (Wajib) */}
           <div>
             <label className="block text-xs font-bold text-[#111b21] mb-1.5">
               Tanggal Lahir (TTL) <span className="text-[#ef4444]">*</span>
@@ -172,35 +173,37 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
                 onChange={(e) => setBirthDate(e.target.value)}
                 required
                 max={new Date().toISOString().slice(0, 10)}
-                className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl focus:bg-white focus:border-2 focus:border-[#128c7e] outline-none font-medium text-[#111b21] transition-all"
+                className={fieldClsWithIcon}
               />
             </div>
 
             {/* Live Age & Category Detection */}
             {agePreview && badge && (
-              <div className="mt-2 p-3 bg-[#e7fceb] border border-[#25d366]/30 rounded-2xl flex items-center justify-between text-xs animate-in fade-in duration-200">
+              <div className="mt-2 p-3 bg-[#e7fceb] border border-[#25d366]/30 rounded-2xl flex items-center justify-between gap-2 text-xs animate-in fade-in duration-200">
                 <div>
                   <span className="text-[#54656f]">Usia saat ini: </span>
                   <span className="font-extrabold text-[#075e54]">{agePreview.display}</span>
                 </div>
-                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${badge.color}`}>
+                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border shrink-0 ${badge.color}`}>
                   {badge.label}
                 </span>
               </div>
             )}
           </div>
 
-          {/* 3. Jenis Kelamin */}
+          {/* 2. Jenis Kelamin & Status */}
+          <GroupLabel text="2 · Jenis Kelamin & Status" />
+
           <div>
             <label className="block text-xs font-bold text-[#111b21] mb-1.5">Jenis Kelamin</label>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 bg-white p-1 rounded-2xl border border-[#e9edef] gap-1">
               <button
                 type="button"
                 onClick={() => handleGenderChange('L')}
-                className={`py-2.5 px-4 rounded-full border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                className={`py-3 rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-all ${
                   gender === 'L'
-                    ? 'bg-[#128c7e] text-white border-[#128c7e] shadow-xs'
-                    : 'bg-[#f0f2f5] text-[#111b21] border-[#e9edef] hover:bg-[#e9edef]'
+                    ? 'bg-[#075e54] text-white shadow-xs'
+                    : 'text-[#111b21] hover:bg-[#f0f2f5]'
                 }`}
               >
                 <User className="w-4 h-4" />
@@ -209,10 +212,10 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
               <button
                 type="button"
                 onClick={() => handleGenderChange('P')}
-                className={`py-2.5 px-4 rounded-full border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                className={`py-3 rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-all ${
                   gender === 'P'
-                    ? 'bg-rose-500 text-white border-rose-500 shadow-xs'
-                    : 'bg-[#f0f2f5] text-[#111b21] border-[#e9edef] hover:bg-[#e9edef]'
+                    ? 'bg-rose-500 text-white shadow-xs'
+                    : 'text-[#111b21] hover:bg-[#f0f2f5]'
                 }`}
               >
                 <User className="w-4 h-4" />
@@ -228,7 +231,7 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
               : 'bg-rose-50/70 border-rose-200'
           }`}>
             <div className="flex items-center gap-2.5">
-              <Heart className={`w-4 h-4 ${gender === 'L' ? 'text-slate-400' : 'text-rose-500'}`} />
+              <Heart className={`w-4 h-4 ${gender === 'L' ? 'text-[#8696a0]' : 'text-rose-500'}`} />
               <div>
                 <span className={`text-xs font-bold ${gender === 'L' ? 'text-[#54656f]' : 'text-[#111b21]'}`}>
                   Pasien Ibu Hamil (Bumil)
@@ -247,69 +250,71 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
             />
           </div>
 
-
-          {/* Toggle Optional Fields */}
-          <button
-            type="button"
-            onClick={() => setShowOptional(!showOptional)}
-            className="text-xs text-[#128c7e] font-bold hover:underline flex items-center gap-1.5 py-1"
-          >
-            {showOptional ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            <span>{showOptional ? 'Sembunyikan' : 'Tambah'} Data Tambahan (Alamat, Wali, HP)</span>
-          </button>
+          {/* 3. Data Tambahan (Opsional) */}
+          <div className="pt-1 flex items-center justify-between gap-2">
+            <span className="text-[11px] font-black uppercase tracking-wider text-[#54656f]">3 · Data Tambahan</span>
+            <button
+              type="button"
+              onClick={() => setShowOptional(!showOptional)}
+              className="text-xs text-[#128c7e] font-bold flex items-center gap-1.5 py-1 hover:underline"
+            >
+              {showOptional ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              <span>{showOptional ? 'Sembunyikan' : 'Isi (opsional)'}</span>
+            </button>
+          </div>
 
           {/* Optional Form Section */}
           {showOptional && (
-            <div className="space-y-3 pt-2 border-t border-[#e9edef] animate-in slide-in-from-top-2 duration-150">
+            <div className="space-y-3.5 pt-2 border-t border-[#e9edef] animate-in slide-in-from-top-2 duration-150">
               <div>
-                <label className="block text-xs font-semibold text-[#54656f] mb-1">
-                  Nama Orang Tua / Wali (Opsional)
+                <label className="block text-xs font-bold text-[#111b21] mb-1.5">
+                  Nama Orang Tua / Wali <span className="text-[#8696a0] font-medium">(opsional)</span>
                 </label>
                 <input
                   type="text"
                   value={guardianName}
                   onChange={(e) => setGuardianName(e.target.value)}
                   placeholder="Nama Ibu / Ayah / Suami"
-                  className="w-full px-3.5 py-2 text-xs bg-[#f0f2f5] border border-[#e9edef] rounded-xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] text-[#111b21]"
+                  className={fieldClsPlain}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#54656f] mb-1">
-                  Alamat / RT-RW (Opsional)
+                <label className="block text-xs font-bold text-[#111b21] mb-1.5">
+                  Alamat / RT-RW <span className="text-[#8696a0] font-medium">(opsional)</span>
                 </label>
                 <div className="relative">
-                  <Home className="w-3.5 h-3.5 text-[#8696a0] absolute left-3 top-2.5" />
+                  <Home className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
                   <input
                     type="text"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="Contoh: RT 02 / RW 04 Purbosari"
-                    className="w-full pl-8 pr-3 py-2 text-xs bg-[#f0f2f5] border border-[#e9edef] rounded-xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] text-[#111b21]"
+                    className={fieldClsWithIcon}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#54656f] mb-1">
-                  Nomor HP / WhatsApp (Opsional)
+                <label className="block text-xs font-bold text-[#111b21] mb-1.5">
+                  Nomor HP / WhatsApp <span className="text-[#8696a0] font-medium">(opsional)</span>
                 </label>
                 <div className="relative">
-                  <Phone className="w-3.5 h-3.5 text-[#8696a0] absolute left-3 top-2.5" />
+                  <Phone className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
                   <input
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="Contoh: 081234567890"
-                    className="w-full pl-8 pr-3 py-2 text-xs bg-[#f0f2f5] border border-[#e9edef] rounded-xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] text-[#111b21]"
+                    className={fieldClsWithIcon}
                   />
                 </div>
               </div>
             </div>
           )}
 
-          {/* Action Buttons (Pill Buttons per DESIGN.md) */}
-          <div className="pt-3 flex gap-2.5">
+          {/* Action Buttons */}
+          <div className="pt-2 flex gap-2.5">
             <button
               type="button"
               onClick={onClose}
@@ -338,3 +343,17 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
   );
 };
 
+const fieldClsWithIcon =
+  'w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl focus:bg-white focus:border-2 focus:border-[#128c7e] outline-none font-medium text-[#111b21] placeholder-[#8696a0] transition-all';
+
+const fieldClsPlain =
+  'w-full px-3.5 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl focus:bg-white focus:border-2 focus:border-[#128c7e] outline-none font-medium text-[#111b21] placeholder-[#8696a0] transition-all';
+
+function GroupLabel({ text }: { text: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[11px] font-black uppercase tracking-wider text-[#075e54]">{text}</span>
+      <div className="flex-1 h-px bg-[#e9edef]" />
+    </div>
+  );
+}

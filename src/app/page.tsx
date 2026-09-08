@@ -159,7 +159,7 @@ export default function PosyanduApp() {
   // 0. Still validating session against server — show splash to avoid flash of login page
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f0f7ff]">
+      <div className="min-h-screen flex items-center justify-center bg-[#f0f2f5]">
         <div className="text-center space-y-2">
           <RefreshCw className="w-7 h-7 animate-spin text-[#075e54] mx-auto" />
           <p className="text-xs font-bold text-[#54656f]">Memuat aplikasi...</p>
@@ -174,12 +174,13 @@ export default function PosyanduApp() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f0f7ff] text-[#1e293b]">
+    <div className="min-h-screen flex flex-col bg-[#f0f2f5] text-[#111b21]">
       {/* 1. STICKY HEADER */}
       <Header
         onOpenScanQR={() => setIsQRScanOpen(true)}
         onOpenExport={() => setIsExportOpen(true)}
         onOpenLogin={() => setIsLoginOpen(true)}
+        showTools={user.role === 'POSYANDU' || activeViewMode === 'posyandu_table'}
         onBackToDashboard={
           activeViewMode === 'posyandu_table' && (user.role === 'PUSKESMAS' || user.role === 'DINKES')
             ? () => {
@@ -211,14 +212,14 @@ export default function PosyanduApp() {
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setSelectedPatient(null)}
-                className="flex items-center gap-1.5 text-xs font-bold text-[#0f172a] hover:text-[#0284c7] bg-white hover:bg-[#f0f7ff] px-4 py-2 rounded-full border border-[#e2e8f0] shadow-xs transition-all touch-press"
+                className="flex items-center gap-1.5 text-xs font-bold text-[#075e54] bg-white hover:bg-[#e7fceb] px-4 py-2 rounded-full border border-[#e9edef] shadow-xs transition-all touch-press"
               >
-                <ArrowLeft className="w-3.5 h-3.5 text-[#0284c7]" />
+                <ArrowLeft className="w-3.5 h-3.5 text-[#128c7e]" />
                 <span>Daftar Pasien ({patients.length})</span>
               </button>
 
-              <div className="text-[11px] text-[#64748b] font-medium">
-                Sesi: <span className="font-bold text-[#0f172a]">{user.posyanduName || 'Posyandu'}</span>
+              <div className="text-[11px] text-[#54656f] font-medium">
+                Sesi: <span className="font-bold text-[#075e54]">{user.posyanduName || 'Posyandu'}</span>
               </div>
             </div>
 
@@ -234,11 +235,11 @@ export default function PosyanduApp() {
           /* VIEW 4: PATIENT LIST & QUEUE FOR POSYANDU */
           <div className="space-y-3.5 animate-in fade-in duration-150 pb-20">
             {isReadOnly && (
-              <div className="bg-[#0f172a] text-white p-3.5 rounded-2xl border border-[#cbd5e1] flex items-center gap-3 shadow-xs">
+              <div className="bg-[#075e54] text-white p-3.5 rounded-2xl border border-[#e9edef] flex items-center gap-3 shadow-xs">
                 <ShieldAlert className="w-5 h-5 text-[#fbbf24] shrink-0" />
                 <div className="text-xs">
                   <span className="font-extrabold text-[#fbbf24] block">Mode Lihat Data Ringkasan (Read-Only)</span>
-                  <span className="text-[#cbd5e1]">
+                  <span className="text-[#d1fae5]">
                     Akun <strong>{user?.role}</strong> hanya memiliki akses tinjauan. Hak tambah, edit, dan hapus pasien dikhususkan untuk Kader Posyandu.
                   </span>
                 </div>
@@ -306,12 +307,12 @@ export default function PosyanduApp() {
             {/* Category Filter Chips */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs font-medium">
               {[
-                { id: 'ALL', label: 'Semua Usia', icon: LayoutGrid, activeColor: 'bg-[#075e54] text-white border-[#075e54]', iconColor: 'text-[#075e54]' },
-                { id: 'BALITA', label: 'Balita (<5th)', icon: Baby, activeColor: 'bg-sky-600 text-white border-sky-600', iconColor: 'text-sky-600' },
-                { id: 'ANAK', label: 'Anak (5-9th)', icon: Smile, activeColor: 'bg-emerald-600 text-white border-emerald-600', iconColor: 'text-emerald-600' },
-                { id: 'REMAJA', label: 'Remaja (10-17th)', icon: User, activeColor: 'bg-indigo-600 text-white border-indigo-600', iconColor: 'text-indigo-600' },
-                { id: 'DEWASA_LANSIA', label: 'Dewasa/Lansia', icon: Users, activeColor: 'bg-teal-600 text-white border-teal-600', iconColor: 'text-teal-600' },
-                { id: 'BUMIL', label: 'Ibu Hamil', icon: Heart, activeColor: 'bg-rose-600 text-white border-rose-600', iconColor: 'text-rose-600' },
+                { id: 'ALL', label: 'Semua Usia', icon: LayoutGrid },
+                { id: 'BALITA', label: 'Balita (<5th)', icon: Baby },
+                { id: 'ANAK', label: 'Anak (5-9th)', icon: Smile },
+                { id: 'REMAJA', label: 'Remaja (10-17th)', icon: User },
+                { id: 'DEWASA_LANSIA', label: 'Dewasa/Lansia', icon: Users },
+                { id: 'BUMIL', label: 'Ibu Hamil', icon: Heart },
               ].map((cat) => {
                 const IconComponent = cat.icon;
                 const isActive = selectedCategory === cat.id;
@@ -321,11 +322,11 @@ export default function PosyanduApp() {
                     onClick={() => setSelectedCategory(cat.id)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-1.5 ${
                       isActive
-                        ? `${cat.activeColor} shadow-xs scale-102`
+                        ? 'bg-[#075e54] text-white border-[#075e54] shadow-xs scale-102'
                         : 'bg-white text-[#111b21] border-[#e9edef] hover:bg-[#f0f2f5]'
                     }`}
                   >
-                    <IconComponent className={`w-3.5 h-3.5 ${isActive ? 'text-white' : cat.iconColor}`} />
+                    <IconComponent className={`w-3.5 h-3.5 ${isActive ? 'text-[#25d366]' : 'text-[#8696a0]'}`} />
                     <span>{cat.label}</span>
                   </button>
                 );

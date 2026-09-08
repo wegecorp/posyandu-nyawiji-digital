@@ -51,13 +51,13 @@ export const LoginModal: React.FC<AccountModalProps> = ({ isOpen, onClose, onCha
   const getRoleBadge = () => {
     switch (user.role) {
       case 'DINKES':
-        return { label: 'Super Admin Dinkes', color: 'bg-[#8b5cf6]/10 text-[#8b5cf6] border-[#8b5cf6]/30' };
+        return { label: 'Super Admin Dinkes', color: 'bg-[#e7fceb] text-[#075e54] border-[#25d366]/40' };
       case 'PUSKESMAS':
-        return { label: 'Admin Puskesmas', color: 'bg-[#0284c7]/10 text-[#0284c7] border-[#0284c7]/30' };
+        return { label: 'Admin Puskesmas', color: 'bg-[#e7fceb] text-[#075e54] border-[#25d366]/40' };
       case 'POSYANDU':
-        return { label: 'Kader Posyandu', color: 'bg-[#10b981]/10 text-[#10b981] border-[#10b981]/30' };
+        return { label: 'Kader Posyandu', color: 'bg-[#e7fceb] text-[#075e54] border-[#25d366]/40' };
       default:
-        return { label: 'Pengguna', color: 'bg-[#f0f7ff] text-[#0f172a] border-[#cbd5e1]' };
+        return { label: 'Pengguna', color: 'bg-[#f0f2f5] text-[#111b21] border-[#e9edef]' };
     }
   };
 

@@ -88,9 +88,6 @@ export const PatientCard: React.FC<PatientCardProps> = ({
           </div>
 
           <div className="flex items-center gap-2 text-xs text-[#54656f] mt-0.5 flex-wrap">
-            <span className="font-mono text-[11px] text-[#111b21] font-semibold bg-[#f0f2f5] px-1.5 py-0.5 rounded border border-[#e9edef]">
-              {patient.regNumber}
-            </span>
             <span className="text-xs font-normal">• {patient.ageDisplay}</span>
           </div>
 

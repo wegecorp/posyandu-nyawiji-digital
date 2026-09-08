@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 
+export type FieldValue = string | number | null | undefined;
+
 export interface UnsyncedItem {
   id: string;
   patientId: string;
   posyanduId: string;
-  payload: Record<string, any>;
+  payload: Record<string, FieldValue>;
   timestamp: number;
 }
 
@@ -56,30 +58,10 @@ export type SaveStatus = 'idle' | 'saving' | 'saved' | 'offline_queued' | 'error
 export function useAutoSave(patientId: string, posyanduId: string, recordedBy?: string) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
-  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [isOnline, setIsOnline] = useState<boolean>(() =>
+    typeof navigator === 'undefined' ? true : navigator.onLine
+  );
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    setIsOnline(navigator.onLine);
-
-    const handleOnline = () => {
-      setIsOnline(true);
-      // Flush queue when back online
-      flushSyncQueue();
-    };
-
-    const handleOffline = () => {
-      setIsOnline(false);
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
 
   const flushSyncQueue = async () => {
     const queue = getSyncQueue();
@@ -104,8 +86,28 @@ export function useAutoSave(patientId: string, posyanduId: string, recordedBy?: 
     }
   };
 
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Flush queue when back online
+      void flushSyncQueue();
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const triggerAutoSave = useCallback(
-    (fieldUpdates: Record<string, any>, delayMs: number = 600) => {
+    (fieldUpdates: Record<string, FieldValue>, delayMs: number = 600) => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }

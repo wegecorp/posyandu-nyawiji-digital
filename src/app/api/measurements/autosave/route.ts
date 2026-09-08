@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 import { calculateAge } from '@/lib/utils';
 import { getAuthSession } from '@/lib/api-auth';
 
@@ -72,7 +73,7 @@ export async function POST(req: Request) {
     const age = calculateAge(patient.birthDate);
 
     // Build update object only for provided fields
-    const fieldData: any = {};
+    const fieldData: Record<string, string | number | null> = {};
     if (weight !== undefined) fieldData.weight = weight === '' || weight === null ? null : parseFloat(weight);
     if (height !== undefined) fieldData.height = height === '' || height === null ? null : parseFloat(height);
     if (headCircumference !== undefined)
@@ -105,18 +106,18 @@ export async function POST(req: Request) {
       savedRecord = await prisma.measurement.update({
         where: { id: existingMeasurement.id },
         data: {
-          ...fieldData,
+          ...(fieldData as unknown as Prisma.MeasurementUncheckedUpdateInput),
           ageInMonths: age.totalMonths,
         },
       });
     } else {
       savedRecord = await prisma.measurement.create({
         data: {
+          ...(fieldData as unknown as Prisma.MeasurementUncheckedCreateInput),
           patientId,
           posyanduId: session.posyanduId!,
           sessionDate: new Date(),
           ageInMonths: age.totalMonths,
-          ...fieldData,
         },
       });
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { PatientData } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
 import { X, Edit3, Calendar, User, Home, Phone, Heart, Check, AlertTriangle, Lock } from 'lucide-react';
@@ -20,34 +20,17 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
   onSuccess,
 }) => {
   const { user } = useAuth();
-  const [name, setName] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [gender, setGender] = useState<'L' | 'P'>('L');
-  const [address, setAddress] = useState('');
-  const [guardianName, setGuardianName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [isPregnant, setIsPregnant] = useState(false);
+  // Nilai awal diambil dari `patient` saat komponen di-mount (parent memakai key utk remount per pasien).
+  const fmtDate = (d?: string) => (d ? new Date(d).toISOString().slice(0, 10) : '');
+  const [name, setName] = useState(patient?.name || '');
+  const [birthDate, setBirthDate] = useState(fmtDate(patient?.birthDate));
+  const [gender, setGender] = useState<'L' | 'P'>(patient?.gender === 'P' ? 'P' : 'L');
+  const [address, setAddress] = useState(patient?.address || '');
+  const [guardianName, setGuardianName] = useState(patient?.guardianName || '');
+  const [phone, setPhone] = useState(patient?.phone || '');
+  const [isPregnant, setIsPregnant] = useState(Boolean(patient?.isPregnant));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-
-  useEffect(() => {
-    if (patient) {
-      setName(patient.name || '');
-      // Format birthDate to YYYY-MM-DD for date input
-      if (patient.birthDate) {
-        const formattedDate = new Date(patient.birthDate).toISOString().slice(0, 10);
-        setBirthDate(formattedDate);
-      } else {
-        setBirthDate('');
-      }
-      setGender(patient.gender === 'P' ? 'P' : 'L');
-      setAddress(patient.address || '');
-      setGuardianName(patient.guardianName || '');
-      setPhone(patient.phone || '');
-      setIsPregnant(Boolean(patient.isPregnant));
-      setErrorMsg('');
-    }
-  }, [patient]);
 
   if (!isOpen || !patient) return null;
 
@@ -103,8 +86,8 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
 
       onSuccess(data.data);
       onClose();
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Terjadi kesalahan saat menyimpan perubahan');
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Terjadi kesalahan saat menyimpan perubahan');
     } finally {
       setIsSubmitting(false);
     }

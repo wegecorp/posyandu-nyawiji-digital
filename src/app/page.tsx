@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { PatientData } from '@/lib/types';
 import { Header } from '@/components/Header';
@@ -14,18 +14,15 @@ import { PuskesmasDashboard } from '@/components/PuskesmasDashboard';
 import { DinkesDashboard } from '@/components/DinkesDashboard';
 import { AuthPage } from '@/components/AuthPage';
 import { EditPatientModal } from '@/components/EditPatientModal';
-import { DeletePatientConfirmModal } from '@/components/DeletePatientConfirmModal';
 import { ChangePasswordModal } from '@/components/ChangePasswordModal';
 import {
   Search,
   UserPlus,
   Users,
-  Filter,
   CheckCircle2,
   CircleDashed,
   ArrowLeft,
   QrCode,
-  Sparkles,
   RefreshCw,
   Baby,
   Smile,
@@ -58,12 +55,11 @@ export default function PosyanduApp() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isChangePassOpen, setIsChangePassOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<PatientData | null>(null);
-  const [deletingPatient, setDeletingPatient] = useState<PatientData | null>(null);
 
   const isReadOnly = user?.role === 'PUSKESMAS' || user?.role === 'DINKES';
 
-  // Fetch patients for active Posyandu
-  const fetchPatients = useCallback(async () => {
+  // Fetch patients for active Posyandu (dipanggil dari event handler/refresh)
+  const fetchPatients = async () => {
     if (!user?.posyanduId && user?.role === 'POSYANDU') return;
     setIsLoading(true);
     try {
@@ -83,18 +79,31 @@ export default function PosyanduApp() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Auto-fetch saat role/lokasi/query pencarian berubah
+  useEffect(() => {
+    if (!user?.posyanduId && user?.role === 'POSYANDU') return;
+    let active = true;
+    const posId = user?.posyanduId || '';
+    fetch(`/api/patients?posyanduId=${posId}&q=${encodeURIComponent(searchQuery)}`)
+      .then((r) => r.json())
+      .then((result) => {
+        if (!active || !result.success || !Array.isArray(result.data)) return;
+        setPatients(result.data);
+        setSelectedPatient((prev) => {
+          if (!prev) return null;
+          return result.data.find((p: PatientData) => p.id === prev.id) || prev;
+        });
+      })
+      .catch((e) => console.error('Error fetching patients:', e))
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [user?.posyanduId, user?.role, searchQuery]);
-
-  useEffect(() => {
-    fetchPatients();
-  }, [fetchPatients]);
-
-  // Reset login modal state whenever user changes or logs out
-  useEffect(() => {
-    if (!user) {
-      setIsLoginOpen(false);
-    }
-  }, [user]);
 
   // Filtered patients list
   const filteredPatients = useMemo(() => {
@@ -123,14 +132,6 @@ export default function PosyanduApp() {
     setPatients((prev) => prev.map((p) => (p.id === updatedPatient.id ? updatedPatient : p)));
     if (selectedPatient?.id === updatedPatient.id) {
       setSelectedPatient(updatedPatient);
-    }
-  };
-
-  // Handle Delete Patient Success
-  const handleDeleteSuccess = (deletedPatientId: string) => {
-    setPatients((prev) => prev.filter((p) => p.id !== deletedPatientId));
-    if (selectedPatient?.id === deletedPatientId) {
-      setSelectedPatient(null);
     }
   };
 
@@ -176,11 +177,9 @@ export default function PosyanduApp() {
     <div className="min-h-screen flex flex-col bg-[#f0f7ff] text-[#1e293b]">
       {/* 1. STICKY HEADER */}
       <Header
-        onOpenRegister={() => setIsRegisterOpen(true)}
         onOpenScanQR={() => setIsQRScanOpen(true)}
         onOpenExport={() => setIsExportOpen(true)}
         onOpenLogin={() => setIsLoginOpen(true)}
-        onRefresh={fetchPatients}
         onBackToDashboard={
           activeViewMode === 'posyandu_table' && (user.role === 'PUSKESMAS' || user.role === 'DINKES')
             ? () => {
@@ -375,7 +374,6 @@ export default function PosyanduApp() {
                       showPatientQR(p);
                     }}
                     onEdit={isReadOnly ? undefined : (p) => setEditingPatient(p)}
-                    onDelete={isReadOnly ? undefined : (p) => setDeletingPatient(p)}
                   />
                 ))}
               </div>
@@ -446,18 +444,11 @@ export default function PosyanduApp() {
 
       {/* 7. Edit Patient Modal */}
       <EditPatientModal
+        key={editingPatient?.id || 'edit-closed'}
         isOpen={Boolean(editingPatient)}
         patient={editingPatient}
         onClose={() => setEditingPatient(null)}
         onSuccess={handleEditSuccess}
-      />
-
-      {/* 8. Delete Patient Confirmation Modal */}
-      <DeletePatientConfirmModal
-        isOpen={Boolean(deletingPatient)}
-        patient={deletingPatient}
-        onClose={() => setDeletingPatient(null)}
-        onSuccess={handleDeleteSuccess}
       />
     </div>
   );

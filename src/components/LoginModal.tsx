@@ -3,7 +3,6 @@
 import React, { useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import {
-  User,
   ShieldCheck,
   X,
   LogOut,

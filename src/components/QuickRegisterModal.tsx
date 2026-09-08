@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { PatientData } from '@/lib/types';
-import { X, UserPlus, Calendar, User, Home, Phone, Heart, Sparkles, Check, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react';
+import { X, UserPlus, Calendar, User, Home, Phone, Heart, Check, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react';
 import { calculateAge, getPatientCategory, getCategoryBadge } from '@/lib/utils';
 
 interface QuickRegisterModalProps {
@@ -97,8 +97,8 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
 
       onSuccess(data.data);
       onClose();
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Terjadi kesalahan saat menyimpan');
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Terjadi kesalahan saat menyimpan');
     } finally {
       setIsSubmitting(false);
     }

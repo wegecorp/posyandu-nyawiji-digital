@@ -3,45 +3,35 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import {
-  Activity,
   QrCode,
-  UserPlus,
   Wifi,
   WifiOff,
-  Building2,
-  Building,
   FileSpreadsheet,
-  RefreshCw,
-  LogOut,
   ChevronDown,
-  Lock,
   LayoutDashboard,
 } from 'lucide-react';
 import { getSyncQueue } from '@/lib/offline-sync';
 
 interface HeaderProps {
-  onOpenRegister: () => void;
   onOpenScanQR: () => void;
   onOpenExport: () => void;
   onOpenLogin: () => void;
-  onRefresh: () => void;
   onBackToDashboard?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  onOpenRegister,
   onOpenScanQR,
   onOpenExport,
   onOpenLogin,
-  onRefresh,
   onBackToDashboard,
 }) => {
-  const { user, logout } = useAuth();
-  const [isOnline, setIsOnline] = useState(true);
+  const { user } = useAuth();
+  const [isOnline, setIsOnline] = useState<boolean>(() =>
+    typeof navigator === 'undefined' ? true : navigator.onLine
+  );
   const [unsyncedCount, setUnsyncedCount] = useState(0);
 
   useEffect(() => {
-    setIsOnline(navigator.onLine);
     const updateStatus = () => {
       setIsOnline(navigator.onLine);
       setUnsyncedCount(getSyncQueue().length);

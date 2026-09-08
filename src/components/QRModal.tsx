@@ -4,8 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { PatientData } from '@/lib/types';
 import QRCode from 'qrcode';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { X, QrCode, Camera, Download, Check, Sparkles } from 'lucide-react';
-import { getCategoryBadge } from '@/lib/utils';
+import { X, QrCode, Camera } from 'lucide-react';
 
 interface QRModalProps {
   mode: 'view' | 'scan';
@@ -66,7 +65,7 @@ export const QRModal: React.FC<QRModalProps> = ({
           scanner.clear();
           onClose();
         },
-        (error) => {
+        () => {
           // scanning frame errors can be ignored
         }
       );
@@ -118,6 +117,8 @@ export const QRModal: React.FC<QRModalProps> = ({
               {/* QR Image */}
               <div className="mt-4 flex justify-center">
                 {qrDataUrl ? (
+                  // QR dihasilkan dari data:image oleh pustaka qrcode — bukan <Image /> biasa.
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={qrDataUrl}
                     alt="QR Code Pasien"

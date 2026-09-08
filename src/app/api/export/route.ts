@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import { calculateAge, getPatientCategory } from '@/lib/utils';
 import { getAuthSession } from '@/lib/api-auth';
@@ -15,10 +16,10 @@ export async function GET(req: Request) {
     const requestedPosyanduId = searchParams.get('posyanduId');
     const requestedHealthCenterId = searchParams.get('healthCenterId');
 
-    const whereClause: any = {};
+    const whereClause: Prisma.MeasurementWhereInput = {};
 
     if (session.role === 'POSYANDU') {
-      whereClause.posyanduId = session.posyanduId;
+      if (session.posyanduId) whereClause.posyanduId = session.posyanduId;
     } else if (session.role === 'PUSKESMAS') {
       if (requestedPosyanduId) {
         const posyandu = await prisma.posyandu.findUnique({
@@ -28,7 +29,7 @@ export async function GET(req: Request) {
           return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 });
         }
         whereClause.posyanduId = requestedPosyanduId;
-      } else {
+      } else if (session.healthCenterId) {
         whereClause.posyandu = { healthCenterId: session.healthCenterId };
       }
     } else if (session.role === 'DINKES') {

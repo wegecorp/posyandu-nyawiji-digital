@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 import { requireRole } from '@/lib/api-auth';
 import { hashPassword } from '@/lib/password';
 import { generatePosyanduCode, buildPosyanduUsername, getDefaultPassword } from '@/lib/accounts';
@@ -12,10 +13,10 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const healthCenterId = searchParams.get('healthCenterId');
 
-    const whereClause: any = {};
+    const whereClause: Prisma.HealthCenterWhereInput = {};
 
     if (session.role === 'PUSKESMAS') {
-      whereClause.id = session.healthCenterId;
+      whereClause.id = session.healthCenterId ?? '';
     } else if (session.role === 'POSYANDU') {
       if (session.posyanduId) {
         whereClause.posyandus = { some: { id: session.posyanduId } };

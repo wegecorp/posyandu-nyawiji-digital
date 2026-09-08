@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { X, FileSpreadsheet, Download, CheckCircle2 } from 'lucide-react';
+import { X, FileSpreadsheet, Download } from 'lucide-react';
 
 interface RekapExportModalProps {
   isOpen: boolean;

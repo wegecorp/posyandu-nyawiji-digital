@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 import { requireRole } from '@/lib/api-auth';
 
 // PATCH /api/posyandus/[posyanduId]
@@ -28,7 +29,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Bukan posyandu binaan Anda.' }, { status: 403 });
     }
 
-    const data: any = {};
+    const data: Prisma.PosyanduUncheckedUpdateInput = {};
     if (name !== undefined) {
       if (typeof name !== 'string' || !name.trim()) {
         return NextResponse.json({ error: 'Nama posyandu tidak boleh kosong' }, { status: 400 });

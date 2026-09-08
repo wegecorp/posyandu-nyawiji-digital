@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(null);
           localStorage.removeItem(STORAGE_KEY);
         }
-      } catch (e) {
+      } catch {
         // Gagal jaringan: pakai cache bila ada, tanpa validasi server.
         if (!cancelled) {
           setUser(cached || null);

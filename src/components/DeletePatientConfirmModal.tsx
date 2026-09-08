@@ -43,8 +43,8 @@ export const DeletePatientConfirmModal: React.FC<DeletePatientConfirmModalProps>
 
       onSuccess(patient.id);
       onClose();
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Terjadi kesalahan saat menghapus data pasien');
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Terjadi kesalahan saat menghapus data pasien');
     } finally {
       setIsDeleting(false);
     }

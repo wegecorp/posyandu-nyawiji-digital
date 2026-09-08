@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PatientData, MeasurementData } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
 import { useAutoSave } from '@/lib/offline-sync';
@@ -12,14 +12,12 @@ import {
   Activity,
   Calendar,
   Clock,
-  ArrowLeft,
   CheckCircle2,
   AlertCircle,
   QrCode,
   FileText,
   User,
   History,
-  ChevronRight,
   RefreshCw,
   TestTube,
 } from 'lucide-react';
@@ -58,66 +56,46 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
 
   const [activeTab, setActiveTab] = useState<'form' | 'history'>('form');
   const [historyList, setHistoryList] = useState<MeasurementData[]>([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   // Autosave Hook
-  const { saveStatus, lastSavedAt, triggerAutoSave } = useAutoSave(
+  const { saveStatus, triggerAutoSave } = useAutoSave(
     patient.id,
     user?.posyanduId || patient.posyanduId,
     user?.name
   );
 
-  // Load today's existing measurement data when patient changes
+  // Muat data pengukuran hari ini & riwayat saat pasien aktif.
+  // (Reset field tidak perlu manual: komponen di-remount tiap ganti pasien.)
   useEffect(() => {
-    // Reset state first
-    setWeight('');
-    setHeight('');
-    setHeadCircumference('');
-    setArmCircumference('');
-    setSystolic('');
-    setDiastolic('');
-    setGestationalAge('');
-    setBloodSugar('');
-    setCholesterol('');
-    setUricAcid('');
-    setHemoglobin('');
-    setNotes('');
-
-    // Fetch fresh patient data + today measurement + history
-    const loadData = async () => {
-      try {
-        const res = await fetch(`/api/patients/${patient.id}`);
-        const result = await res.json();
-        if (result.success && result.data) {
-          const p = result.data;
-          if (p.todayMeasurement) {
-            const tm = p.todayMeasurement;
-            if (tm.weight !== null && tm.weight !== undefined) setWeight(String(tm.weight));
-            if (tm.height !== null && tm.height !== undefined) setHeight(String(tm.height));
-            if (tm.headCircumference !== null && tm.headCircumference !== undefined)
-              setHeadCircumference(String(tm.headCircumference));
-            if (tm.armCircumference !== null && tm.armCircumference !== undefined)
-              setArmCircumference(String(tm.armCircumference));
-            if (tm.systolic !== null && tm.systolic !== undefined) setSystolic(String(tm.systolic));
-            if (tm.diastolic !== null && tm.diastolic !== undefined) setDiastolic(String(tm.diastolic));
-            if (tm.gestationalAge !== null && tm.gestationalAge !== undefined)
-              setGestationalAge(String(tm.gestationalAge));
-            if (tm.bloodSugar !== null && tm.bloodSugar !== undefined) setBloodSugar(String(tm.bloodSugar));
-            if (tm.cholesterol !== null && tm.cholesterol !== undefined) setCholesterol(String(tm.cholesterol));
-            if (tm.uricAcid !== null && tm.uricAcid !== undefined) setUricAcid(String(tm.uricAcid));
-            if (tm.hemoglobin !== null && tm.hemoglobin !== undefined) setHemoglobin(String(tm.hemoglobin));
-            if (tm.notes) setNotes(tm.notes);
-          }
-          if (p.measurements) {
-            setHistoryList(p.measurements);
-          }
+    let active = true;
+    fetch(`/api/patients/${patient.id}`)
+      .then((res) => res.json())
+      .then((result) => {
+        if (!active || !result.success || !result.data) return;
+        const p = result.data;
+        const tm = p.todayMeasurement;
+        if (tm) {
+          if (tm.weight != null) setWeight(String(tm.weight));
+          if (tm.height != null) setHeight(String(tm.height));
+          if (tm.headCircumference != null) setHeadCircumference(String(tm.headCircumference));
+          if (tm.armCircumference != null) setArmCircumference(String(tm.armCircumference));
+          if (tm.systolic != null) setSystolic(String(tm.systolic));
+          if (tm.diastolic != null) setDiastolic(String(tm.diastolic));
+          if (tm.gestationalAge != null) setGestationalAge(String(tm.gestationalAge));
+          if (tm.bloodSugar != null) setBloodSugar(String(tm.bloodSugar));
+          if (tm.cholesterol != null) setCholesterol(String(tm.cholesterol));
+          if (tm.uricAcid != null) setUricAcid(String(tm.uricAcid));
+          if (tm.hemoglobin != null) setHemoglobin(String(tm.hemoglobin));
+          if (tm.notes) setNotes(tm.notes);
         }
-      } catch (e) {
-        console.error('Error loading patient details:', e);
-      }
+        if (p.measurements) {
+          setHistoryList(p.measurements);
+        }
+      })
+      .catch((e) => console.error('Error loading patient details:', e));
+    return () => {
+      active = false;
     };
-
-    loadData();
   }, [patient.id]);
 
   const isReadOnly = user?.role === 'PUSKESMAS' || user?.role === 'DINKES';

@@ -70,8 +70,8 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
         setSuccessMsg('');
         onClose();
       }, 1800);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Terjadi kesalahan');
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Terjadi kesalahan saat memperbarui password');
     } finally {
       setIsSubmitting(false);
     }

@@ -9,10 +9,7 @@ import {
   CircleDashed,
   QrCode,
   User,
-  MoreVertical,
   Edit3,
-  Trash2,
-  ClipboardList,
 } from 'lucide-react';
 
 interface PatientCardProps {
@@ -21,7 +18,6 @@ interface PatientCardProps {
   onSelect: (patient: PatientData) => void;
   onShowQR: (e: React.MouseEvent, patient: PatientData) => void;
   onEdit?: (patient: PatientData) => void;
-  onDelete?: (patient: PatientData) => void;
 }
 
 export const PatientCard: React.FC<PatientCardProps> = ({
@@ -30,7 +26,6 @@ export const PatientCard: React.FC<PatientCardProps> = ({
   onSelect,
   onShowQR,
   onEdit,
-  onDelete,
 }) => {
   const category = patient.category || 'BALITA';
   const badge = getCategoryBadge(category);
@@ -54,27 +49,10 @@ export const PatientCard: React.FC<PatientCardProps> = ({
     };
   }, [isMenuOpen]);
 
-  const handleInputAndHistory = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsMenuOpen(false);
-    onSelect(patient);
-  };
-
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsMenuOpen(false);
     if (onEdit) onEdit(patient);
-  };
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsMenuOpen(false);
-    if (onDelete) onDelete(patient);
-  };
-
-  const toggleMenu = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsMenuOpen((prev) => !prev);
   };
 
   return (

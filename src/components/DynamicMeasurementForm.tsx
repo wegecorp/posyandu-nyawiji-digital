@@ -296,16 +296,16 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
       {activeTab === 'form' && (
         <div className="space-y-3.5">
           {/* Card: Basic Measurements (BB & TB for All Categories) */}
-          <div className="bg-white rounded-[24px] p-4.5 border border-[#dee3e9] shadow-xs space-y-4">
-            <h3 className="text-xs font-bold text-[#5d6c7b] uppercase tracking-wider flex items-center gap-2">
-              <Scale className="w-4 h-4 text-[#0064e0]" />
+          <div className="bg-white rounded-2xl p-5 border border-[#e9edef] shadow-sm space-y-4">
+            <h3 className="text-sm font-extrabold text-[#075e54] uppercase tracking-wider flex items-center gap-2">
+              <Scale className="w-5 h-5 text-[#075e54]" />
               <span>Pengukuran Fisik Utama</span>
             </h3>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Berat Badan (BB) */}
-              <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
-                <label className="block text-xs font-bold text-[#0a1317] mb-1">
+              <div className="bg-[#f0f2f5] p-3.5 rounded-2xl border-2 border-[#cbd5e1] focus-within:border-[#075e54] focus-within:bg-white transition-all">
+                <label className="block text-sm font-black text-[#111b21] mb-1">
                   Berat Badan (BB)
                 </label>
                 <div className="flex items-center gap-2">
@@ -316,17 +316,17 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                     value={weight}
                     onChange={(e) => handleFieldChange('weight', e.target.value)}
                     placeholder="0.0"
-                    className="w-full text-xl font-extrabold text-[#0a1317] bg-transparent outline-none"
+                    className="w-full h-12 text-2xl font-black text-[#111b21] bg-transparent outline-none"
                   />
-                  <span className="text-xs font-bold text-[#5d6c7b] bg-white px-2 py-1 rounded-md border border-[#ced0d4]">
+                  <span className="text-sm font-black text-[#075e54] bg-white px-3 py-1.5 rounded-xl border border-[#cbd5e1]">
                     kg
                   </span>
                 </div>
               </div>
 
               {/* Tinggi / Panjang Badan (TB/PB) */}
-              <div className="bg-[#f1f4f7] p-3 rounded-2xl border border-[#ced0d4] focus-within:border-2 focus-within:border-[#1876f2] focus-within:bg-white transition-all">
-                <label className="block text-xs font-bold text-[#0a1317] mb-1">
+              <div className="bg-[#f0f2f5] p-3.5 rounded-2xl border-2 border-[#cbd5e1] focus-within:border-[#075e54] focus-within:bg-white transition-all">
+                <label className="block text-sm font-black text-[#111b21] mb-1">
                   {category === 'BALITA' ? 'Panjang / TB' : 'Tinggi Badan (TB)'}
                 </label>
                 <div className="flex items-center gap-2">
@@ -337,9 +337,9 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                     value={height}
                     onChange={(e) => handleFieldChange('height', e.target.value)}
                     placeholder="0.0"
-                    className="w-full text-xl font-extrabold text-[#0a1317] bg-transparent outline-none"
+                    className="w-full h-12 text-2xl font-black text-[#111b21] bg-transparent outline-none"
                   />
-                  <span className="text-xs font-bold text-[#5d6c7b] bg-white px-2 py-1 rounded-md border border-[#ced0d4]">
+                  <span className="text-sm font-black text-[#075e54] bg-white px-3 py-1.5 rounded-xl border border-[#cbd5e1]">
                     cm
                   </span>
                 </div>
@@ -774,20 +774,15 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
         </div>
       )}
 
-      {/* Floating Bottom Action Bar (Fixed for Mobile, Pill CTA per DESIGN.md) */}
-      <div className="fixed bottom-0 left-0 right-0 p-3.5 bg-white/95 backdrop-blur-md border-t border-[#dee3e9] z-30">
-        <div className="max-w-xl mx-auto flex items-center justify-between gap-3">
-          <div className="text-[11px] text-[#5d6c7b] truncate flex items-center gap-2 font-medium">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#31a24c]"></span>
-            <span className="truncate">Otomatis tersimpan per-kolom</span>
-          </div>
-
+      {/* Floating Bottom Action Bar (Fixed for Mobile - Giant WhatsApp Green Button) */}
+      <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-[#e9edef] z-30 shadow-2xl">
+        <div className="max-w-xl mx-auto">
           <button
             onClick={onBackToList}
-            className="py-3 px-6 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold rounded-full text-xs shadow-md flex items-center gap-2 transition-all touch-press shrink-0"
+            className="w-full h-14 bg-[#25d366] hover:bg-[#128c7e] text-white font-black rounded-2xl text-base shadow-lg flex items-center justify-center gap-2 transition-all touch-press active:scale-98"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Kembali ke Daftar Pasien</span>
+            <CheckCircle2 className="w-6 h-6 text-white" />
+            <span>SIMPAN & KEMBALI KE DAFTAR PASIEN</span>
           </button>
         </div>
       </div>

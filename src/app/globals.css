@@ -1,32 +1,36 @@
 @import "tailwindcss";
 
 :root {
-  --primary: #0284c7;
-  --primary-deep: #0369a1;
-  --primary-soft: #e0f2fe;
+  --primary: #075e54;
+  --primary-deep: #054c44;
+  --primary-soft: #e7fceb;
+  --wa-teal: #075e54;
+  --wa-teal-dark: #054c44;
+  --wa-green: #25d366;
+  --wa-green-dark: #128c7e;
   --on-primary: #ffffff;
-  --ink-button: #0f172a;
+  --ink-button: #075e54;
   --on-ink-button: #ffffff;
-  --fb-blue: #0284c7;
-  --meta-link: #0369a1;
+  --fb-blue: #075e54;
+  --meta-link: #128c7e;
   --oculus-purple: #8b5cf6;
-  --success: #10b981;
-  --success-bg: #34d399;
+  --success: #128c7e;
+  --success-bg: #25d366;
   --attention: #f59e0b;
   --warning: #fbbf24;
   --critical: #ef4444;
   --critical-strong: #dc2626;
   --canvas: #ffffff;
-  --surface-soft: #f0f7ff;
-  --ink-deep: #0f172a;
-  --ink: #1e293b;
-  --charcoal: #334155;
-  --slate: #475569;
-  --steel: #64748b;
-  --stone: #94a3b8;
-  --hairline: #cbd5e1;
-  --hairline-soft: #e2e8f0;
-  --disabled-text: #cbd5e1;
+  --surface-soft: #f0f2f5;
+  --ink-deep: #0b141a;
+  --ink: #111b21;
+  --charcoal: #3b4a54;
+  --slate: #54656f;
+  --steel: #667781;
+  --stone: #8696a0;
+  --hairline: #e9edef;
+  --hairline-soft: #f0f2f5;
+  --disabled-text: #8696a0;
 }
 
 body {

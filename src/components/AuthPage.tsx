@@ -188,32 +188,32 @@ export function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#f0f7ff] text-[#1e293b]">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#f0f2f5] text-[#111b21]">
       {/* Logo / Branding */}
       <div className="text-center mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
-        <div className="w-16 h-16 bg-[#0f172a] text-[#38bdf8] rounded-full flex items-center justify-center mx-auto mb-3 shadow-md">
+        <div className="w-16 h-16 bg-[#075e54] text-[#25d366] rounded-full flex items-center justify-center mx-auto mb-3 shadow-md border-2 border-white">
           <Stethoscope className="w-8 h-8" />
         </div>
-        <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">Posyandu Digital</h1>
-        <p className="text-sm text-[#64748b] font-medium">Kabupaten Gunungkidul — D.I. Yogyakarta</p>
+        <h1 className="text-2xl font-black text-[#075e54] tracking-tight">Posyandu Digital</h1>
+        <p className="text-sm text-[#54656f] font-bold">Kabupaten Gunungkidul — D.I. Yogyakarta</p>
       </div>
 
-      {/* Auth Card (DESIGN.md card style) */}
+      {/* Auth Card */}
       <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-300 delay-100">
-        <div className="bg-white rounded-[28px] shadow-xl border border-[#e2e8f0] overflow-hidden">
+        <div className="bg-white rounded-3xl shadow-xl border border-[#e9edef] overflow-hidden">
 
           {/* ===== LOGIN VIEW ===== */}
           {view === 'login' && (
             <>
-              <div className="bg-[#0f172a] text-white p-5">
+              <div className="bg-[#075e54] text-white p-5">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-white/10 rounded-full">
-                    <Lock className="w-5 h-5 text-[#38bdf8]" />
+                    <Lock className="w-5 h-5 text-[#25d366]" />
                   </div>
                   <div>
                     <h2 className="font-extrabold text-white text-lg leading-tight">Masuk ke Sistem</h2>
-                    <p className="text-xs text-[#cbd5e1] mt-0.5 flex items-center gap-1">
-                      <span>Dinas</span> <ArrowRight className="w-3 h-3 inline text-[#38bdf8]" /> <span>Puskesmas</span> <ArrowRight className="w-3 h-3 inline text-[#38bdf8]" /> <span>Posyandu</span>
+                    <p className="text-xs text-white/80 mt-0.5 flex items-center gap-1 font-medium">
+                      <span>Dinas</span> <ArrowRight className="w-3 h-3 inline text-[#25d366]" /> <span>Puskesmas</span> <ArrowRight className="w-3 h-3 inline text-[#25d366]" /> <span>Posyandu</span>
                     </p>
                   </div>
                 </div>
@@ -228,9 +228,9 @@ export function AuthPage() {
                 )}
 
                 <div>
-                  <label className="block text-xs font-bold text-[#0f172a] mb-1.5">Username</label>
+                  <label className="block text-xs font-bold text-[#111b21] mb-1.5">Username</label>
                   <div className="relative">
-                    <User className="w-4 h-4 text-[#94a3b8] absolute left-3.5 top-3.5" />
+                    <User className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
                     <input
                       type="text"
                       value={username}
@@ -238,15 +238,15 @@ export function AuthPage() {
                       placeholder="Masukkan username akun..."
                       autoComplete="username"
                       required
-                      className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7] font-medium text-[#1e293b] transition-all"
+                      className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#0f172a] mb-1.5">Password</label>
+                  <label className="block text-xs font-bold text-[#111b21] mb-1.5">Password</label>
                   <div className="relative">
-                    <Key className="w-4 h-4 text-[#94a3b8] absolute left-3.5 top-3.5" />
+                    <Key className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={password}
@@ -254,12 +254,12 @@ export function AuthPage() {
                       placeholder="••••••••"
                       autoComplete="current-password"
                       required
-                      className="w-full pl-10 pr-10 py-2.5 text-sm bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7] font-medium text-[#1e293b] transition-all"
+                      className="w-full pl-10 pr-10 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-3 text-[#94a3b8] hover:text-[#0f172a] transition-colors"
+                      className="absolute right-3.5 top-3 text-[#8696a0] hover:text-[#111b21] transition-colors"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -269,7 +269,7 @@ export function AuthPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold rounded-full text-sm shadow-md transition-all flex items-center justify-center gap-2 touch-press disabled:opacity-50"
+                  className="w-full py-3 bg-[#128c7e] hover:bg-[#075e54] text-white font-bold rounded-full text-sm shadow-md transition-all flex items-center justify-center gap-2 touch-press disabled:opacity-50"
                 >
                   <span>{isLoading ? 'Memverifikasi...' : 'Masuk'}</span>
                   <ArrowRight className="w-4 h-4" />
@@ -277,13 +277,13 @@ export function AuthPage() {
               </form>
 
               {/* Signup CTA */}
-              <div className="px-5 pb-5 pt-1 border-t border-[#e2e8f0]">
-                <p className="text-xs text-[#64748b] text-center mb-3 font-medium">Belum punya akun?</p>
+              <div className="px-5 pb-5 pt-1 border-t border-[#e9edef]">
+                <p className="text-xs text-[#54656f] text-center mb-3 font-medium">Belum punya akun?</p>
                 <button
                   onClick={() => { resetAll(); setView('signup_choose'); }}
-                  className="w-full py-3 bg-[#f0f7ff] hover:bg-[#e2e8f0] text-[#0f172a] font-bold rounded-full text-xs transition-all flex items-center justify-center gap-2 touch-press border border-[#cbd5e1]"
+                  className="w-full py-3 bg-[#f0f2f5] hover:bg-[#e9edef] text-[#111b21] font-bold rounded-full text-xs transition-all flex items-center justify-center gap-2 touch-press border border-[#e9edef]"
                 >
-                  <PlusCircle className="w-4 h-4 text-[#0284c7]" />
+                  <PlusCircle className="w-4 h-4 text-[#128c7e]" />
                   <span>Daftarkan Akun Puskesmas / Posyandu</span>
                 </button>
               </div>
@@ -293,85 +293,85 @@ export function AuthPage() {
           {/* ===== SIGNUP CHOOSE VIEW ===== */}
           {view === 'signup_choose' && (
             <>
-              <div className="bg-[#0f172a] text-white p-5">
+              <div className="bg-[#075e54] text-white p-5">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-white/10 rounded-full">
-                    <PlusCircle className="w-5 h-5 text-[#38bdf8]" />
+                    <PlusCircle className="w-5 h-5 text-[#25d366]" />
                   </div>
                   <div>
                     <h2 className="font-extrabold text-white text-lg leading-tight">Pendaftaran Akun</h2>
-                    <p className="text-xs text-[#cbd5e1] mt-0.5">Pilih jenis akun yang ingin didaftarkan</p>
+                    <p className="text-xs text-[#e9edef] mt-0.5">Pilih jenis akun yang ingin didaftarkan</p>
                   </div>
                 </div>
               </div>
 
               <div className="p-5 space-y-3.5">
-                <p className="text-xs text-[#64748b] leading-relaxed font-medium">
+                <p className="text-xs text-[#54656f] leading-relaxed font-medium">
                   Sistem Posyandu Digital menggunakan <strong>akun institusi berjenjang</strong>. Setiap lembaga mendaftar satu akun dengan satu username & password.
                 </p>
 
                 {/* Option: Puskesmas */}
                 <button
                   onClick={() => { resetAll(); setView('signup_puskesmas'); }}
-                  className="w-full p-4 bg-white hover:bg-[#f0f7ff] border-2 border-[#e2e8f0] hover:border-[#0284c7] rounded-2xl text-left transition-all touch-press group shadow-xs"
+                  className="w-full p-4 bg-white hover:bg-[#f0f2f5] border-2 border-[#e9edef] hover:border-[#128c7e] rounded-2xl text-left transition-all touch-press group shadow-xs"
                 >
                   <div className="flex items-center gap-3.5">
-                    <div className="p-3 bg-[#0284c7] text-white rounded-full shadow-xs group-hover:scale-105 transition-transform">
+                    <div className="p-3 bg-[#128c7e] text-white rounded-full shadow-xs group-hover:scale-105 transition-transform">
                       <Building2 className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-black text-[#0f172a] text-sm">Daftar sebagai Puskesmas</h3>
-                      <p className="text-xs text-[#64748b] mt-0.5 font-medium">
+                      <h3 className="font-black text-[#111b21] text-sm">Daftar sebagai Puskesmas</h3>
+                      <p className="text-xs text-[#54656f] mt-0.5 font-medium">
                         Puskesmas membuat akun untuk mengelola Posyandu di wilayah binaan
                       </p>
                     </div>
-                    <ArrowRight className="w-5 h-5 text-[#94a3b8] group-hover:text-[#0284c7] transition-colors shrink-0" />
+                    <ArrowRight className="w-5 h-5 text-[#8696a0] group-hover:text-[#128c7e] transition-colors shrink-0" />
                   </div>
                 </button>
 
                 {/* Option: Posyandu */}
                 <button
                   onClick={() => { resetAll(); setView('signup_posyandu'); }}
-                  className="w-full p-4 bg-white hover:bg-[#f0f7ff] border-2 border-[#e2e8f0] hover:border-[#10b981] rounded-2xl text-left transition-all touch-press group shadow-xs"
+                  className="w-full p-4 bg-white hover:bg-[#f0f2f5] border-2 border-[#e9edef] hover:border-[#075e54] rounded-2xl text-left transition-all touch-press group shadow-xs"
                 >
                   <div className="flex items-center gap-3.5">
-                    <div className="p-3 bg-[#10b981] text-white rounded-full shadow-xs group-hover:scale-105 transition-transform">
+                    <div className="p-3 bg-[#075e54] text-white rounded-full shadow-xs group-hover:scale-105 transition-transform">
                       <Building className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-black text-[#0f172a] text-sm">Daftar sebagai Posyandu</h3>
-                      <p className="text-xs text-[#64748b] mt-0.5 font-medium">
+                      <h3 className="font-black text-[#111b21] text-sm">Daftar sebagai Posyandu</h3>
+                      <p className="text-xs text-[#54656f] mt-0.5 font-medium">
                         Posyandu mendaftar di bawah Puskesmas pembina untuk catat pengukuran
                       </p>
                     </div>
-                    <ArrowRight className="w-5 h-5 text-[#94a3b8] group-hover:text-[#10b981] transition-colors shrink-0" />
+                    <ArrowRight className="w-5 h-5 text-[#8696a0] group-hover:text-[#075e54] transition-colors shrink-0" />
                   </div>
                 </button>
 
-                {/* Hierarchy Explanation (Lucide Icons replacing text emojis) */}
-                <div className="bg-[#f0f7ff] p-3.5 rounded-2xl border border-[#e2e8f0] text-xs text-[#64748b] space-y-2 font-medium">
-                  <span className="font-bold text-[#0f172a]">Alur Jenjang Akun:</span>
+                {/* Hierarchy Explanation */}
+                <div className="bg-[#f0f2f5] p-3.5 rounded-2xl border border-[#e9edef] text-xs text-[#54656f] space-y-2 font-medium">
+                  <span className="font-bold text-[#111b21]">Alur Jenjang Akun:</span>
                   <div className="flex items-center gap-2 text-[11px] flex-wrap">
                     <span className="bg-[#8b5cf6]/10 text-[#8b5cf6] px-2.5 py-1 rounded-full font-bold border border-[#8b5cf6]/20 flex items-center gap-1">
                       <Landmark className="w-3 h-3" /> Dinas Kesehatan
                     </span>
-                    <ArrowRight className="w-3.5 h-3.5 text-[#94a3b8]" />
-                    <span className="bg-[#0284c7]/10 text-[#0284c7] px-2.5 py-1 rounded-full font-bold border border-[#0284c7]/20 flex items-center gap-1">
+                    <ArrowRight className="w-3.5 h-3.5 text-[#8696a0]" />
+                    <span className="bg-[#128c7e]/10 text-[#128c7e] px-2.5 py-1 rounded-full font-bold border border-[#128c7e]/20 flex items-center gap-1">
                       <Hospital className="w-3 h-3" /> Puskesmas
                     </span>
-                    <ArrowRight className="w-3.5 h-3.5 text-[#94a3b8]" />
-                    <span className="bg-[#10b981]/10 text-[#10b981] px-2.5 py-1 rounded-full font-bold border border-[#10b981]/20 flex items-center gap-1">
+                    <ArrowRight className="w-3.5 h-3.5 text-[#8696a0]" />
+                    <span className="bg-[#075e54]/10 text-[#075e54] px-2.5 py-1 rounded-full font-bold border border-[#075e54]/20 flex items-center gap-1">
                       <Sprout className="w-3 h-3" /> Posyandu
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#64748b]">
+                  <p className="text-[11px] text-[#54656f]">
                     Dinas sudah tersedia. Puskesmas mendaftar sendiri. Posyandu mendaftar di bawah Puskesmas.
                   </p>
                 </div>
 
                 <button
                   onClick={() => { resetAll(); setView('login'); }}
-                  className="w-full py-2.5 text-xs text-[#64748b] font-bold hover:text-[#0f172a] transition-all flex items-center justify-center gap-1"
+                  className="w-full py-2.5 text-xs text-[#54656f] font-bold hover:text-[#111b21] transition-all flex items-center justify-center gap-1"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Kembali ke halaman Login</span>
@@ -383,14 +383,14 @@ export function AuthPage() {
           {/* ===== SIGNUP PUSKESMAS VIEW ===== */}
           {view === 'signup_puskesmas' && (
             <>
-              <div className="bg-[#0f172a] text-white p-5">
+              <div className="bg-[#075e54] text-white p-5">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-white/10 rounded-full">
-                    <Building2 className="w-5 h-5 text-[#38bdf8]" />
+                    <Building2 className="w-5 h-5 text-[#25d366]" />
                   </div>
                   <div>
                     <h2 className="font-extrabold text-white text-lg leading-tight">Daftar Akun Puskesmas</h2>
-                    <p className="text-xs text-[#cbd5e1] mt-0.5">1 akun institusi — 1 username & password</p>
+                    <p className="text-xs text-[#e9edef] mt-0.5">1 akun institusi — 1 username & password</p>
                   </div>
                 </div>
               </div>
@@ -405,44 +405,44 @@ export function AuthPage() {
 
                 {/* Info Institusi */}
                 <div className="space-y-3">
-                  <span className="text-[11px] font-bold text-[#0284c7] uppercase tracking-wider">Data Puskesmas</span>
+                  <span className="text-[11px] font-bold text-[#128c7e] uppercase tracking-wider">Data Puskesmas</span>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0f172a] mb-1">Nama Puskesmas <span className="text-[#ef4444]">*</span></label>
+                    <label className="block text-xs font-bold text-[#111b21] mb-1">Nama Puskesmas <span className="text-[#ef4444]">*</span></label>
                     <input
                       type="text"
                       value={pkmName}
                       onChange={(e) => setPkmName(e.target.value)}
                       placeholder="Contoh: Puskesmas Semanu I"
                       required
-                      className="w-full px-3.5 py-2.5 text-sm bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7] font-medium text-[#1e293b] transition-all"
+                      className="w-full px-3.5 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0f172a] mb-1">Kapanewon / Kecamatan <span className="text-[#ef4444]">*</span></label>
+                    <label className="block text-xs font-bold text-[#111b21] mb-1">Kapanewon / Kecamatan <span className="text-[#ef4444]">*</span></label>
                     <input
                       type="text"
                       value={pkmKapanewon}
                       onChange={(e) => setPkmKapanewon(e.target.value)}
                       placeholder="Contoh: Semanu"
                       required
-                      className="w-full px-3.5 py-2.5 text-sm bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7] font-medium text-[#1e293b] transition-all"
+                      className="w-full px-3.5 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
                     />
                   </div>
                 </div>
 
                 {/* Credentials */}
-                <div className="space-y-3 pt-3 border-t border-[#e2e8f0]">
+                <div className="space-y-3 pt-3 border-t border-[#e9edef]">
                   <div className="flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-[#0284c7]" />
-                    <span className="text-[11px] font-bold text-[#0284c7] uppercase tracking-wider">Kredensial Login</span>
+                    <Lock className="w-3.5 h-3.5 text-[#128c7e]" />
+                    <span className="text-[11px] font-bold text-[#128c7e] uppercase tracking-wider">Kredensial Login</span>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0f172a] mb-1">Username <span className="text-[#ef4444]">*</span></label>
+                    <label className="block text-xs font-bold text-[#111b21] mb-1">Username <span className="text-[#ef4444]">*</span></label>
                     <div className="relative">
-                      <User className="w-4 h-4 text-[#94a3b8] absolute left-3.5 top-3.5" />
+                      <User className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
                       <input
                         type="text"
                         value={pkmUsername}
@@ -450,15 +450,15 @@ export function AuthPage() {
                         placeholder="Contoh: pkm_semanu1"
                         autoComplete="username"
                         required
-                        className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7] font-mono font-medium text-[#1e293b] transition-all"
+                        className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-mono font-medium text-[#111b21] transition-all"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0f172a] mb-1">Password <span className="text-[#ef4444]">*</span></label>
+                    <label className="block text-xs font-bold text-[#111b21] mb-1">Password <span className="text-[#ef4444]">*</span></label>
                     <div className="relative">
-                      <Key className="w-4 h-4 text-[#94a3b8] absolute left-3.5 top-3.5" />
+                      <Key className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
                       <input
                         type={pkmShowPassword ? 'text' : 'password'}
                         value={pkmPassword}
@@ -466,9 +466,9 @@ export function AuthPage() {
                         placeholder="Buat password yang aman"
                         autoComplete="new-password"
                         required
-                        className="w-full pl-10 pr-10 py-2.5 text-sm bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7] font-medium text-[#1e293b] transition-all"
+                        className="w-full pl-10 pr-10 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
                       />
-                      <button type="button" onClick={() => setPkmShowPassword(!pkmShowPassword)} className="absolute right-3.5 top-3 text-[#94a3b8] hover:text-[#0f172a]">
+                      <button type="button" onClick={() => setPkmShowPassword(!pkmShowPassword)} className="absolute right-3.5 top-3 text-[#8696a0] hover:text-[#111b21]">
                         {pkmShowPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
@@ -478,7 +478,7 @@ export function AuthPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold rounded-full text-sm shadow-md transition-all flex items-center justify-center gap-2 touch-press disabled:opacity-50"
+                  className="w-full py-3 bg-[#128c7e] hover:bg-[#075e54] text-white font-bold rounded-full text-sm shadow-md transition-all flex items-center justify-center gap-2 touch-press disabled:opacity-50"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   <span>{isLoading ? 'Mendaftarkan...' : 'Daftarkan Puskesmas & Masuk'}</span>
@@ -487,7 +487,7 @@ export function AuthPage() {
                 <button
                   type="button"
                   onClick={() => { resetAll(); setView('signup_choose'); }}
-                  className="w-full py-2 text-xs text-[#64748b] font-bold hover:text-[#0f172a] transition-all flex items-center justify-center gap-1"
+                  className="w-full py-2 text-xs text-[#54656f] font-bold hover:text-[#111b21] transition-all flex items-center justify-center gap-1"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Kembali pilih jenis akun</span>
@@ -499,14 +499,14 @@ export function AuthPage() {
           {/* ===== SIGNUP POSYANDU VIEW ===== */}
           {view === 'signup_posyandu' && (
             <>
-              <div className="bg-[#0f172a] text-white p-5">
+              <div className="bg-[#075e54] text-white p-5">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-white/10 rounded-full">
-                    <Building className="w-5 h-5 text-[#10b981]" />
+                    <Building className="w-5 h-5 text-[#25d366]" />
                   </div>
                   <div>
                     <h2 className="font-extrabold text-white text-lg leading-tight">Daftar Akun Posyandu</h2>
-                    <p className="text-xs text-[#cbd5e1] mt-0.5">Wajib memilih Puskesmas Pembina</p>
+                    <p className="text-xs text-[#e9edef] mt-0.5">Wajib memilih Puskesmas Pembina</p>
                   </div>
                 </div>
               </div>
@@ -521,11 +521,11 @@ export function AuthPage() {
 
                 {/* Puskesmas Pembina Dropdown */}
                 <div>
-                  <label className="block text-xs font-bold text-[#0f172a] mb-1">
+                  <label className="block text-xs font-bold text-[#111b21] mb-1">
                     Puskesmas Pembina <span className="text-[#ef4444]">*</span>
                   </label>
                   {healthCenterList.length === 0 ? (
-                    <div className="p-3.5 bg-[#f59e0b]/10 border border-[#f59e0b]/40 rounded-2xl text-xs text-[#0f172a] font-bold space-y-2">
+                    <div className="p-3.5 bg-[#f59e0b]/10 border border-[#f59e0b]/40 rounded-2xl text-xs text-[#111b21] font-bold space-y-2">
                       <div className="flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4 text-[#f59e0b] shrink-0" />
                         <span>Belum ada Puskesmas terdaftar. Puskesmas harus mendaftar terlebih dahulu agar Posyandu bisa mendaftar di bawahnya.</span>
@@ -533,7 +533,7 @@ export function AuthPage() {
                       <button
                         type="button"
                         onClick={() => setView('signup_puskesmas')}
-                        className="w-full py-1.5 px-3 bg-[#0284c7] hover:bg-[#0284c7]/90 text-white rounded-xl font-bold transition-all text-xs flex items-center justify-center gap-1.5"
+                        className="w-full py-1.5 px-3 bg-[#128c7e] hover:bg-[#075e54] text-white rounded-xl font-bold transition-all text-xs flex items-center justify-center gap-1.5"
                       >
                         <Building2 className="w-3.5 h-3.5" />
                         <span>Daftarkan Puskesmas Sekarang</span>
@@ -541,12 +541,12 @@ export function AuthPage() {
                     </div>
                   ) : (
                     <div className="relative">
-                      <Building2 className="w-4 h-4 text-[#94a3b8] absolute left-3.5 top-3.5" />
+                      <Building2 className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
                       <select
                         value={posHealthCenterId}
                         onChange={(e) => setPosHealthCenterId(e.target.value)}
                         required
-                        className="w-full pl-10 pr-8 py-2.5 text-sm bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7] font-medium text-[#1e293b] appearance-none transition-all"
+                        className="w-full pl-10 pr-8 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] appearance-none transition-all"
                       >
                         {healthCenterList.map((hc) => (
                           <option key={hc.id} value={hc.id}>
@@ -554,62 +554,62 @@ export function AuthPage() {
                           </option>
                         ))}
                       </select>
-                      <ChevronDown className="w-4 h-4 text-[#94a3b8] absolute right-3.5 top-3.5 pointer-events-none" />
+                      <ChevronDown className="w-4 h-4 text-[#8696a0] absolute right-3.5 top-3.5 pointer-events-none" />
                     </div>
                   )}
                 </div>
 
                 {/* Posyandu Info */}
                 <div className="space-y-3">
-                  <span className="text-[11px] font-bold text-[#10b981] uppercase tracking-wider">Data Posyandu</span>
+                  <span className="text-[11px] font-bold text-[#128c7e] uppercase tracking-wider">Data Posyandu</span>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0f172a] mb-1">Nama Posyandu <span className="text-[#ef4444]">*</span></label>
+                    <label className="block text-xs font-bold text-[#111b21] mb-1">Nama Posyandu <span className="text-[#ef4444]">*</span></label>
                     <input
                       type="text"
                       value={posName}
                       onChange={(e) => setPosName(e.target.value)}
                       placeholder="Contoh: Posyandu Dahlia"
                       required
-                      className="w-full px-3.5 py-2.5 text-sm bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7] font-medium text-[#1e293b] transition-all"
+                      className="w-full px-3.5 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2.5">
                     <div>
-                      <label className="block text-xs font-bold text-[#0f172a] mb-1">Kalurahan</label>
+                      <label className="block text-xs font-bold text-[#111b21] mb-1">Kalurahan</label>
                       <input
                         type="text"
                         value={posKalurahan}
                         onChange={(e) => setPosKalurahan(e.target.value)}
                         placeholder="Wonosari"
-                        className="w-full px-3.5 py-2 text-xs bg-[#f0f7ff] border border-[#cbd5e1] rounded-xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7]"
+                        className="w-full px-3.5 py-2 text-xs bg-[#f0f2f5] border border-[#e9edef] rounded-xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] text-[#111b21]"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-[#0f172a] mb-1">Padukuhan</label>
+                      <label className="block text-xs font-bold text-[#111b21] mb-1">Padukuhan</label>
                       <input
                         type="text"
                         value={posPadukuhan}
                         onChange={(e) => setPosPadukuhan(e.target.value)}
                         placeholder="Purbosari"
-                        className="w-full px-3.5 py-2 text-xs bg-[#f0f7ff] border border-[#cbd5e1] rounded-xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7]"
+                        className="w-full px-3.5 py-2 text-xs bg-[#f0f2f5] border border-[#e9edef] rounded-xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] text-[#111b21]"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Credentials */}
-                <div className="space-y-3 pt-3 border-t border-[#e2e8f0]">
+                <div className="space-y-3 pt-3 border-t border-[#e9edef]">
                   <div className="flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-[#10b981]" />
-                    <span className="text-[11px] font-bold text-[#10b981] uppercase tracking-wider">Kredensial Login Posyandu</span>
+                    <Lock className="w-3.5 h-3.5 text-[#128c7e]" />
+                    <span className="text-[11px] font-bold text-[#128c7e] uppercase tracking-wider">Kredensial Login Posyandu</span>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0f172a] mb-1">Username <span className="text-[#ef4444]">*</span></label>
+                    <label className="block text-xs font-bold text-[#111b21] mb-1">Username <span className="text-[#ef4444]">*</span></label>
                     <div className="relative">
-                      <User className="w-4 h-4 text-[#94a3b8] absolute left-3.5 top-3.5" />
+                      <User className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
                       <input
                         type="text"
                         value={posUsername}
@@ -617,15 +617,15 @@ export function AuthPage() {
                         placeholder="Contoh: pos_dahlia"
                         autoComplete="username"
                         required
-                        className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7] font-mono font-medium text-[#1e293b] transition-all"
+                        className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-mono font-medium text-[#111b21] transition-all"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0f172a] mb-1">Password <span className="text-[#ef4444]">*</span></label>
+                    <label className="block text-xs font-bold text-[#111b21] mb-1">Password <span className="text-[#ef4444]">*</span></label>
                     <div className="relative">
-                      <Key className="w-4 h-4 text-[#94a3b8] absolute left-3.5 top-3.5" />
+                      <Key className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
                       <input
                         type={posShowPassword ? 'text' : 'password'}
                         value={posPassword}
@@ -633,9 +633,9 @@ export function AuthPage() {
                         placeholder="Buat password yang aman"
                         autoComplete="new-password"
                         required
-                        className="w-full pl-10 pr-10 py-2.5 text-sm bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7] font-medium text-[#1e293b] transition-all"
+                        className="w-full pl-10 pr-10 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
                       />
-                      <button type="button" onClick={() => setPosShowPassword(!posShowPassword)} className="absolute right-3.5 top-3 text-[#94a3b8] hover:text-[#0f172a]">
+                      <button type="button" onClick={() => setPosShowPassword(!posShowPassword)} className="absolute right-3.5 top-3 text-[#8696a0] hover:text-[#111b21]">
                         {posShowPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
@@ -645,7 +645,7 @@ export function AuthPage() {
                 <button
                   type="submit"
                   disabled={isLoading || healthCenterList.length === 0}
-                  className="w-full py-3 bg-[#10b981] hover:bg-[#10b981]/90 text-white font-bold rounded-full text-sm shadow-md transition-all flex items-center justify-center gap-2 touch-press disabled:opacity-50"
+                  className="w-full py-3 bg-[#128c7e] hover:bg-[#075e54] text-white font-bold rounded-full text-sm shadow-md transition-all flex items-center justify-center gap-2 touch-press disabled:opacity-50"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   <span>{isLoading ? 'Mendaftarkan...' : 'Daftarkan Posyandu & Masuk'}</span>
@@ -654,7 +654,7 @@ export function AuthPage() {
                 <button
                   type="button"
                   onClick={() => { resetAll(); setView('signup_choose'); }}
-                  className="w-full py-2 text-xs text-[#64748b] font-bold hover:text-[#0f172a] transition-all flex items-center justify-center gap-1"
+                  className="w-full py-2 text-xs text-[#54656f] font-bold hover:text-[#111b21] transition-all flex items-center justify-center gap-1"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Kembali pilih jenis akun</span>
@@ -665,7 +665,7 @@ export function AuthPage() {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-4 text-xs text-[#64748b]">
+        <div className="text-center mt-4 text-xs text-[#54656f]">
           <p>© 2026 Posyandu Digital — Dinas Kesehatan Kab. Gunungkidul</p>
         </div>
       </div>

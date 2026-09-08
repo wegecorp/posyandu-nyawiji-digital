@@ -85,14 +85,14 @@ export const QRModal: React.FC<QRModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="bg-white w-full max-w-sm rounded-[28px] shadow-2xl overflow-hidden border border-[#dee3e9]">
+      <div className="bg-white w-full max-w-sm rounded-[28px] shadow-2xl overflow-hidden border border-[#e9edef]">
         {/* Header */}
-        <div className="bg-[#0f172a] text-white p-4.5 flex items-center justify-between">
+        <div className="bg-[#075e54] text-white p-4.5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             {mode === 'view' ? (
-              <QrCode className="w-5 h-5 text-[#38bdf8]" />
+              <QrCode className="w-5 h-5 text-[#25d366]" />
             ) : (
-              <Camera className="w-5 h-5 text-[#38bdf8]" />
+              <Camera className="w-5 h-5 text-[#25d366]" />
             )}
             <h2 className="font-extrabold text-sm">
               {mode === 'view' ? 'Kartu QR Pasien' : 'Pindai QR Code Pasien'}
@@ -109,9 +109,9 @@ export const QRModal: React.FC<QRModalProps> = ({
         {/* VIEW MODE: QR CARD */}
         {mode === 'view' && patient && (
           <div className="p-6 text-center space-y-4">
-            <div className="border border-[#e2e8f0] rounded-[24px] p-4.5 bg-[#f0f7ff]">
-              <h3 className="font-black text-[#0f172a] text-base">{patient.name}</h3>
-              <p className="font-mono text-xs text-[#0284c7] font-bold mt-0.5">
+            <div className="border border-[#e9edef] rounded-[24px] p-4.5 bg-[#f0f2f5]">
+              <h3 className="font-black text-[#111b21] text-base">{patient.name}</h3>
+              <p className="font-mono text-xs text-[#075e54] font-bold mt-0.5">
                 {patient.regNumber}
               </p>
 
@@ -121,29 +121,29 @@ export const QRModal: React.FC<QRModalProps> = ({
                   <img
                     src={qrDataUrl}
                     alt="QR Code Pasien"
-                    className="w-48 h-48 rounded-2xl shadow-xs border border-[#e2e8f0] bg-white p-2"
+                    className="w-48 h-48 rounded-2xl shadow-xs border border-[#e9edef] bg-white p-2"
                   />
                 ) : (
-                  <div className="w-48 h-48 bg-[#f0f7ff] animate-pulse rounded-2xl flex items-center justify-center text-xs text-[#94a3b8]">
+                  <div className="w-48 h-48 bg-white animate-pulse rounded-2xl flex items-center justify-center text-xs text-[#8696a0]">
                     Membuat QR...
                   </div>
                 )}
               </div>
 
-              <div className="mt-3 flex items-center justify-center gap-2 text-xs text-[#64748b] font-medium">
+              <div className="mt-3 flex items-center justify-center gap-2 text-xs text-[#54656f] font-medium">
                 <span>{patient.ageDisplay}</span>
                 <span>•</span>
                 <span>Posyandu Digital</span>
               </div>
             </div>
 
-            <p className="text-[11px] text-[#64748b]">
+            <p className="text-[11px] text-[#54656f]">
               Tunjukkan QR ini ke meja kader posyandu untuk pencarian kilat.
             </p>
 
             <button
               onClick={onClose}
-              className="w-full py-3 bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold rounded-full text-xs transition-all touch-press"
+              className="w-full py-3 bg-[#128c7e] hover:bg-[#075e54] text-white font-bold rounded-full text-xs transition-all touch-press"
             >
               Tutup
             </button>
@@ -153,13 +153,13 @@ export const QRModal: React.FC<QRModalProps> = ({
         {/* SCAN MODE: CAMERA VIEWER */}
         {mode === 'scan' && (
           <div className="p-5 space-y-3.5">
-            <p className="text-xs text-[#64748b] text-center font-medium">
+            <p className="text-xs text-[#54656f] text-center font-medium">
               Arahkan kamera ke QR Code pada kartu pasien atau HP warga:
             </p>
-            <div id="qr-reader-container" className="rounded-2xl overflow-hidden border border-[#e2e8f0]" />
+            <div id="qr-reader-container" className="rounded-2xl overflow-hidden border border-[#e9edef]" />
             <button
               onClick={onClose}
-              className="w-full py-3 bg-[#f0f7ff] hover:bg-[#e2e8f0] text-[#0f172a] font-bold rounded-full text-xs transition-all touch-press border border-[#cbd5e1]"
+              className="w-full py-3 bg-[#f0f2f5] hover:bg-[#e9edef] text-[#111b21] font-bold rounded-full text-xs transition-all touch-press border border-[#e9edef]"
             >
               Batal
             </button>

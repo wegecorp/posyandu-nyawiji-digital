@@ -74,30 +74,25 @@ export const Header: React.FC<HeaderProps> = ({
   const roleBadge = getRoleBadge();
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#e2e8f0] shadow-xs">
+    <header className="sticky top-0 z-40 bg-[#075e54] text-white shadow-md">
       {/* Top Banner / Status Bar */}
-      <div className="bg-[#0f172a] text-white px-3.5 py-1.5 text-xs flex items-center justify-between font-medium">
+      <div className="bg-[#054c44] text-[#8696a0] px-4 py-1 text-xs flex items-center justify-between font-medium border-b border-[#075e54]">
         <div className="flex items-center gap-2 truncate">
-          <span className="inline-block w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span>
-          <span className="truncate font-bold tracking-tight">Posyandu Digital Gunungkidul</span>
-          <span className={`px-2 py-0.5 rounded-full text-[9px] font-black tracking-wider ${roleBadge.color}`}>
+          <span className={`inline-block w-2 h-2 rounded-full ${isOnline ? 'bg-[#25d366] animate-pulse' : 'bg-[#ef4444]'}`}></span>
+          <span className="truncate text-white font-bold text-xs tracking-wide">Posyandu Digital</span>
+          <span className={`px-2 py-0.5 rounded-md text-[10px] font-black tracking-wider ${roleBadge.color}`}>
             {roleBadge.label}
           </span>
         </div>
 
-        <div className="flex items-center gap-2 text-[11px] shrink-0">
-          {/* Online/Offline Badge */}
-          <div
-            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-              isOnline ? 'bg-[#10b981]/20 text-[#34d399]' : 'bg-[#ef4444]/20 text-[#f87171]'
-            }`}
-          >
-            {isOnline ? <Wifi className="w-3 h-3 text-[#34d399]" /> : <WifiOff className="w-3 h-3 text-[#f87171]" />}
+        <div className="flex items-center gap-2 text-xs shrink-0">
+          <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold ${isOnline ? 'bg-[#25d366]/20 text-[#25d366]' : 'bg-[#ef4444]/20 text-[#f87171]'}`}>
+            {isOnline ? <Wifi className="w-3 h-3 text-[#25d366]" /> : <WifiOff className="w-3 h-3 text-[#f87171]" />}
             <span>{isOnline ? 'ONLINE' : 'OFFLINE'}</span>
           </div>
 
           {unsyncedCount > 0 && (
-            <span className="bg-[#fbbf24] text-[#0f172a] px-2 py-0.5 rounded-full text-[10px] font-bold">
+            <span className="bg-[#fbbf24] text-[#0b141a] px-2 py-0.5 rounded-full text-[10px] font-black">
               {unsyncedCount} antrean
             </span>
           )}
@@ -105,44 +100,35 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Main Action Bar */}
-      <div className="px-3.5 py-2.5 flex items-center justify-between gap-2 max-w-2xl mx-auto">
+      <div className="px-4 py-2.5 flex items-center justify-between gap-3 max-w-2xl mx-auto">
         {/* Account Info Button */}
         <button
           onClick={onOpenLogin}
-          className="flex items-center gap-2.5 text-left bg-[#f0f7ff] hover:bg-[#e2e8f0] border border-[#cbd5e1] rounded-full px-3 py-1.5 transition-all text-xs touch-press"
+          className="flex items-center gap-2.5 text-left hover:bg-white/10 rounded-xl px-2 py-1 transition-all touch-press"
         >
-          <div
-            className={`w-7 h-7 rounded-full text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs ${
-              user?.role === 'DINKES'
-                ? 'bg-[#8b5cf6]'
-                : user?.role === 'PUSKESMAS'
-                ? 'bg-[#0284c7]'
-                : 'bg-[#10b981]'
-            }`}
-          >
+          <div className="w-9 h-9 rounded-full bg-[#128c7e] text-white flex items-center justify-center font-black text-sm shrink-0 border border-white/20 shadow-xs">
             {user?.role === 'DINKES' ? 'DK' : user?.role === 'PUSKESMAS' ? 'PK' : 'PS'}
           </div>
-          <div className="truncate max-w-[130px] sm:max-w-[200px]">
-            <div className="font-bold text-[#0f172a] truncate text-[13px] leading-tight">
-              {user?.name || user?.posyanduName || 'Belum Login'}
+          <div className="truncate max-w-[140px] sm:max-w-[220px]">
+            <div className="font-extrabold text-white truncate text-sm leading-tight">
+              {user?.name || user?.posyanduName || 'Posyandu Digital'}
             </div>
-            <div className="text-[11px] text-[#64748b] truncate leading-tight flex items-center gap-1 font-mono">
-              <span>user: {user?.username || 'tamu'}</span>
-              <ChevronDown className="w-3 h-3 inline text-[#94a3b8]" />
+            <div className="text-xs text-[#25d366] truncate leading-tight flex items-center gap-1 font-medium">
+              <span>{user?.username || 'Ganti Akun'}</span>
+              <ChevronDown className="w-3.5 h-3.5 inline text-white/70" />
             </div>
           </div>
         </button>
 
-        {/* Action Buttons (Pill Buttons per DESIGN.md) */}
+        {/* Header Action Buttons */}
         <div className="flex items-center gap-2">
-          {/* If user is Puskesmas or Dinkes and currently inside a Posyandu table, show button to return to dashboard */}
           {(user?.role === 'PUSKESMAS' || user?.role === 'DINKES') && onBackToDashboard && (
             <button
               onClick={onBackToDashboard}
-              className="flex items-center gap-1.5 bg-[#f0f7ff] hover:bg-[#e2e8f0] text-[#0f172a] font-bold px-3.5 py-2 rounded-full text-xs border border-[#cbd5e1] shadow-xs transition-all touch-press"
+              className="flex items-center gap-1.5 bg-[#128c7e] hover:bg-[#054c44] text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-xs transition-all touch-press border border-white/20"
               title="Kembali ke Dashboard Utama"
             >
-              <LayoutDashboard className="w-4 h-4 text-[#8b5cf6]" />
+              <LayoutDashboard className="w-4 h-4 text-white" />
               <span className="hidden sm:inline">Dashboard</span>
             </button>
           )}
@@ -151,32 +137,21 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onOpenScanQR}
             aria-label="Scan QR Pasien"
-            className="w-10 h-10 text-[#0f172a] bg-[#f0f7ff] hover:bg-[#e2e8f0] rounded-full transition-all touch-press flex items-center justify-center border border-[#cbd5e1] shrink-0"
-            title="Scan QR Pasien"
+            className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
+            title="Scan QR Code Pasien"
           >
-            <QrCode className="w-4.5 h-4.5 text-[#0284c7]" />
+            <QrCode className="w-5 h-5 text-white" />
           </button>
 
           {/* Export Excel Button */}
           <button
             onClick={onOpenExport}
             aria-label="Export Rekap Excel"
-            className="w-10 h-10 text-[#0f172a] bg-[#f0f7ff] hover:bg-[#e2e8f0] rounded-full transition-all touch-press flex items-center justify-center border border-[#cbd5e1] shrink-0"
-            title="Export Excel Rekap"
+            className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
+            title="Export Excel Rekap Data"
           >
-            <FileSpreadsheet className="w-4.5 h-4.5 text-[#10b981]" />
+            <FileSpreadsheet className="w-5 h-5 text-[#25d366]" />
           </button>
-
-          {/* Register Patient Button (Cobalt Pill Primary CTA per DESIGN.md) — Only for Posyandu role or default */}
-          {(!user || user.role === 'POSYANDU') && (
-            <button
-              onClick={onOpenRegister}
-              className="flex items-center gap-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold px-4 py-2 rounded-full text-xs shadow-xs transition-all touch-press"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span className="hidden xs:inline">Daftar</span> Pasien
-            </button>
-          )}
         </div>
       </div>
     </header>

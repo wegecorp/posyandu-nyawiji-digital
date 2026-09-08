@@ -80,13 +80,13 @@ export const PatientCard: React.FC<PatientCardProps> = ({
   return (
     <div
       onClick={() => onSelect(patient)}
-      className={`p-4 rounded-[20px] border transition-all cursor-pointer touch-press relative flex items-center justify-between gap-3 ${
+      className={`p-2.5 sm:p-3 rounded-xl border transition-all cursor-pointer touch-press relative flex items-center justify-between gap-2.5 shadow-xs ${
         isSelected
-          ? 'bg-[#0284c7]/5 border-[#0284c7] shadow-sm ring-2 ring-[#0284c7]/20'
-          : 'bg-white hover:bg-[#f0f7ff] border-[#e2e8f0] shadow-xs'
+          ? 'bg-[#e7fceb] border-[#25d366] ring-1 ring-[#25d366]/40'
+          : 'bg-white hover:bg-[#f0f2f5] border-[#e9edef]'
       }`}
     >
-      <div className="flex items-center gap-3.5 min-w-0 flex-1">
+      <div className="flex items-center gap-3 min-w-0 flex-1">
         {/* Avatar */}
         <div
           className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 border ${
@@ -98,39 +98,39 @@ export const PatientCard: React.FC<PatientCardProps> = ({
           <User className="w-5 h-5" />
         </div>
 
-        {/* Info */}
+        {/* Info Pasien */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-extrabold text-[#0f172a] text-sm truncate leading-tight">
+            <h3 className="font-bold text-[#111b21] text-sm sm:text-base truncate leading-snug">
               {patient.name}
             </h3>
-            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badge.color}`}>
+            <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${badge.color}`}>
               {badge.label}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-[#64748b] mt-1 flex-wrap font-medium">
-            <span className="font-mono text-[11px] text-[#0f172a] font-bold bg-[#f0f7ff] px-1.5 py-0.5 rounded-md border border-[#e2e8f0]">
+          <div className="flex items-center gap-2 text-xs text-[#54656f] mt-0.5 flex-wrap">
+            <span className="font-mono text-[11px] text-[#111b21] font-semibold bg-[#f0f2f5] px-1.5 py-0.5 rounded border border-[#e9edef]">
               {patient.regNumber}
             </span>
-            <span>• {patient.ageDisplay}</span>
+            <span className="text-xs font-normal">• {patient.ageDisplay}</span>
           </div>
 
-          {/* Measurement summary status for today */}
-          <div className="mt-2 flex items-center gap-2">
+          {/* Status Ukur Hari Ini */}
+          <div className="mt-1 flex items-center gap-2">
             {isMeasuredToday ? (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#10b981] bg-[#10b981]/10 px-2.5 py-0.5 rounded-full border border-[#10b981]/20">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#10b981]" />
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-[#0f766e] bg-[#f0fdf4] px-2.5 py-0.5 rounded-full border border-[#bbf7d0]">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#16a34a]" />
                 <span>
                   Sudah diukur
                   {patient.todayMeasurement?.weight
-                    ? ` (BB: ${patient.todayMeasurement.weight}kg)`
+                    ? ` (${patient.todayMeasurement.weight} kg)`
                     : ''}
                 </span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#0f172a] bg-[#f59e0b]/20 px-2.5 py-0.5 rounded-full border border-[#f59e0b]/40">
-                <CircleDashed className="w-3.5 h-3.5 text-[#f59e0b]" />
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-[#c2410c] bg-[#fff7ed] px-2.5 py-0.5 rounded-full border border-[#ffedd5]">
+                <CircleDashed className="w-3.5 h-3.5 text-[#ea580c]" />
                 <span>Belum diukur hari ini</span>
               </span>
             )}
@@ -138,62 +138,29 @@ export const PatientCard: React.FC<PatientCardProps> = ({
         </div>
       </div>
 
-      {/* Right Actions */}
-      <div className="flex items-center gap-1 shrink-0 relative" ref={menuRef}>
-        {/* QR Code Button */}
+      {/* Right Direct Buttons */}
+      <div className="flex items-center gap-1 shrink-0">
         <button
           onClick={(e) => onShowQR(e, patient)}
-          className="w-8 h-8 flex items-center justify-center text-[#64748b] hover:text-[#0284c7] rounded-full hover:bg-[#f0f7ff] transition-all"
+          className="w-8 h-8 flex items-center justify-center text-[#54656f] hover:text-[#075e54] rounded-full hover:bg-[#f0f2f5] transition-all"
           title="QR Code Pasien"
         >
-          <QrCode className="w-4 h-4" />
+          <QrCode className="w-4.5 h-4.5" />
         </button>
 
-        {/* Action Menu Popover Button (Three Dots) */}
-        <button
-          onClick={toggleMenu}
-          className={`w-8 h-8 flex items-center justify-center text-[#64748b] rounded-full transition-all ${
-            isMenuOpen ? 'bg-[#0284c7]/10 text-[#0284c7]' : 'hover:bg-[#f0f7ff] hover:text-[#0f172a]'
-          }`}
-          title="Menu Aksi Pasien"
-        >
-          <MoreVertical className="w-4.5 h-4.5" />
-        </button>
-
-        {/* Dropdown Menu */}
-        {isMenuOpen && (
-          <div className="absolute right-0 top-10 z-40 bg-white rounded-2xl shadow-xl border border-[#cbd5e1] py-1.5 w-48 animate-in fade-in zoom-in-95 duration-150">
-            <button
-              onClick={handleInputAndHistory}
-              className="w-full px-3.5 py-2 text-left text-xs font-bold text-[#0f172a] hover:bg-[#f0f7ff] flex items-center gap-2.5 transition-all"
-            >
-              <ClipboardList className="w-4 h-4 text-[#0284c7]" />
-              <span>Input & Riwayat</span>
-            </button>
-            {onEdit && (
-              <button
-                onClick={handleEdit}
-                className="w-full px-3.5 py-2 text-left text-xs font-bold text-[#0f172a] hover:bg-[#f0f7ff] flex items-center gap-2.5 transition-all"
-              >
-                <Edit3 className="w-4 h-4 text-[#0284c7]" />
-                <span>Edit Data Pasien</span>
-              </button>
-            )}
-            {onDelete && (
-              <div className="border-t border-[#e2e8f0] my-1 pt-1">
-                <button
-                  onClick={handleDelete}
-                  className="w-full px-3.5 py-2 text-left text-xs font-bold text-[#ef4444] hover:bg-rose-50 flex items-center gap-2.5 transition-all"
-                >
-                  <Trash2 className="w-4 h-4 text-[#ef4444]" />
-                  <span>Hapus Pasien</span>
-                </button>
-              </div>
-            )}
-          </div>
+        {onEdit && (
+          <button
+            onClick={handleEdit}
+            className="w-8 h-8 flex items-center justify-center text-[#54656f] hover:text-[#075e54] rounded-full hover:bg-[#f0f2f5] transition-all"
+            title="Edit Data Pasien"
+          >
+            <Edit3 className="w-4 h-4" />
+          </button>
         )}
 
-        <ChevronRight className={`w-5 h-5 ${isSelected ? 'text-[#0284c7]' : 'text-[#94a3b8]'}`} />
+        <div className="w-8 h-8 rounded-full bg-[#075e54] text-white flex items-center justify-center shadow-xs">
+          <ChevronRight className="w-4 h-4" />
+        </div>
       </div>
     </div>
   );

@@ -234,46 +234,46 @@ export default function PosyanduApp() {
               </div>
             )}
 
-            {/* Search Input Bar (Search Pill per DESIGN.md) */}
-            <div className="bg-white rounded-[24px] p-2 shadow-xs border border-[#e2e8f0] flex items-center gap-2">
+            {/* Search Input Bar (WhatsApp Search Bar) */}
+            <div className="bg-white rounded-xl p-1 shadow-sm border border-[#e9edef] flex items-center gap-2">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 text-[#64748b] absolute left-3.5 top-3" />
+                <Search className="w-4 h-4 text-[#8696a0] absolute left-3 top-3" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari nama pasien / nomor registrasi..."
-                  className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-[#f0f7ff] rounded-full border border-[#cbd5e1] outline-none focus:bg-white focus:border-2 focus:border-[#0284c7] font-medium text-[#1e293b] transition-all"
+                  placeholder="Cari nama pasien..."
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-[#f0f2f5] rounded-lg border border-[#e9edef] outline-none focus:bg-white focus:border focus:border-[#075e54] font-medium text-[#111b21] placeholder-[#8696a0] transition-all"
                 />
               </div>
 
               <button
                 onClick={() => setIsQRScanOpen(true)}
-                className="p-2.5 bg-[#f0f7ff] hover:bg-[#e2e8f0] text-[#0284c7] rounded-full border border-[#cbd5e1] transition-all touch-press shrink-0"
-                title="Scan QR Code"
+                className="w-9 h-9 bg-[#075e54] hover:bg-[#054c44] text-white rounded-lg flex items-center justify-center transition-all touch-press shrink-0 shadow-xs"
+                title="Scan QR Code Pasien"
               >
                 <QrCode className="w-4 h-4" />
               </button>
             </div>
 
             {/* Status Filter Tabs (Semua / Belum Diukur / Sudah Diukur) */}
-            <div className="flex bg-[#f0f7ff] p-1.5 rounded-full border border-[#e2e8f0] text-xs font-bold text-[#64748b]">
+            <div className="flex bg-white p-1 rounded-lg border border-[#e9edef] text-xs font-semibold text-[#54656f] shadow-xs">
               <button
                 onClick={() => setStatusFilter('ALL')}
-                className={`flex-1 py-1.5 rounded-full transition-all ${
+                className={`flex-1 py-1.5 rounded transition-all ${
                   statusFilter === 'ALL'
-                    ? 'bg-[#0f172a] text-white shadow-xs'
-                    : 'hover:text-[#0f172a]'
+                    ? 'bg-[#075e54] text-white shadow-xs'
+                    : 'hover:text-[#111b21]'
                 }`}
               >
                 Semua ({patients.length})
               </button>
               <button
                 onClick={() => setStatusFilter('UNMEASURED')}
-                className={`flex-1 py-1.5 rounded-full transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-1.5 rounded transition-all flex items-center justify-center gap-1 ${
                   statusFilter === 'UNMEASURED'
-                    ? 'bg-[#f59e0b] text-white shadow-xs'
-                    : 'hover:text-[#0f172a]'
+                    ? 'bg-[#ea580c] text-white shadow-xs'
+                    : 'hover:text-[#111b21]'
                 }`}
               >
                 <CircleDashed className="w-3.5 h-3.5" />
@@ -281,10 +281,10 @@ export default function PosyanduApp() {
               </button>
               <button
                 onClick={() => setStatusFilter('MEASURED')}
-                className={`flex-1 py-1.5 rounded-full transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-1.5 rounded transition-all flex items-center justify-center gap-1 ${
                   statusFilter === 'MEASURED'
-                    ? 'bg-[#10b981] text-white shadow-xs'
-                    : 'hover:text-[#0f172a]'
+                    ? 'bg-[#128c7e] text-white shadow-xs'
+                    : 'hover:text-[#111b21]'
                 }`}
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
@@ -292,15 +292,15 @@ export default function PosyanduApp() {
               </button>
             </div>
 
-            {/* Category Filter Chips (Fresh & Bright Color Badges!) */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
+            {/* Category Filter Chips */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs font-medium">
               {[
-                { id: 'ALL', label: 'Semua Usia', icon: LayoutGrid, activeColor: 'bg-[#0f172a] text-white border-[#0f172a]', iconColor: 'text-[#0284c7]' },
-                { id: 'BALITA', label: 'Balita (<5th)', icon: Baby, activeColor: 'bg-sky-500 text-white border-sky-500', iconColor: 'text-sky-500' },
-                { id: 'ANAK', label: 'Anak (5-9th)', icon: Smile, activeColor: 'bg-emerald-500 text-white border-emerald-500', iconColor: 'text-emerald-500' },
-                { id: 'REMAJA', label: 'Remaja (10-17th)', icon: User, activeColor: 'bg-indigo-500 text-white border-indigo-500', iconColor: 'text-indigo-500' },
-                { id: 'DEWASA_LANSIA', label: 'Dewasa/Lansia', icon: Users, activeColor: 'bg-teal-500 text-white border-teal-500', iconColor: 'text-teal-500' },
-                { id: 'BUMIL', label: 'Ibu Hamil', icon: Heart, activeColor: 'bg-rose-500 text-white border-rose-500', iconColor: 'text-rose-500' },
+                { id: 'ALL', label: 'Semua Usia', icon: LayoutGrid, activeColor: 'bg-[#075e54] text-white border-[#075e54]', iconColor: 'text-[#075e54]' },
+                { id: 'BALITA', label: 'Balita (<5th)', icon: Baby, activeColor: 'bg-sky-600 text-white border-sky-600', iconColor: 'text-sky-600' },
+                { id: 'ANAK', label: 'Anak (5-9th)', icon: Smile, activeColor: 'bg-emerald-600 text-white border-emerald-600', iconColor: 'text-emerald-600' },
+                { id: 'REMAJA', label: 'Remaja (10-17th)', icon: User, activeColor: 'bg-indigo-600 text-white border-indigo-600', iconColor: 'text-indigo-600' },
+                { id: 'DEWASA_LANSIA', label: 'Dewasa/Lansia', icon: Users, activeColor: 'bg-teal-600 text-white border-teal-600', iconColor: 'text-teal-600' },
+                { id: 'BUMIL', label: 'Ibu Hamil', icon: Heart, activeColor: 'bg-rose-600 text-white border-rose-600', iconColor: 'text-rose-600' },
               ].map((cat) => {
                 const IconComponent = cat.icon;
                 const isActive = selectedCategory === cat.id;
@@ -308,10 +308,10 @@ export default function PosyanduApp() {
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-1.5 shadow-2xs ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-1.5 ${
                       isActive
-                        ? `${cat.activeColor} shadow-xs scale-105`
-                        : 'bg-white text-[#1e293b] border-[#cbd5e1] hover:bg-[#f0f7ff]'
+                        ? `${cat.activeColor} shadow-xs scale-102`
+                        : 'bg-white text-[#111b21] border-[#e9edef] hover:bg-[#f0f2f5]'
                     }`}
                   >
                     <IconComponent className={`w-3.5 h-3.5 ${isActive ? 'text-white' : cat.iconColor}`} />
@@ -323,30 +323,30 @@ export default function PosyanduApp() {
 
             {/* Patient Cards List */}
             {isLoading ? (
-              <div className="p-12 text-center text-xs text-[#64748b] flex flex-col items-center gap-2">
-                <RefreshCw className="w-5 h-5 animate-spin text-[#0284c7]" />
+              <div className="p-12 text-center text-sm font-bold text-[#54656f] flex flex-col items-center gap-2">
+                <RefreshCw className="w-6 h-6 animate-spin text-[#075e54]" />
                 <span>Memuat data pasien...</span>
               </div>
             ) : filteredPatients.length === 0 ? (
-              <div className="bg-white rounded-[28px] p-8 border border-[#e2e8f0] text-center space-y-3 shadow-xs">
-                <div className="w-12 h-12 bg-[#f0f7ff] text-[#0284c7] rounded-full flex items-center justify-center mx-auto">
-                  <Users className="w-6 h-6" />
+              <div className="bg-white rounded-2xl p-8 border border-[#e9edef] text-center space-y-4 shadow-xs">
+                <div className="w-14 h-14 bg-[#e7fceb] text-[#075e54] rounded-full flex items-center justify-center mx-auto">
+                  <Users className="w-7 h-7" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-[#0f172a] text-sm">Tidak ada pasien ditemukan</h3>
-                  <p className="text-xs text-[#64748b] mt-0.5">
+                  <h3 className="font-extrabold text-[#111b21] text-base">Tidak ada pasien ditemukan</h3>
+                  <p className="text-xs text-[#54656f] mt-1 font-medium">
                     {searchQuery
-                      ? 'Coba kata kunci pencarian lain'
+                      ? 'Coba ketik nama lain di pencarian'
                       : 'Belum ada pasien terdaftar di posyandu ini'}
                   </p>
                 </div>
                 {!isReadOnly && (
                   <button
                     onClick={() => setIsRegisterOpen(true)}
-                    className="py-3 px-6 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold rounded-full text-xs shadow-md transition-all inline-flex items-center gap-2 touch-press"
+                    className="py-3.5 px-6 bg-[#25d366] hover:bg-[#128c7e] text-white font-black rounded-xl text-sm shadow-md transition-all inline-flex items-center gap-2 touch-press"
                   >
-                    <UserPlus className="w-4 h-4" />
-                    <span>Daftarkan Pasien Sekarang</span>
+                    <UserPlus className="w-5 h-5" />
+                    <span>Daftarkan Pasien Baru</span>
                   </button>
                 )}
               </div>
@@ -366,6 +366,20 @@ export default function PosyanduApp() {
                     onDelete={isReadOnly ? undefined : (p) => setDeletingPatient(p)}
                   />
                 ))}
+              </div>
+            )}
+
+            {/* WhatsApp Floating Action Button (FAB) for Quick Patient Register */}
+            {!isReadOnly && !selectedPatient && (
+              <div className="fixed bottom-6 right-6 z-40">
+                <button
+                  onClick={() => setIsRegisterOpen(true)}
+                  className="bg-[#25d366] hover:bg-[#128c7e] text-white font-black px-5 py-3.5 rounded-full shadow-2xl flex items-center gap-2.5 border-2 border-white transition-all touch-press text-sm active:scale-95"
+                  title="Tambah Pasien Baru"
+                >
+                  <UserPlus className="w-6 h-6 text-white" />
+                  <span className="font-black text-sm">PASIEN BARU</span>
+                </button>
               </div>
             )}
           </div>

@@ -52,7 +52,7 @@ export const DeletePatientConfirmModal: React.FC<DeletePatientConfirmModalProps>
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-md rounded-[28px] shadow-2xl overflow-hidden border border-[#dee3e9] animate-in zoom-in-95 duration-150">
+      <div className="bg-white w-full max-w-md rounded-[28px] shadow-2xl overflow-hidden border border-[#e9edef] animate-in zoom-in-95 duration-150">
         {/* Danger Header Banner */}
         <div className="bg-[#ef4444] text-white p-4.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -86,12 +86,12 @@ export const DeletePatientConfirmModal: React.FC<DeletePatientConfirmModalProps>
           </div>
 
           <div>
-            <p className="text-sm text-[#64748b]">Apakah Anda yakin ingin menghapus permanen data pasien berikut?</p>
-            <div className="mt-3 p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl">
-              <span className="font-extrabold text-base text-[#0f172a] block">{patient.name}</span>
-              <span className="font-mono text-xs text-[#0284c7] font-bold">{patient.regNumber}</span>
+            <p className="text-sm text-[#54656f]">Apakah Anda yakin ingin menghapus permanen data pasien berikut?</p>
+            <div className="mt-3 p-3 bg-[#f0f2f5] border border-[#e9edef] rounded-2xl">
+              <span className="font-extrabold text-base text-[#111b21] block">{patient.name}</span>
+              <span className="font-mono text-xs text-[#075e54] font-bold">{patient.regNumber}</span>
               {patient.guardianName && (
-                <span className="text-xs text-[#64748b] block mt-0.5">Wali: {patient.guardianName}</span>
+                <span className="text-xs text-[#54656f] block mt-0.5">Wali: {patient.guardianName}</span>
               )}
             </div>
             <p className="text-[11px] text-[#ef4444] font-medium mt-3">
@@ -104,7 +104,7 @@ export const DeletePatientConfirmModal: React.FC<DeletePatientConfirmModalProps>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 px-4 bg-[#f0f7ff] hover:bg-[#e2e8f0] text-[#0f172a] font-bold rounded-full text-xs transition-all touch-press border border-[#cbd5e1]"
+              className="flex-1 py-3 px-4 bg-[#f0f2f5] hover:bg-[#e9edef] text-[#111b21] font-bold rounded-full text-xs transition-all touch-press border border-[#e9edef]"
             >
               Batal
             </button>

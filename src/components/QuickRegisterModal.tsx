@@ -108,14 +108,14 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] shadow-2xl overflow-hidden max-h-[92vh] flex flex-col border border-[#dee3e9]">
         {/* Header */}
-        <div className="bg-[#0f172a] text-white p-4.5 flex items-center justify-between">
+        <div className="bg-[#075e54] text-white p-4.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-white/10 rounded-full">
-              <UserPlus className="w-5 h-5 text-[#38bdf8]" />
+              <UserPlus className="w-5 h-5 text-[#25d366]" />
             </div>
             <div>
               <h2 className="font-extrabold text-base leading-tight">Pendaftaran Cepat Pasien</h2>
-              <p className="text-xs text-[#cbd5e1] mt-0.5">Cukup nama & tanggal lahir (tanpa NIK)</p>
+              <p className="text-xs text-[#e9edef] mt-0.5">Cukup nama & tanggal lahir (tanpa NIK)</p>
             </div>
           </div>
           <button
@@ -136,52 +136,52 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
           )}
 
           {/* Posyandu Info Tag */}
-          <div className="bg-[#f0f7ff] border border-[#e2e8f0] rounded-2xl p-3 text-xs text-[#64748b] flex items-center justify-between font-medium">
+          <div className="bg-[#f0f2f5] border border-[#e9edef] rounded-2xl p-3 text-xs text-[#54656f] flex items-center justify-between font-medium">
             <span>Posyandu:</span>
-            <span className="font-extrabold text-[#0284c7]">{user?.posyanduName || 'Posyandu Terpilih'}</span>
+            <span className="font-extrabold text-[#075e54]">{user?.posyanduName || 'Posyandu Terpilih'}</span>
           </div>
 
           {/* 1. Nama Pasien (Wajib) */}
           <div>
-            <label className="block text-xs font-bold text-[#0f172a] mb-1.5">
+            <label className="block text-xs font-bold text-[#111b21] mb-1.5">
               Nama Lengkap Pasien <span className="text-[#ef4444]">*</span>
             </label>
             <div className="relative">
-              <User className="w-4 h-4 text-[#94a3b8] absolute left-3.5 top-3.5" />
+              <User className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Contoh: Muhammad Arka Pratama"
                 required
-                className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl focus:bg-white focus:border-2 focus:border-[#0284c7] outline-none font-medium text-[#1e293b] transition-all"
+                className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl focus:bg-white focus:border-2 focus:border-[#128c7e] outline-none font-medium text-[#111b21] transition-all"
               />
             </div>
           </div>
 
           {/* 2. Tanggal Lahir (Wajib) */}
           <div>
-            <label className="block text-xs font-bold text-[#0f172a] mb-1.5">
+            <label className="block text-xs font-bold text-[#111b21] mb-1.5">
               Tanggal Lahir (TTL) <span className="text-[#ef4444]">*</span>
             </label>
             <div className="relative">
-              <Calendar className="w-4 h-4 text-[#94a3b8] absolute left-3.5 top-3.5" />
+              <Calendar className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
               <input
                 type="date"
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
                 required
                 max={new Date().toISOString().slice(0, 10)}
-                className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl focus:bg-white focus:border-2 focus:border-[#0284c7] outline-none font-medium text-[#1e293b] transition-all"
+                className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl focus:bg-white focus:border-2 focus:border-[#128c7e] outline-none font-medium text-[#111b21] transition-all"
               />
             </div>
 
             {/* Live Age & Category Detection */}
             {agePreview && badge && (
-              <div className="mt-2 p-3 bg-[#0284c7]/10 border border-[#0284c7]/20 rounded-2xl flex items-center justify-between text-xs animate-in fade-in duration-200">
+              <div className="mt-2 p-3 bg-[#e7fceb] border border-[#25d366]/30 rounded-2xl flex items-center justify-between text-xs animate-in fade-in duration-200">
                 <div>
-                  <span className="text-[#64748b]">Usia saat ini: </span>
-                  <span className="font-extrabold text-[#0f172a]">{agePreview.display}</span>
+                  <span className="text-[#54656f]">Usia saat ini: </span>
+                  <span className="font-extrabold text-[#075e54]">{agePreview.display}</span>
                 </div>
                 <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${badge.color}`}>
                   {badge.label}
@@ -192,15 +192,15 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
 
           {/* 3. Jenis Kelamin */}
           <div>
-            <label className="block text-xs font-bold text-[#0f172a] mb-1.5">Jenis Kelamin</label>
+            <label className="block text-xs font-bold text-[#111b21] mb-1.5">Jenis Kelamin</label>
             <div className="grid grid-cols-2 gap-2.5">
               <button
                 type="button"
                 onClick={() => handleGenderChange('L')}
                 className={`py-2.5 px-4 rounded-full border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                   gender === 'L'
-                    ? 'bg-[#0284c7] text-white border-[#0284c7] shadow-xs'
-                    : 'bg-[#f0f7ff] text-[#0f172a] border-[#cbd5e1] hover:bg-[#e2e8f0]'
+                    ? 'bg-[#128c7e] text-white border-[#128c7e] shadow-xs'
+                    : 'bg-[#f0f2f5] text-[#111b21] border-[#e9edef] hover:bg-[#e9edef]'
                 }`}
               >
                 <User className="w-4 h-4" />
@@ -212,7 +212,7 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
                 className={`py-2.5 px-4 rounded-full border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                   gender === 'P'
                     ? 'bg-rose-500 text-white border-rose-500 shadow-xs'
-                    : 'bg-[#f0f7ff] text-[#0f172a] border-[#cbd5e1] hover:bg-[#e2e8f0]'
+                    : 'bg-[#f0f2f5] text-[#111b21] border-[#e9edef] hover:bg-[#e9edef]'
                 }`}
               >
                 <User className="w-4 h-4" />
@@ -224,16 +224,16 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
           {/* Tag Ibu Hamil Toggle */}
           <div className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all ${
             gender === 'L'
-              ? 'bg-slate-100/70 border-slate-200 opacity-60 cursor-not-allowed'
+              ? 'bg-[#f0f2f5]/60 border-[#e9edef] opacity-60 cursor-not-allowed'
               : 'bg-rose-50/70 border-rose-200'
           }`}>
             <div className="flex items-center gap-2.5">
               <Heart className={`w-4 h-4 ${gender === 'L' ? 'text-slate-400' : 'text-rose-500'}`} />
               <div>
-                <span className={`text-xs font-bold ${gender === 'L' ? 'text-[#64748b]' : 'text-[#0f172a]'}`}>
+                <span className={`text-xs font-bold ${gender === 'L' ? 'text-[#54656f]' : 'text-[#111b21]'}`}>
                   Pasien Ibu Hamil (Bumil)
                 </span>
-                <p className="text-[11px] text-[#64748b]">
+                <p className="text-[11px] text-[#54656f]">
                   {gender === 'L' ? 'Hanya berlaku untuk pasien Perempuan' : 'Form akan mengaktifkan kolom kehamilan & LiLA'}
                 </p>
               </div>
@@ -252,7 +252,7 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
           <button
             type="button"
             onClick={() => setShowOptional(!showOptional)}
-            className="text-xs text-[#0284c7] font-bold hover:underline flex items-center gap-1.5 py-1"
+            className="text-xs text-[#128c7e] font-bold hover:underline flex items-center gap-1.5 py-1"
           >
             {showOptional ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             <span>{showOptional ? 'Sembunyikan' : 'Tambah'} Data Tambahan (Alamat, Wali, HP)</span>
@@ -260,9 +260,9 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
 
           {/* Optional Form Section */}
           {showOptional && (
-            <div className="space-y-3 pt-2 border-t border-[#e2e8f0] animate-in slide-in-from-top-2 duration-150">
+            <div className="space-y-3 pt-2 border-t border-[#e9edef] animate-in slide-in-from-top-2 duration-150">
               <div>
-                <label className="block text-xs font-semibold text-[#64748b] mb-1">
+                <label className="block text-xs font-semibold text-[#54656f] mb-1">
                   Nama Orang Tua / Wali (Opsional)
                 </label>
                 <input
@@ -270,38 +270,38 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
                   value={guardianName}
                   onChange={(e) => setGuardianName(e.target.value)}
                   placeholder="Nama Ibu / Ayah / Suami"
-                  className="w-full px-3.5 py-2 text-xs bg-[#f0f7ff] border border-[#cbd5e1] rounded-xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7]"
+                  className="w-full px-3.5 py-2 text-xs bg-[#f0f2f5] border border-[#e9edef] rounded-xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] text-[#111b21]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#64748b] mb-1">
+                <label className="block text-xs font-semibold text-[#54656f] mb-1">
                   Alamat / RT-RW (Opsional)
                 </label>
                 <div className="relative">
-                  <Home className="w-3.5 h-3.5 text-[#94a3b8] absolute left-3 top-2.5" />
+                  <Home className="w-3.5 h-3.5 text-[#8696a0] absolute left-3 top-2.5" />
                   <input
                     type="text"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="Contoh: RT 02 / RW 04 Purbosari"
-                    className="w-full pl-8 pr-3 py-2 text-xs bg-[#f0f7ff] border border-[#cbd5e1] rounded-xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7]"
+                    className="w-full pl-8 pr-3 py-2 text-xs bg-[#f0f2f5] border border-[#e9edef] rounded-xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] text-[#111b21]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#64748b] mb-1">
+                <label className="block text-xs font-semibold text-[#54656f] mb-1">
                   Nomor HP / WhatsApp (Opsional)
                 </label>
                 <div className="relative">
-                  <Phone className="w-3.5 h-3.5 text-[#94a3b8] absolute left-3 top-2.5" />
+                  <Phone className="w-3.5 h-3.5 text-[#8696a0] absolute left-3 top-2.5" />
                   <input
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="Contoh: 081234567890"
-                    className="w-full pl-8 pr-3 py-2 text-xs bg-[#f0f7ff] border border-[#cbd5e1] rounded-xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7]"
+                    className="w-full pl-8 pr-3 py-2 text-xs bg-[#f0f2f5] border border-[#e9edef] rounded-xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] text-[#111b21]"
                   />
                 </div>
               </div>
@@ -313,14 +313,14 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 px-4 bg-[#f0f7ff] hover:bg-[#e2e8f0] text-[#0f172a] font-bold rounded-full text-xs transition-all touch-press border border-[#cbd5e1]"
+              className="flex-1 py-3 px-4 bg-[#f0f2f5] hover:bg-[#e9edef] text-[#111b21] font-bold rounded-full text-xs transition-all touch-press border border-[#e9edef]"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-2 py-3 px-6 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold rounded-full text-xs transition-all shadow-md flex items-center justify-center gap-2 touch-press disabled:opacity-50"
+              className="flex-2 py-3 px-6 bg-[#128c7e] hover:bg-[#075e54] text-white font-bold rounded-full text-xs transition-all shadow-md flex items-center justify-center gap-2 touch-press disabled:opacity-50"
             >
               {isSubmitting ? (
                 <span>Menyimpan...</span>

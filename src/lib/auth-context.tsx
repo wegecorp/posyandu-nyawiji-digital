@@ -6,6 +6,7 @@ import { UserSession } from './types';
 interface AuthContextType {
   user: UserSession | null;
   isLoading: boolean;
+  setUser: (user: UserSession | null) => void;
   login: (userData: UserSession) => void;
   logout: () => void;
   switchActivePosyandu: (posyanduId: string, posyanduName: string, posyanduCode: string) => void;
@@ -19,19 +20,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Sumber kebenaran sesi = server (/api/auth/me). localStorage hanya cache
+  // agar tidak logout saat jaringan putus; tetap divalidasi tiap muat aplikasi.
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        setUser(JSON.parse(saved));
+    let cancelled = false;
+
+    async function loadSession() {
+      let cached: UserSession | null = null;
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) cached = JSON.parse(raw);
+      } catch {
+        /* ignore corrupt cache */
       }
-      // No auto-login fallback — user must authenticate
-    } catch (e) {
-      console.error('Failed to load session:', e);
-      localStorage.removeItem(STORAGE_KEY);
-    } finally {
-      setIsLoading(false);
+
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
+        if (!cancelled) {
+          if (res.ok) {
+            const json = await res.json();
+            if (json.success && json.user) {
+              setUser(json.user);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(json.user));
+              return;
+            }
+          }
+          // 401 / invalid session -> hapus cache
+          setUser(null);
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      } catch (e) {
+        // Gagal jaringan: pakai cache bila ada, tanpa validasi server.
+        if (!cancelled) {
+          setUser(cached || null);
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
     }
+
+    loadSession();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const login = (userData: UserSession) => {
@@ -62,7 +93,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, switchActivePosyandu }}>
+    <AuthContext.Provider
+      value={{ user, isLoading, setUser, login, logout, switchActivePosyandu }}
+    >
       {children}
     </AuthContext.Provider>
   );

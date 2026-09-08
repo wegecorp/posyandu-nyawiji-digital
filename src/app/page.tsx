@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 
 export default function PosyanduApp() {
-  const { user, switchActivePosyandu } = useAuth();
+  const { user, isLoading, switchActivePosyandu } = useAuth();
   const [patients, setPatients] = useState<PatientData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -154,6 +154,18 @@ export default function PosyanduApp() {
     setActiveViewMode('posyandu_table');
     setSelectedPatient(null);
   };
+
+  // 0. Still validating session against server — show splash to avoid flash of login page
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f0f7ff]">
+        <div className="text-center space-y-2">
+          <RefreshCw className="w-7 h-7 animate-spin text-[#075e54] mx-auto" />
+          <p className="text-xs font-bold text-[#54656f]">Memuat aplikasi...</p>
+        </div>
+      </div>
+    );
+  }
 
   // 1. IF NOT LOGGED IN — show full-page login/signup
   if (!user) {

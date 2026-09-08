@@ -53,4 +53,7 @@ export interface UserSession {
   posyanduId?: string | null;
   posyanduName?: string | null;
   posyanduCode?: string | null;
+  kalurahan?: string | null;
+  padukuhan?: string | null;
+  kapanewon?: string | null;
 }

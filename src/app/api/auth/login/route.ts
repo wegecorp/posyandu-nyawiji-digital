@@ -1,56 +1,66 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { hashPassword, verifyPassword } from '@/lib/password';
+import { hashPassword, verifyPassword, isPasswordHashed } from '@/lib/password';
 import { createSession, buildSetCookieHeader, type SessionPayload } from '@/lib/session';
+import { isRateLimited, getClientKey } from '@/lib/rate-limit';
+import { getUserBySession, serializeUser } from '@/lib/user-profile';
 
+// POST /api/auth/login
+// Mode 'staff'   : { mode:'staff', username, password }   -> DINKES / PUSKESMAS
+// Mode 'posyandu': { mode:'posyandu', posyanduId, password } -> kader (login cascade)
 export async function POST(req: Request) {
   try {
-    const { username, password } = await req.json();
-
-    if (!username || !password) {
-      return NextResponse.json({ error: 'Username dan Password wajib diisi' }, { status: 400 });
+    if (isRateLimited({ key: getClientKey(req, 'login'), limit: 20, windowMs: 60_000 })) {
+      return NextResponse.json({ error: 'Terlalu banyak percobaan login. Coba lagi nanti.' }, { status: 429 });
     }
 
-    if (typeof username !== 'string' || typeof password !== 'string') {
-      return NextResponse.json({ error: 'Format input tidak valid' }, { status: 400 });
+    const body = await req.json();
+    const { mode, username, posyanduId, password } = body;
+
+    if (!password || typeof password !== 'string') {
+      return NextResponse.json({ error: 'Password wajib diisi' }, { status: 400 });
     }
 
-    const cleanUsername = username.toLowerCase().trim();
+    let user;
 
-    let user = await prisma.user.findUnique({
-      where: { username: cleanUsername },
-      include: {
-        posyandu: {
-          include: {
-            healthCenter: true,
-          },
-        },
-        healthCenter: true,
-      },
-    });
-
-    // Auto-bootstrap Dinkes Super Admin if database is fresh and login matches env
-    const envDinkesUser = (process.env.DINKES_ADMIN_USERNAME || '').toLowerCase().trim();
-    const envDinkesPass = process.env.DINKES_ADMIN_PASSWORD || '';
-
-    if (!user && envDinkesUser && envDinkesPass && cleanUsername === envDinkesUser && password === envDinkesPass) {
-      const hashedPass = await hashPassword(envDinkesPass);
-      user = await prisma.user.create({
-        data: {
-          username: envDinkesUser,
-          password: hashedPass,
-          name: 'Dinas Kesehatan Kabupaten Gunungkidul',
-          role: 'DINKES',
-        },
-        include: {
-          posyandu: { include: { healthCenter: true } },
-          healthCenter: true,
-        },
+    if (mode === 'posyandu') {
+      if (!posyanduId) {
+        return NextResponse.json({ error: 'Pilih posyandu terlebih dahulu' }, { status: 400 });
+      }
+      user = await prisma.user.findFirst({
+        where: { posyanduId, role: 'POSYANDU' },
       });
-    }
+      if (!user) {
+        return NextResponse.json({ error: 'Akun posyandu tidak ditemukan.' }, { status: 401 });
+      }
+    } else {
+      // Staff (DINKES/PUSKESMAS) default
+      if (!username || typeof username !== 'string') {
+        return NextResponse.json({ error: 'Username dan password wajib diisi' }, { status: 400 });
+      }
+      const cleanUsername = username.toLowerCase().trim();
 
-    if (!user) {
-      return NextResponse.json({ error: 'Akun tidak ditemukan. Periksa username Anda.' }, { status: 401 });
+      user = await prisma.user.findUnique({ where: { username: cleanUsername } });
+
+      // Auto-bootstrap Dinkes Super Admin bila DB kosong & login cocok dgn env.
+      const envDinkesUser = (process.env.DINKES_ADMIN_USERNAME || '').toLowerCase().trim();
+      const envDinkesPass = process.env.DINKES_ADMIN_PASSWORD || '';
+      if (!user && envDinkesUser && envDinkesPass && cleanUsername === envDinkesUser && password === envDinkesPass) {
+        const hashedPass = await hashPassword(envDinkesPass);
+        user = await prisma.user.create({
+          data: {
+            username: envDinkesUser,
+            password: hashedPass,
+            name: 'Dinas Kesehatan Kabupaten Gunungkidul',
+            role: 'DINKES',
+            mustChangePassword: false,
+          },
+        });
+      }
+
+      if (!user) {
+        return NextResponse.json({ error: 'Akun tidak ditemukan. Periksa username Anda.' }, { status: 401 });
+      }
     }
 
     const passwordValid = await verifyPassword(password, user.password);
@@ -58,54 +68,46 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Password salah.' }, { status: 401 });
     }
 
-    // Migrate plaintext password to hash on successful login
-    const { isPasswordHashed } = await import('@/lib/password');
+    // Migrate plaintext password ke hash bila masih plaintext.
     if (!isPasswordHashed(user.password)) {
       const hashed = await hashPassword(password);
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { password: hashed },
+      await prisma.user.update({ where: { id: user.id }, data: { password: hashed } });
+    }
+
+    // Akun baru (belum aktivasi): jangan beri sesi — paksa ganti password dulu.
+    if (user.mustChangePassword) {
+      return NextResponse.json({
+        success: true,
+        needsActivation: true,
+        identity: {
+          mode: user.role === 'POSYANDU' ? 'posyandu' : 'staff',
+          username: user.username,
+          posyanduId: user.posyanduId || null,
+          label: user.name,
+        },
       });
     }
 
-    // Build session payload based on role
+    const fresh = await getUserBySession(user.id);
+    if (!fresh) {
+      return NextResponse.json({ error: 'Gagal memuat akun.' }, { status: 500 });
+    }
+
     const sessionPayload: SessionPayload = {
-      userId: user.id,
-      username: user.username,
-      name: user.name,
-      role: user.role as SessionPayload['role'],
+      userId: fresh.id,
+      username: fresh.username,
+      name: fresh.name,
+      role: fresh.role as SessionPayload['role'],
     };
-
-    if (user.role === 'POSYANDU' && user.posyandu) {
-      sessionPayload.posyanduId = user.posyandu.id;
+    if (fresh.role === 'POSYANDU' && fresh.posyandu) {
+      sessionPayload.posyanduId = fresh.posyandu.id;
     }
-    if ((user.role === 'PUSKESMAS' || user.role === 'POSYANDU') && (user.healthCenter || user.posyandu?.healthCenter)) {
-      sessionPayload.healthCenterId = user.healthCenter?.id || user.posyandu?.healthCenterId || null;
+    if ((fresh.role === 'PUSKESMAS' || fresh.role === 'POSYANDU') && (fresh.healthCenter || fresh.posyandu?.healthCenter)) {
+      sessionPayload.healthCenterId = fresh.healthCenter?.id || fresh.posyandu?.healthCenterId || null;
     }
 
-    // Create JWT and set httpOnly cookie
     const token = await createSession(sessionPayload);
-
-    // Build client-safe user data (no password, no sensitive internals)
-    const clientPayload: Record<string, any> = {
-      id: user.id,
-      username: user.username,
-      name: user.name,
-      role: user.role,
-    };
-
-    if (user.role === 'POSYANDU' && user.posyandu) {
-      clientPayload.posyanduId = user.posyandu.id;
-      clientPayload.posyanduName = user.posyandu.name;
-      clientPayload.posyanduCode = user.posyandu.code;
-      clientPayload.healthCenterId = user.posyandu.healthCenterId;
-      clientPayload.healthCenterName = user.posyandu.healthCenter?.name || null;
-    } else if (user.role === 'PUSKESMAS' && user.healthCenter) {
-      clientPayload.healthCenterId = user.healthCenter.id;
-      clientPayload.healthCenterName = user.healthCenter.name;
-    }
-
-    const response = NextResponse.json({ success: true, user: clientPayload });
+    const response = NextResponse.json({ success: true, user: serializeUser(fresh) });
     response.headers.set('Set-Cookie', buildSetCookieHeader(token));
     return response;
   } catch (error) {

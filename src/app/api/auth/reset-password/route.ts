@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/password';
 import { requireAuth } from '@/lib/api-auth';
+import { getDefaultPassword } from '@/lib/accounts';
+import { isRateLimited, getClientKey } from '@/lib/rate-limit';
 
 export async function POST(req: Request) {
   try {
@@ -9,20 +11,14 @@ export async function POST(req: Request) {
     const auth = await requireAuth(req);
     if (auth instanceof NextResponse) return auth;
 
-    const { targetUserId, newPassword } = await req.json();
-
-    if (!targetUserId || !newPassword) {
-      return NextResponse.json(
-        { error: 'ID Akun Target dan Password Baru wajib diisi' },
-        { status: 400 }
-      );
+    if (isRateLimited({ key: getClientKey(req, 'reset'), limit: 10, windowMs: 60_000 })) {
+      return NextResponse.json({ error: 'Terlalu banyak percobaan. Coba lagi nanti.' }, { status: 429 });
     }
 
-    if (typeof newPassword !== 'string' || newPassword.trim().length < 8) {
-      return NextResponse.json(
-        { error: 'Password baru minimal 8 karakter' },
-        { status: 400 }
-      );
+    const { targetUserId } = await req.json();
+
+    if (!targetUserId) {
+      return NextResponse.json({ error: 'ID Akun Target wajib diisi' }, { status: 400 });
     }
 
     // Authorization checks using server-verified role
@@ -68,20 +64,21 @@ export async function POST(req: Request) {
       );
     }
 
-    // Hash new password before storing
-    const hashedPassword = await hashPassword(newPassword.trim());
+    // Reset = kembalikan password default & paksa aktivasi ulang oleh pemilik akun.
+    const defaultPassword = getDefaultPassword();
+    const hashedPassword = await hashPassword(defaultPassword);
 
-    // Perform password reset
     const updatedUser = await prisma.user.update({
       where: { id: targetUserId },
       data: {
         password: hashedPassword,
+        mustChangePassword: true,
       },
     });
 
     return NextResponse.json({
       success: true,
-      message: `Password akun ${updatedUser.username} berhasil direset!`,
+      message: `Password akun ${updatedUser.username} direset. Akun wajib mengganti password saat login berikutnya.`,
     });
   } catch (error) {
     console.error('Reset password error:', error);

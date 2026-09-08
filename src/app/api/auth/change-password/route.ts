@@ -42,11 +42,12 @@ export async function POST(req: Request) {
     // Hash new password
     const hashedNew = await hashPassword(newPassword.trim());
 
-    // Update password
+    // Update password (+ pastikan status aktivasi selesai)
     await prisma.user.update({
       where: { id: auth.userId },
       data: {
         password: hashedNew,
+        mustChangePassword: false,
       },
     });
 

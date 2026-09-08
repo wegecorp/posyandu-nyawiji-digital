@@ -4,9 +4,17 @@ import { cookies } from 'next/headers';
 const SESSION_COOKIE_NAME = 'posyandu_session';
 const SESSION_MAX_AGE = 60 * 60 * 24; // 24 hours in seconds
 
-// Secret key for JWT signing — in production, use a proper env var
+// Secret key for JWT signing. WAJIB diset via env; tanpa secret di produksi,
+// aplikasi sengaja gagal (fail-fast) alih-alih memakai default yang tidak aman.
 function getSecretKey() {
-  const secret = process.env.SESSION_SECRET || 'posyandu-digital-gk-secret-key-change-in-production';
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('SESSION_SECRET wajib diset di environment produksi.');
+    }
+    // Dev-only: jangan pernah dipakai untuk produksi.
+    return new TextEncoder().encode('dev-only-insecure-secret-change-me');
+  }
   return new TextEncoder().encode(secret);
 }
 

@@ -1,21 +1,18 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/auth-context';
 import {
   Building,
   PlusCircle,
-  Users,
-  Activity,
   FileSpreadsheet,
   ArrowRight,
-  ShieldCheck,
-  Building2,
   X,
-  Lock,
-  AlertTriangle,
   Key,
+  AlertTriangle,
   Check,
+  RefreshCw,
+  ShieldCheck,
+  Info,
 } from 'lucide-react';
 
 interface DinkesDashboardProps {
@@ -23,166 +20,179 @@ interface DinkesDashboardProps {
   onEnterPosyandu: (posyanduId: string, posyanduName: string, posyanduCode: string) => void;
 }
 
-export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({
-  onExportAll,
-  onEnterPosyandu,
-}) => {
-  const { user } = useAuth();
-  const [puskesmasList, setPuskesmasList] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+interface KapanewonRef { id: string; code: string; name: string }
+interface PuskesmaRow {
+  id: string;
+  code: string;
+  name: string;
+  kapanewon: string;
+  users?: { id: string; username: string; mustChangePassword: boolean }[];
+  posyandus?: {
+    id: string;
+    code: string;
+    name: string;
+    kalurahan: string;
+    users?: { id: string; username: string; mustChangePassword: boolean }[];
+  }[];
+  _count?: { posyandus: number };
+}
 
-  // New Puskesmas Form State
-  const [pkmName, setPkmName] = useState('');
-  const [kapanewon, setKapanewon] = useState('');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, onEnterPosyandu }) => {
+  const [puskesmasList, setPuskesmasList] = useState<PuskesmaRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [kapanewonList, setKapanewonList] = useState<KapanewonRef[]>([]);
+
+  // Create puskesmas modal
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [cName, setCName] = useState('');
+  const [cKapanewonId, setCKapanewonId] = useState('');
+  const [cUsername, setCUsername] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Reset Password State for Dinkes
-  const [resetTarget, setResetTarget] = useState<{
-    accountName: string;
-    userId: string;
-    username: string;
-    roleName: string;
-  } | null>(null);
-  const [resetNewPass, setResetNewPass] = useState('');
-  const [resetIsSubmitting, setResetIsSubmitting] = useState(false);
-  const [resetErrorMsg, setResetErrorMsg] = useState('');
-  const [resetSuccessMsg, setResetSuccessMsg] = useState('');
+  // Reset modal
+  const [resetTarget, setResetTarget] = useState<{ id: string; label: string; roleName: string } | null>(null);
+  const [resetMsg, setResetMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const [resetSubmitting, setResetSubmitting] = useState(false);
 
-  const fetchPuskesmas = async () => {
+  const refresh = () => {
     setIsLoading(true);
-    try {
-      const res = await fetch('/api/dinkes/puskesmas');
-      const data = await res.json();
-      if (data.success) {
-        setPuskesmasList(data.data);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoading(false);
-    }
+    fetch('/api/dinkes/puskesmas')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) setPuskesmasList(data.data);
+      })
+      .catch((e) => console.error(e))
+      .finally(() => setIsLoading(false));
   };
 
   useEffect(() => {
-    fetchPuskesmas();
+    fetch('/api/dinkes/puskesmas')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) setPuskesmasList(data.data);
+      })
+      .catch((e) => console.error(e))
+      .finally(() => setIsLoading(false));
+    fetch('/api/lokasi')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) setKapanewonList(json.data);
+      })
+      .catch(console.error);
   }, []);
 
-  const handleCreatePuskesmas = async (e: React.FormEvent) => {
+  const openCreate = () => {    setCName('');
+    setCKapanewonId('');
+    setCUsername('');
+    setErrorMsg('');
+    setIsCreateOpen(true);
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pkmName.trim() || !kapanewon.trim() || !username.trim() || !password.trim()) {
-      setErrorMsg('Semua kolom wajib diisi');
+    if (!cName.trim() || !cKapanewonId || !cUsername.trim()) {
+      setErrorMsg('Nama Puskesmas, Kapanewon, dan Username wajib diisi');
       return;
     }
-
     setIsSubmitting(true);
     setErrorMsg('');
-
     try {
       const res = await fetch('/api/dinkes/puskesmas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: pkmName.trim(),
-          kapanewon: kapanewon.trim(),
-          username: username.trim(),
-          password: password.trim(),
+          name: cName.trim(),
+          kapanewonId: cKapanewonId,
+          username: cUsername.trim(),
         }),
       });
-
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Gagal membuat akun puskesmas');
-      }
-
-      setPkmName('');
-      setKapanewon('');
-      setUsername('');
-      setPassword('password123');
-      setIsCreateModalOpen(false);
-      fetchPuskesmas();
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Terjadi kesalahan');
+      if (!res.ok) throw new Error(data.error || 'Gagal membuat akun puskesmas');
+      setIsCreateOpen(false);
+      refresh();
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Terjadi kesalahan');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resetTarget || !resetNewPass.trim()) {
-      setResetErrorMsg('Password baru wajib diisi');
-      return;
-    }
+  const openReset = (userId: string, label: string, roleName: string) => {
+    setResetTarget({ id: userId, label, roleName });
+    setResetMsg(null);
+  };
 
-    if (resetNewPass.trim().length < 4) {
-      setResetErrorMsg('Password baru minimal 4 karakter');
-      return;
-    }
-
-    setResetIsSubmitting(true);
-    setResetErrorMsg('');
-    setResetSuccessMsg('');
-
+  const handleReset = async () => {
+    if (!resetTarget) return;
+    setResetSubmitting(true);
+    setResetMsg(null);
     try {
       const res = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          requesterId: user?.id,
-          targetUserId: resetTarget.userId,
-          newPassword: resetNewPass.trim(),
-        }),
+        body: JSON.stringify({ targetUserId: resetTarget.id }),
       });
-
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Gagal mereset password');
-      }
-
-      setResetSuccessMsg(data.message || 'Password berhasil direset!');
-      setResetNewPass('');
-
-      setTimeout(() => {
-        setResetSuccessMsg('');
-        setResetTarget(null);
-        fetchPuskesmas();
-      }, 1500);
-    } catch (err: any) {
-      setResetErrorMsg(err.message || 'Terjadi kesalahan');
+      if (!res.ok) throw new Error(data.error || 'Gagal mereset password');
+      setResetMsg({ type: 'ok', text: data.message || 'Password direset ke password default.' });
+    } catch (err: unknown) {
+      setResetMsg({ type: 'err', text: err instanceof Error ? err.message : 'Terjadi kesalahan' });
     } finally {
-      setResetIsSubmitting(false);
+      setResetSubmitting(false);
     }
   };
 
   const totalPosyandu = puskesmasList.reduce((acc, p) => acc + (p.posyandus?.length || 0), 0);
+  const totalPending = puskesmasList.reduce(
+    (acc, p) =>
+      acc +
+      (p.users?.[0]?.mustChangePassword ? 1 : 0) +
+      (p.posyandus?.filter((pos) => pos.users?.[0]?.mustChangePassword).length || 0),
+    0
+  );
+
+  const ActBadge = ({ pending }: { pending?: boolean }) =>
+    pending ? (
+      <span className="text-[10px] font-bold bg-[#f59e0b]/15 text-[#b45309] border border-[#f59e0b]/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+        <AlertTriangle className="w-3 h-3" /> Aktivasi
+      </span>
+    ) : (
+      <span className="text-[10px] font-bold bg-[#10b981]/10 text-[#047857] border border-[#10b981]/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+        <Check className="w-3 h-3" /> Aktif
+      </span>
+    );
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto pb-20">
-      {/* Dinkes Banner (DESIGN.md Hero Card Pattern) */}
+      {/* Banner */}
       <div className="bg-[#0f172a] text-white rounded-[28px] p-6 shadow-md space-y-4 border border-[#e2e8f0]/20">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-white/10 rounded-full">
-              <Building className="w-6 h-6 text-[#8b5cf6]" />
-            </div>
-            <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider bg-[#8b5cf6] px-2.5 py-0.5 rounded-full text-white">
-                Pusat Kontrol Dinas Kesehatan
-              </span>
-              <h1 className="text-lg font-black leading-tight mt-1">Dinas Kesehatan Gunungkidul</h1>
-              <p className="text-xs text-[#cbd5e1]">Pembuat & Pengelola Seluruh Puskesmas & Posyandu GK</p>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-white/10 rounded-full">
+            <Building className="w-6 h-6 text-[#8b5cf6]" />
+          </div>
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider bg-[#8b5cf6] px-2.5 py-0.5 rounded-full text-white">
+              Pusat Kontrol Dinas Kesehatan
+            </span>
+            <h1 className="text-lg font-black leading-tight mt-1">Dinas Kesehatan Gunungkidul</h1>
+            <p className="text-xs text-[#cbd5e1]">Membuat akun Puskesmas & memantau seluruh Posyandu</p>
           </div>
         </div>
-
         <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs">
-          <span>
-            Puskesmas: <strong className="text-white">{puskesmasList.length}</strong> • Total Posyandu: <strong className="text-white">{totalPosyandu}</strong>
-          </span>
+          <div>
+            <span>
+              Puskesmas: <strong className="text-white">{puskesmasList.length}</strong> · Posyandu:{' '}
+              <strong className="text-white">{totalPosyandu}</strong>
+            </span>
+            {totalPending > 0 && (
+              <div className="mt-1 flex items-center gap-1.5 text-[#fbbf24] font-bold">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                {totalPending} akun menunggu aktivasi
+              </div>
+            )}
+          </div>
           <button
             onClick={onExportAll}
             className="flex items-center gap-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white px-3.5 py-1.5 rounded-full text-xs font-bold transition-all touch-press"
@@ -193,15 +203,14 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({
         </div>
       </div>
 
-      {/* Action Header */}
+      {/* Action header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-black text-[#0f172a]">Daftar Akun Puskesmas</h2>
-          <p className="text-xs text-[#64748b]">Masing-masing Puskesmas memegang 1 akun & password</p>
+          <h2 className="text-sm font-black text-[#0f172a]">Daftar Puskesmas</h2>
+          <p className="text-xs text-[#64748b]">Staf login dengan username & password (bukan cascade)</p>
         </div>
-
         <button
-          onClick={() => setIsCreateModalOpen(true)}
+          onClick={openCreate}
           className="flex items-center gap-1.5 bg-[#8b5cf6] hover:bg-[#8b5cf6]/90 text-white font-bold px-4 py-2 rounded-full text-xs shadow-xs transition-all touch-press"
         >
           <PlusCircle className="w-4 h-4" />
@@ -209,290 +218,231 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({
         </button>
       </div>
 
-      {/* Puskesmas List */}
+      {/* List */}
       {isLoading ? (
-        <div className="p-12 text-center text-xs text-[#64748b]">Memuat data Puskesmas...</div>
+        <div className="p-12 flex flex-col items-center gap-2 text-xs font-bold text-[#64748b]">
+          <RefreshCw className="w-5 h-5 animate-spin text-[#8b5cf6]" />
+          Memuat data Puskesmas...
+        </div>
       ) : (
         <div className="space-y-3">
-          {puskesmasList.map((pkm) => (
-            <div
-              key={pkm.id}
-              className="bg-white rounded-[20px] p-4.5 border border-[#e2e8f0] shadow-xs space-y-3.5 hover:border-[#cbd5e1] transition-all"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
+          {puskesmasList.map((pkm) => {
+            const pkmUser = pkm.users?.[0];
+            return (
+            <div key={pkm.id} className="bg-white rounded-[20px] p-4 border border-[#e2e8f0] shadow-xs space-y-3.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-extrabold text-sm text-[#0f172a]">{pkm.name}</h3>
                     <span className="font-mono text-[10px] bg-[#8b5cf6]/10 text-[#8b5cf6] border border-[#8b5cf6]/20 px-2 py-0.5 rounded-full font-bold">
                       {pkm.code}
                     </span>
+                    <ActBadge pending={pkm.users?.[0]?.mustChangePassword} />
                   </div>
-                  <p className="text-xs text-[#64748b] font-medium mt-0.5">Kapanewon {pkm.kapanewon}</p>
+                  <p className="text-xs text-[#64748b] font-medium mt-0.5">
+                    Kapanewon {pkm.kapanewon} · {pkm._count?.posyandus || 0} posyandu
+                  </p>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  {pkm.users?.[0] && (
+                <div className="flex items-center gap-2 shrink-0">
+                  {pkmUser?.username && (
+                    <span className="text-[11px] font-mono bg-[#f0f7ff] text-[#0f172a] px-2.5 py-1 rounded-full border border-[#e2e8f0]">
+                      @{pkmUser.username}
+                    </span>
+                  )}
+                  {pkmUser && (
                     <button
-                      onClick={() => {
-                        setResetTarget({
-                          accountName: pkm.name,
-                          userId: pkm.users[0].id,
-                          username: pkm.users[0].username,
-                          roleName: 'Akun Puskesmas',
-                        });
-                        setResetNewPass('');
-                        setResetErrorMsg('');
-                        setResetSuccessMsg('');
-                      }}
+                      onClick={() => openReset(pkmUser.id, pkm.name, 'Akun Puskesmas')}
                       className="px-3 py-1.5 bg-[#f0f7ff] hover:bg-[#e2e8f0] text-[#8b5cf6] border border-[#cbd5e1] rounded-full text-xs font-bold transition-all flex items-center gap-1.5 touch-press"
-                      title="Reset Password Akun Puskesmas ini"
                     >
                       <Key className="w-3.5 h-3.5" />
                       <span>Reset Pass</span>
                     </button>
                   )}
-
-                  {pkm.users?.[0]?.username && (
-                    <span className="text-[11px] font-mono bg-[#f0f7ff] text-[#0f172a] px-2.5 py-1 rounded-full border border-[#e2e8f0]">
-                      user: <strong>{pkm.users[0].username}</strong>
-                    </span>
-                  )}
                 </div>
               </div>
 
-              {/* Posyandu sub-units */}
               <div className="bg-[#f0f7ff] p-3.5 rounded-2xl border border-[#e2e8f0] space-y-2">
                 <span className="text-[11px] font-bold text-[#0f172a]">
-                  Unit Posyandu Terdaftar ({pkm.posyandus?.length || 0}):
+                  Posyandu Terdaftar ({pkm.posyandus?.length || 0}):
                 </span>
-
                 <div className="flex flex-wrap gap-2">
-                  {pkm.posyandus?.map((pos: any) => (
-                    <div key={pos.id} className="flex items-center gap-1 bg-white border border-[#cbd5e1] rounded-full p-1 shadow-xs">
+                  {pkm.posyandus?.map((pos) => {
+                    const posUser = pos.users?.[0];
+                    return (
+                    <div
+                      key={pos.id}
+                      className="flex items-center gap-1.5 bg-white border border-[#cbd5e1] rounded-full px-2 py-1 shadow-xs"
+                    >
                       <button
                         onClick={() => onEnterPosyandu(pos.id, pos.name, pos.code)}
-                        className="px-2.5 py-0.5 text-[#0f172a] hover:text-[#0284c7] text-xs font-bold transition-all flex items-center gap-1"
+                        className="text-[#0f172a] hover:text-[#0284c7] text-xs font-bold transition-all flex items-center gap-1"
                       >
                         <span>{pos.name}</span>
                         <ArrowRight className="w-3 h-3 text-[#94a3b8]" />
                       </button>
-                      {pos.users?.[0] && (
+                      {posUser && (
                         <button
-                          onClick={() => {
-                            setResetTarget({
-                              accountName: pos.name,
-                              userId: pos.users[0].id,
-                              username: pos.users[0].username,
-                              roleName: 'Akun Posyandu',
-                            });
-                            setResetNewPass('');
-                            setResetErrorMsg('');
-                            setResetSuccessMsg('');
-                          }}
-                          className="p-1 text-[#94a3b8] hover:text-[#0284c7] rounded-full hover:bg-[#f0f7ff]"
-                          title={`Reset password ${pos.name}`}
+                          onClick={() => openReset(posUser.id, pos.name, 'Akun Posyandu')}
+                          className={`text-[#94a3b8] hover:text-[#0284c7] transition-all ${posUser.mustChangePassword ? 'text-[#b45309]' : ''}`}
+                          title={`Reset password / lihat status ${pos.name}`}
                         >
                           <Key className="w-3 h-3" />
                         </button>
                       )}
                     </div>
-                  ))}
+                  );
+                })}
                 </div>
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       )}
 
-      {/* Modal: Create Puskesmas Account */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white w-full max-w-md rounded-[28px] shadow-2xl overflow-hidden border border-[#e2e8f0] flex flex-col">
-            <div className="bg-[#0f172a] text-white p-4.5 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <PlusCircle className="w-5 h-5 text-[#8b5cf6]" />
-                <div>
-                  <h2 className="font-extrabold text-sm">Pendaftaran Akun Puskesmas Baru</h2>
-                  <p className="text-[11px] text-[#cbd5e1]">Dinas Kesehatan Kabupaten Gunungkidul</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsCreateModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-white/10 text-white/80"
-              >
-                <X className="w-5 h-5" />
+      {/* Modal: Daftarkan Puskesmas */}
+      {isCreateOpen && (
+        <ModalShell title="Daftarkan Puskesmas Baru" subtitle="Dinas Kesehatan Kabupaten Gunungkidul" accent="bg-[#8b5cf6]" onClose={() => setIsCreateOpen(false)}>
+          <form onSubmit={handleCreate} className="p-5 space-y-3.5">
+            {errorMsg && <BannerError msg={errorMsg} />}
+
+            <Field label="Nama Puskesmas" required>
+              <input type="text" value={cName} onChange={(e) => setCName(e.target.value)} placeholder="Contoh: Puskesmas Semanu I" required className={inputCls} />
+            </Field>
+
+            <Field label="Kapanewon" required>
+              <select value={cKapanewonId} onChange={(e) => setCKapanewonId(e.target.value)} required className={inputCls}>
+                <option value="">— Pilih Kapanewon —</option>
+                {kapanewonList.map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <div className="pt-1">
+              <span className="text-[11px] font-bold text-[#8b5cf6] flex items-center gap-1.5 mb-2">
+                <Key className="w-3.5 h-3.5" />
+                <span>Login Staf Puskesmas</span>
+              </span>
+              <Field label="Username" required>
+                <input
+                  type="text"
+                  value={cUsername}
+                  onChange={(e) => setCUsername(e.target.value)}
+                  placeholder="Contoh: pkm_semanu1"
+                  autoComplete="off"
+                  required
+                  className={inputCls}
+                />
+              </Field>
+            </div>
+
+            <div className="p-3 bg-[#f0f7ff] rounded-2xl border border-[#cbd5e1] text-[11px] text-[#0f172a] font-medium flex gap-2">
+              <Info className="w-4 h-4 shrink-0 text-[#8b5cf6]" />
+              <p>
+                Akun baru memakai <strong>password default</strong> dan wajib diganti staf saat login pertama.
+                Sampaikan password default ke pengelola Puskesmas.
+              </p>
+            </div>
+
+            <div className="pt-2 flex gap-2.5">
+              <button type="button" onClick={() => setIsCreateOpen(false)} className="flex-1 py-3 bg-[#f0f7ff] hover:bg-[#e2e8f0] text-[#0f172a] font-bold rounded-full text-xs border border-[#cbd5e1]">
+                Batal
+              </button>
+              <button type="submit" disabled={isSubmitting} className="flex-2 py-3 bg-[#8b5cf6] hover:bg-[#8b5cf6]/90 text-white font-bold rounded-full text-xs shadow-xs transition-all disabled:opacity-50">
+                {isSubmitting ? 'Mendaftarkan...' : 'Simpan & Terbitkan Akun'}
               </button>
             </div>
-
-            <form onSubmit={handleCreatePuskesmas} className="p-5 space-y-3.5">
-              {errorMsg && (
-                <div className="p-3 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl text-xs text-[#ef4444] font-bold flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 shrink-0 text-[#ef4444]" />
-                  <span>{errorMsg}</span>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-xs font-bold text-[#0f172a] mb-1">
-                  Nama Puskesmas <span className="text-[#ef4444]">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={pkmName}
-                  onChange={(e) => setPkmName(e.target.value)}
-                  placeholder="Contoh: Puskesmas Semanu I"
-                  required
-                  className="w-full px-3.5 py-2.5 text-xs bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#0f172a] mb-1">
-                  Kapanewon / Kecamatan <span className="text-[#ef4444]">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={kapanewon}
-                  onChange={(e) => setKapanewon(e.target.value)}
-                  placeholder="Contoh: Semanu"
-                  required
-                  className="w-full px-3.5 py-2.5 text-xs bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7]"
-                />
-              </div>
-
-              <div className="pt-2 border-t border-[#e2e8f0] space-y-2.5">
-                <span className="text-[11px] font-bold text-[#8b5cf6] flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-[#8b5cf6]" />
-                  <span>Kredensial Akun Institusi Puskesmas (1 Akun 1 Password):</span>
-                </span>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#64748b] mb-0.5">
-                    Username Akun Puskesmas <span className="text-[#ef4444]">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Contoh: pkm_semanu1"
-                    required
-                    className="w-full px-3.5 py-2.5 text-xs bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7] font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#64748b] mb-0.5">
-                    Password Akun Puskesmas <span className="text-[#ef4444]">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    className="w-full px-3.5 py-2.5 text-xs bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#0284c7] font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2 flex gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateModalOpen(false)}
-                  className="flex-1 py-3 bg-[#f0f7ff] hover:bg-[#e2e8f0] text-[#0f172a] font-bold rounded-full text-xs border border-[#cbd5e1]"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-2 py-3 bg-[#8b5cf6] hover:bg-[#8b5cf6]/90 text-white font-bold rounded-full text-xs shadow-xs transition-all"
-                >
-                  {isSubmitting ? 'Mendaftarkan...' : 'Simpan & Terbitkan Akun'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </ModalShell>
       )}
 
-      {/* Modal: Reset Password Dinkes (Super Admin) */}
+      {/* Modal: Reset Password */}
       {resetTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white w-full max-w-md rounded-[28px] shadow-2xl overflow-hidden border border-[#e2e8f0] flex flex-col">
-            <div className="bg-[#0f172a] text-white p-4.5 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <Key className="w-5 h-5 text-[#8b5cf6]" />
-                <div>
-                  <h2 className="font-extrabold text-sm">Reset Password Akun ({resetTarget.roleName})</h2>
-                  <p className="text-[11px] text-[#cbd5e1]">{resetTarget.accountName} (@{resetTarget.username})</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setResetTarget(null)}
-                className="p-1.5 rounded-full hover:bg-white/10 text-white/80"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleResetPasswordSubmit} className="p-5 space-y-4">
-              {resetErrorMsg && (
-                <div className="p-3 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl text-xs text-[#ef4444] font-bold flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 shrink-0 text-[#ef4444]" />
-                  <span>{resetErrorMsg}</span>
-                </div>
-              )}
-
-              {resetSuccessMsg && (
-                <div className="p-3 bg-[#10b981]/10 border border-[#10b981]/30 rounded-2xl text-xs text-[#10b981] font-bold flex items-center gap-2">
-                  <Check className="w-4 h-4 shrink-0 text-[#10b981]" />
-                  <span>{resetSuccessMsg}</span>
-                </div>
-              )}
-
-              <div className="bg-[#f0f7ff] p-3 rounded-2xl border border-[#cbd5e1] text-xs text-[#0f172a]">
-                <p className="font-medium text-[#64748b]">
-                  Sebagai Admin Dinkes, Anda berwenang mereset password akun Puskesmas & Posyandu manapun secara langsung.
+        <ModalShell title={`Reset Password (${resetTarget.roleName})`} subtitle={resetTarget.label} accent="bg-[#0f172a]" onClose={() => setResetTarget(null)}>
+          <div className="p-5 space-y-4">
+            {resetMsg?.type === 'ok' && <BannerOk msg={resetMsg.text} />}
+            {resetMsg?.type === 'err' && <BannerError msg={resetMsg.text} />}
+            {!resetMsg && (
+              <div className="p-3 bg-[#f0f7ff] rounded-2xl border border-[#cbd5e1] text-xs text-[#0f172a] font-medium flex gap-2">
+                <ShieldCheck className="w-4 h-4 shrink-0 text-[#8b5cf6]" />
+                <p>
+                  Password akun ini dikembalikan ke <strong>password default</strong>. Pemilik akun
+                  wajib menggantinya saat login pertama berikutnya. Tidak perlu mengetik password baru di sini.
                 </p>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#0f172a] mb-1">
-                  Password Baru <span className="text-[#ef4444]">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={resetNewPass}
-                  onChange={(e) => setResetNewPass(e.target.value)}
-                  placeholder="Masukkan password baru"
-                  required
-                  className="w-full px-3.5 py-2.5 text-xs bg-[#f8fafc] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#8b5cf6] font-mono"
-                />
-              </div>
-
-              <div className="pt-2 flex gap-2.5">
+            )}
+            <div className="pt-2 flex gap-2.5">
+              <button type="button" onClick={() => setResetTarget(null)} className="flex-1 py-3 bg-[#f0f7ff] hover:bg-[#e2e8f0] text-[#0f172a] font-bold rounded-full text-xs border border-[#cbd5e1]">
+                Tutup
+              </button>
+              {!resetMsg && (
                 <button
-                  type="button"
-                  onClick={() => setResetTarget(null)}
-                  className="flex-1 py-3 bg-[#f0f7ff] hover:bg-[#e2e8f0] text-[#0f172a] font-bold rounded-full text-xs border border-[#cbd5e1]"
+                  onClick={handleReset}
+                  disabled={resetSubmitting}
+                  className="flex-2 py-3 bg-[#8b5cf6] hover:bg-[#8b5cf6]/90 text-white font-extrabold rounded-full text-xs shadow-xs transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
-                  Batal
+                  <Key className="w-4 h-4" />
+                  <span>{resetSubmitting ? 'Memproses...' : 'Ya, Reset ke Default'}</span>
                 </button>
-                <button
-                  type="submit"
-                  disabled={resetIsSubmitting}
-                  className="flex-2 py-3 bg-[#8b5cf6] hover:bg-[#8b5cf6]/90 text-white font-extrabold rounded-full text-xs shadow-xs transition-all flex items-center justify-center gap-1.5"
-                >
-                  <Lock className="w-4 h-4" />
-                  <span>{resetIsSubmitting ? 'Simpan...' : 'Reset Password Now'}</span>
-                </button>
-              </div>
-            </form>
+              )}
+            </div>
           </div>
-        </div>
+        </ModalShell>
       )}
     </div>
   );
 };
 
+const inputCls =
+  'w-full px-3.5 py-2.5 text-xs bg-[#f0f7ff] border border-[#cbd5e1] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#8b5cf6] font-medium text-[#0f172a] transition-all';
+
+function ModalShell({ title, subtitle, accent, onClose, children }: { title: string; subtitle?: string; accent: string; onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="bg-white w-full max-w-md rounded-[28px] shadow-2xl overflow-hidden border border-[#e2e8f0] flex flex-col max-h-[90vh]">
+        <div className={`${accent} text-white p-4 flex items-center justify-between`}>
+          <div>
+            <h2 className="font-extrabold text-sm">{title}</h2>
+            {subtitle && <p className="text-[11px] text-white/80">{subtitle}</p>}
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-white/10 text-white/80">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-xs font-bold text-[#0f172a] mb-1">
+        {label} {required && <span className="text-[#ef4444]">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function BannerError({ msg }: { msg: string }) {
+  return (
+    <div className="p-3 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl text-xs text-[#ef4444] font-bold flex items-center gap-2">
+      <AlertTriangle className="w-4 h-4 shrink-0" />
+      <span>{msg}</span>
+    </div>
+  );
+}
+
+function BannerOk({ msg }: { msg: string }) {
+  return (
+    <div className="p-3 bg-[#10b981]/10 border border-[#10b981]/30 rounded-2xl text-xs text-[#10b981] font-bold flex items-center gap-2">
+      <Check className="w-4 h-4 shrink-0" />
+      <span>{msg}</span>
+    </div>
+  );
+}

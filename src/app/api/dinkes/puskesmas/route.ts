@@ -12,9 +12,15 @@ export async function GET() {
     const healthCenters = await prisma.healthCenter.findMany({
       include: {
         kapanewon: { select: { name: true } },
-        posyandus: true,
+        posyandus: {
+          include: {
+            kalurahan: { select: { name: true } },
+            users: { select: { id: true, username: true, mustChangePassword: true } },
+          },
+          orderBy: { name: 'asc' },
+        },
         users: {
-          select: { username: true },
+          select: { id: true, username: true, mustChangePassword: true },
         },
         _count: {
           select: { posyandus: true },
@@ -27,6 +33,10 @@ export async function GET() {
     const data = healthCenters.map((hc) => ({
       ...hc,
       kapanewon: hc.kapanewon.name,
+      posyandus: hc.posyandus.map((pos) => ({
+        ...pos,
+        kalurahan: pos.kalurahan.name,
+      })),
     }));
 
     return NextResponse.json({ success: true, data });

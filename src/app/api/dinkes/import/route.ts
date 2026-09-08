@@ -3,10 +3,11 @@ import { prisma } from '@/lib/prisma';
 import { requireRole } from '@/lib/api-auth';
 import { hashPassword } from '@/lib/password';
 import * as XLSX from 'xlsx';
+import { smartTitle } from '@/lib/names';
 import {
   generatePosyanduCode,
   buildPosyanduUsername,
-  getDefaultPassword,
+  getPosyanduDefaultPassword,
 } from '@/lib/accounts';
 
 interface ImportRow {
@@ -32,10 +33,6 @@ function norm(s: string): string {
 
 function normNoPuskesma(s: string): string {
   return s.toUpperCase().replace(/PUSKESMAS/g, '').replace(/[^A-Z0-9]/g, '');
-}
-
-function toTitle(s: string): string {
-  return s.toLowerCase().replace(/\b\w/g, (m) => m.toUpperCase());
 }
 
 function parseRows(buffer: Buffer): { rows: ImportRow[]; error: string | null } {
@@ -139,7 +136,7 @@ async function runImport(rows: ImportRow[], dryRun: boolean): Promise<Report> {
     return `${kapanewonCode}-${String(n).padStart(3, '0')}`;
   };
 
-  const defaultPassword = getDefaultPassword();
+  const defaultPassword = getPosyanduDefaultPassword();
   const defaultHash = await hashPassword(defaultPassword);
 
   for (const row of rows) {
@@ -161,7 +158,7 @@ async function runImport(rows: ImportRow[], dryRun: boolean): Promise<Report> {
       kalurahan = {
         id: `k-${kKey}`, // pseudo utk dry-run
         code: nextKalCode(hc.kapanewon.code, kapanewonId),
-        name: toTitle(row.kalurahan),
+        name: smartTitle(row.kalurahan),
         kapanewonId,
       };
       if (!dryRun) {
@@ -182,8 +179,8 @@ async function runImport(rows: ImportRow[], dryRun: boolean): Promise<Report> {
     }
 
     const code = await generatePosyanduCode(hc.code);
-    const name = toTitle(row.posyandu);
-    const padukuhan = toTitle(row.padukuhan || '-');
+    const name = smartTitle(row.posyandu);
+    const padukuhan = smartTitle(row.padukuhan || '-');
     const username = buildPosyanduUsername(code);
 
     if (dryRun) {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
 import { requireRole } from '@/lib/api-auth';
+import { smartTitle } from '@/lib/names';
 
 // PATCH /api/posyandus/[posyanduId]
 // Ubah nama / kalurahan / padukuhan posyandu. Nama boleh duplikat; kode tidak berubah.
@@ -34,7 +35,7 @@ export async function PATCH(
       if (typeof name !== 'string' || !name.trim()) {
         return NextResponse.json({ error: 'Nama posyandu tidak boleh kosong' }, { status: 400 });
       }
-      data.name = name.trim();
+      data.name = smartTitle(name.trim());
     }
 
     if (kalurahanId !== undefined) {
@@ -55,7 +56,7 @@ export async function PATCH(
     }
 
     if (padukuhan !== undefined) {
-      data.padukuhan = (padukuhan || '').trim() || '-';
+      data.padukuhan = smartTitle((padukuhan || '').trim() || '-');
     }
 
     const updated = await prisma.posyandu.update({

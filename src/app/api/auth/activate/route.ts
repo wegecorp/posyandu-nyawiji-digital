@@ -4,7 +4,7 @@ import { verifyPassword, hashPassword } from '@/lib/password';
 import { createSession, buildSetCookieHeader, isSecureRequest, type SessionPayload } from '@/lib/session';
 import { isRateLimited, getClientKey } from '@/lib/rate-limit';
 import { getUserBySession, serializeUser } from '@/lib/user-profile';
-import { getDefaultPassword } from '@/lib/accounts';
+import { getDefaultPasswordForRole } from '@/lib/accounts';
 
 // POST /api/auth/activate
 // Aktivasi akun baru: verifikasi identitas + password default, lalu set password pribadi.
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     }
 
     const cleanNewPassword = newPassword.trim();
-    if (cleanNewPassword === getDefaultPassword()) {
+    if (cleanNewPassword === getDefaultPasswordForRole(user.role)) {
       return NextResponse.json(
         { error: 'Password baru tidak boleh sama dengan password default.' },
         { status: 400 }

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/password';
 import { requireAuth } from '@/lib/api-auth';
-import { getDefaultPassword } from '@/lib/accounts';
+import { getDefaultPasswordForRole } from '@/lib/accounts';
 import { isRateLimited, getClientKey } from '@/lib/rate-limit';
 
 export async function POST(req: Request) {
@@ -64,8 +64,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Reset = kembalikan password default & paksa aktivasi ulang oleh pemilik akun.
-    const defaultPassword = getDefaultPassword();
+    // Reset = kembalikan password default (sesuai role akun) & paksa aktivasi ulang.
+    const defaultPassword = getDefaultPasswordForRole(targetUser.role);
     const hashedPassword = await hashPassword(defaultPassword);
 
     const updatedUser = await prisma.user.update({

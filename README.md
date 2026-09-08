@@ -10,9 +10,13 @@ Aplikasi web modern untuk digitalisasi pencatatan, pemantauan kesehatan balita &
 - 📏 **Pencatatan Pengukuran**: Catat Berat Badan (BB), Tinggi/Panjang Badan (TB/PB), Lingkar Kepala, LiLA, Tensi, & Usia Kehamilan.
 - 📱 **Sistem QR Code**: Scan & cetak QR Code pasien untuk pencarian data instan saat hari pelayanan.
 - 👥 **Multi-Role User**:
-  - **DINKES**: Pemantauan data kesehatan tingkat kabupaten/kota.
-  - **PUSKESMAS**: Pengawasan & manajemen Posyandu di wilayah kerja kecamatan/kapanewon.
-  - **POSYANDU**: Operasional kader untuk pencatatan rutin pasien & pelayanan bulanan.
+- **DINKES**: Pemantauan data kesehatan tingkat kabupaten/kota.
+- **PUSKESMAS**: Pengawasan & manajemen Posyandu di wilayah kerja kecamatan/kapanewon.
+- **POSYANDU**: Operasional kader untuk pencatatan rutin pasien & pelayanan bulanan.
+- 🔑 **Kredensial**:
+  - Staf Puskesmas login dengan **username otomatis** dari nama puskesmas (mis. `pkm_semanu1`, `pkm_wonosari2`) + **password default puskesmas** (`PUSKESMAS_DEFAULT_PASSWORD`).
+  - Kader Posyandu login via cascade (Puskesmas → Kalurahan → Posyandu) tanpa username, memakai **password default posyandu** (`POSYANDU_DEFAULT_PASSWORD`) lalu wajib aktivasi/ganti password saat login pertama.
+  - Penulisan angka romawi dinormalisasi otomatis: `Ii` → `II`, `Iii` → `III`.
 - 📊 **Ekspor & Impor Excel**: Kemudahan pengolahan data & pelaporan via file `.xlsx`.
 
 ---
@@ -48,6 +52,7 @@ SESSION_SECRET="ganti_dengan_string_acak_panjang"
 DINKES_ADMIN_USERNAME="dinkes_gk"
 DINKES_ADMIN_PASSWORD="ganti_password_admin"
 POSYANDU_DEFAULT_PASSWORD="posyandu2026"
+PUSKESMAS_DEFAULT_PASSWORD="puskesmas2026"
 ```
 
 ### 4. Setup Database Prisma

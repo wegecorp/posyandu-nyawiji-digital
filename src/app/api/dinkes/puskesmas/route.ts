@@ -2,7 +2,12 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireRole } from '@/lib/api-auth';
 import { hashPassword } from '@/lib/password';
-import { generateHealthCenterCode, getDefaultPassword } from '@/lib/accounts';
+import { smartTitle } from '@/lib/names';
+import {
+  generateHealthCenterCode,
+  generateUniquePuskesmasUsername,
+  getPuskesmasDefaultPassword,
+} from '@/lib/accounts';
 
 export async function GET() {
   try {
@@ -52,11 +57,11 @@ export async function POST(req: Request) {
     const session = await requireRole(req, ['DINKES']);
     if (session instanceof NextResponse) return session;
 
-    const { name, kapanewonId, username } = await req.json();
+    const { name, kapanewonId } = await req.json();
 
-    if (!name || !kapanewonId || !username) {
+    if (!name || !kapanewonId) {
       return NextResponse.json(
-        { error: 'Nama Puskesmas, Kapanewon, dan Username wajib diisi' },
+        { error: 'Nama Puskesmas dan Kapanewon wajib diisi' },
         { status: 400 }
       );
     }
@@ -66,32 +71,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Kapanewon tidak ditemukan.' }, { status: 400 });
     }
 
-    const cleanUsername = username.toLowerCase().trim();
-    const existingUser = await prisma.user.findUnique({
-      where: { username: cleanUsername },
-    });
-    if (existingUser) {
-      return NextResponse.json({ error: 'Username puskesmas ini sudah digunakan' }, { status: 400 });
-    }
-
+    const cleanName = smartTitle(name.trim());
     const code = await generateHealthCenterCode(kapanewon.code);
-    const defaultPassword = getDefaultPassword();
+    const username = await generateUniquePuskesmasUsername(cleanName);
+    const defaultPassword = getPuskesmasDefaultPassword();
     const hashedPassword = await hashPassword(defaultPassword);
 
     const result = await prisma.$transaction(async (tx) => {
       const healthCenter = await tx.healthCenter.create({
         data: {
           code,
-          name: name.trim(),
+          name: cleanName,
           kapanewonId: kapanewon.id,
         },
       });
 
       const user = await tx.user.create({
         data: {
-          username: cleanUsername,
+          username,
           password: hashedPassword,
-          name: name.trim(),
+          name: cleanName,
           role: 'PUSKESMAS',
           healthCenterId: healthCenter.id,
           mustChangePassword: true,

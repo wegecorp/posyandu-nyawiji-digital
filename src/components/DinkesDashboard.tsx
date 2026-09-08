@@ -19,6 +19,7 @@ import {
   Users,
   Activity,
 } from 'lucide-react';
+import { puskesmasUsernameBase } from '@/lib/names';
 
 interface DinkesDashboardProps {
   onExportAll: () => void;
@@ -64,7 +65,6 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [cName, setCName] = useState('');
   const [cKapanewonId, setCKapanewonId] = useState('');
-  const [cUsername, setCUsername] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -136,15 +136,14 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
   const openCreate = () => {
     setCName('');
     setCKapanewonId('');
-    setCUsername('');
     setErrorMsg('');
     setIsCreateOpen(true);
   };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cName.trim() || !cKapanewonId || !cUsername.trim()) {
-      setErrorMsg('Nama Puskesmas, Kapanewon, dan Username wajib diisi');
+    if (!cName.trim() || !cKapanewonId) {
+      setErrorMsg('Nama Puskesmas dan Kapanewon wajib diisi');
       return;
     }
     setIsSubmitting(true);
@@ -156,7 +155,6 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
         body: JSON.stringify({
           name: cName.trim(),
           kapanewonId: cKapanewonId,
-          username: cUsername.trim(),
         }),
       });
       const data = await res.json();
@@ -529,24 +527,23 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
                 <Key className="w-3.5 h-3.5" />
                 <span>Login Staf Puskesmas</span>
               </span>
-              <Field label="Username" required>
-                <input
-                  type="text"
-                  value={cUsername}
-                  onChange={(e) => setCUsername(e.target.value)}
-                  placeholder="Contoh: pkm_semanu1"
-                  autoComplete="off"
-                  required
-                  className={inputCls}
-                />
-              </Field>
+              <div className="p-3 bg-[#f0f2f5] rounded-2xl border border-[#e9edef] flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] text-[#54656f] font-medium">
+                    Username dibuat otomatis dari nama puskesmas:
+                  </p>
+                  <p className="text-sm font-mono font-black text-[#111b21] mt-0.5 break-all">
+                    {cName.trim() ? `@pkm_${puskesmasUsernameBase(cName)}` : '@pkm_...'}
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="p-3 bg-[#f0f2f5] rounded-2xl border border-[#e9edef] text-[11px] text-[#111b21] font-medium flex gap-2">
               <Info className="w-4 h-4 shrink-0 text-[#128c7e]" />
               <p>
-                Akun baru memakai <strong>password default</strong> dan wajib diganti staf saat login pertama.
-                Sampaikan password default ke pengelola Puskesmas.
+                Akun baru memakai <strong>password default puskesmas</strong> dan wajib diganti staf saat
+                login pertama. Sampaikan username &amp; password default ke pengelola Puskesmas.
               </p>
             </div>
 

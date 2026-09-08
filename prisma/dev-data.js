@@ -4,12 +4,14 @@ const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 const SALT_ROUNDS = 12;
 
-const DEFAULT_PASSWORD = process.env.POSYANDU_DEFAULT_PASSWORD || 'posyandu2026';
+const POSYANDU_PASS = process.env.POSYANDU_DEFAULT_PASSWORD || 'posyandu2026';
+const PUSKESMAS_PASS = process.env.PUSKESMAS_DEFAULT_PASSWORD || 'puskesmas2026';
 
 // Data uji lokal: 1 Puskesmas + beberapa Posyandu di Kapanewon Wonosari.
 // Idempotent — aman dijalankan berulang.
 async function main() {
-  const pass = await bcrypt.hash(DEFAULT_PASSWORD, SALT_ROUNDS);
+  const posyanduPass = await bcrypt.hash(POSYANDU_PASS, SALT_ROUNDS);
+  const puskesmasPass = await bcrypt.hash(PUSKESMAS_PASS, SALT_ROUNDS);
 
   const wonosari = await prisma.kapanewon.upsert({
     where: { code: 'WNS' },
@@ -31,14 +33,14 @@ async function main() {
     await prisma.user.create({
       data: {
         username: 'pkm_wonosari1',
-        password: pass,
+        password: puskesmasPass,
         name: 'Puskesmas Wonosari I',
         role: 'PUSKESMAS',
         healthCenterId: hc.id,
         mustChangePassword: true,
       },
     });
-    console.log('Puskesmas Wonosari I + akun staf dibuat (default password).');
+    console.log('Puskesmas Wonosari I + akun staf dibuat (password default puskesmas).');
   } else {
     console.log('Puskesmas Wonosari I sudah ada — dilewati.');
   }
@@ -71,7 +73,7 @@ async function main() {
     await prisma.user.create({
       data: {
         username: `posyandu-${code.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-        password: pass,
+        password: posyanduPass,
         name: s.name,
         role: 'POSYANDU',
         posyanduId: posyandu.id,

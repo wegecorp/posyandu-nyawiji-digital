@@ -1,11 +1,19 @@
 import { prisma } from './prisma';
+import { puskesmasUsernameBase } from './names';
 
-/**
- * Password default seragam untuk akun baru (posyandu & puskesmas).
- * Akun wajib mengganti password saat aktivasi pertama (mustChangePassword).
- */
-export function getDefaultPassword(): string {
+/** Password default seragam utk akun baru POSYANDU. */
+export function getPosyanduDefaultPassword(): string {
   return process.env.POSYANDU_DEFAULT_PASSWORD || 'posyandu2026';
+}
+
+/** Password default khusus akun staf PUSKESMAS (beda dari posyandu). */
+export function getPuskesmasDefaultPassword(): string {
+  return process.env.PUSKESMAS_DEFAULT_PASSWORD || 'puskesmas2026';
+}
+
+/** Password default sesuai role akun. */
+export function getDefaultPasswordForRole(role: string): string {
+  return role === 'PUSKESMAS' ? getPuskesmasDefaultPassword() : getPosyanduDefaultPassword();
 }
 
 /** Kode internal username utk akun posyandu — tidak pernah dipakai kader utk login. */
@@ -13,9 +21,24 @@ export function buildPosyanduUsername(posyanduCode: string): string {
   return `posyandu-${posyanduCode.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 }
 
-/** Kode internal username utk akun puskesmas staf — dipakai login staf. */
-export function buildPuskesmasUsername(healthCenterCode: string): string {
-  return `puskesmas-${healthCenterCode.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+/**
+ * Username staf puskesmas, diturunkan otomatis dari nama puskesmas — mudah diingat.
+ * 'Puskesmas Wonosari I' -> 'pkm_wonosari1' ; 'Puskesmas Semanu II' -> 'pkm_semanu2'
+ */
+export function buildPuskesmasUsername(healthCenterName: string): string {
+  return `pkm_${puskesmasUsernameBase(healthCenterName)}`;
+}
+
+/** Username puskesmas unik di DB (fallback suffix _2, _3, ... bila bentrok). */
+export async function generateUniquePuskesmasUsername(healthCenterName: string): Promise<string> {
+  const base = buildPuskesmasUsername(healthCenterName);
+  let candidate = base;
+  let n = 1;
+  while (await prisma.user.findUnique({ where: { username: candidate } })) {
+    n += 1;
+    candidate = `${base}_${n}`;
+  }
+  return candidate;
 }
 
 async function uniqueCode(base: string, exists: (code: string) => Promise<boolean>): Promise<string> {

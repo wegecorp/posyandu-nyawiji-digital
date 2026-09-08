@@ -45,6 +45,7 @@ SESSION_SECRET="<string acak sangat panjang — WAJIB beda dari dev>"
 DINKES_ADMIN_USERNAME="dinkes_gk"
 DINKES_ADMIN_PASSWORD="<password admin yang kuat>"
 POSYANDU_DEFAULT_PASSWORD="<password default kader — ganti sebelum sosialisasi>"
+PUSKESMAS_DEFAULT_PASSWORD="<password default staf puskesmas — WAJIB beda dari posyandu>"
 ```
 
 > `SESSION_SECRET` wajib diisi: di produksi aplikasi **sengaja gagal** kalau kosong.
@@ -132,7 +133,14 @@ sqlite3 prisma/dev.db ".backup '/backup/posyandu_$(date +%F).db'"
 
 ### Catatan penting
 
-- **Akun baru = password default** (`POSYANDU_DEFAULT_PASSWORD`) lalu **aktivasi paksa**
-  (ganti password) saat login pertama. Sampaikan default password ini lewat jalur resmi.
+- **Akun baru = password default sesuai role** lalu **aktivasi paksa** (ganti password) saat login
+  pertama:
+  - Kader Posyandu → `POSYANDU_DEFAULT_PASSWORD`.
+  - Staf Puskesmas → `PUSKESMAS_DEFAULT_PASSWORD` (berbeda dari posyandu).
+  Sampaikan password default ini lewat jalur resmi.
+- **Username staf Puskesmas dibuat otomatis dari nama** (mis. `pkm_semanu1`, `pkm_wonosari2`) dan
+  tampil di dashboard DINKES — cukup disebarkan, tidak perlu dibuat manual.
+- Penulisan nama dinormalisasi saat seed/import: angka romawi dipertahankan kapital
+  (`Puskesmas Wonosari II`, bukan `... Ii`).
 - Kader login memakai **cascade picker** (Puskesmas → Kalurahan → Posyandu) — tidak perlu username.
 - Staf Puskesmas/DINKES login memakai **username + password** (username tampil di dashboard DINKES).

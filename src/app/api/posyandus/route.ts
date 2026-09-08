@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
 import { requireRole } from '@/lib/api-auth';
 import { hashPassword } from '@/lib/password';
-import { generatePosyanduCode, buildPosyanduUsername, getDefaultPassword } from '@/lib/accounts';
+import { generatePosyanduCode, buildPosyanduUsername, getPosyanduDefaultPassword } from '@/lib/accounts';
+import { smartTitle } from '@/lib/names';
 
 export async function GET(req: Request) {
   try {
@@ -99,8 +100,9 @@ export async function POST(req: Request) {
     }
 
     const code = await generatePosyanduCode(hc.code);
-    const cleanName = name.trim();
-    const defaultPassword = getDefaultPassword();
+    const cleanName = smartTitle(name.trim());
+    const cleanPadukuhan = smartTitle(padukuhan?.trim() || '-');
+    const defaultPassword = getPosyanduDefaultPassword();
     const hashedPassword = await hashPassword(defaultPassword);
     const username = buildPosyanduUsername(code);
 
@@ -110,7 +112,7 @@ export async function POST(req: Request) {
           code,
           name: cleanName,
           kalurahanId: kalurahan.id,
-          padukuhan: padukuhan?.trim() || '-',
+          padukuhan: cleanPadukuhan,
           healthCenterId: targetHealthCenterId,
         },
       });

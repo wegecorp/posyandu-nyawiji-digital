@@ -9,7 +9,8 @@
     "lint": "eslint",
     "db:seed": "prisma db seed",
     "db:dev": "node prisma/dev-data.js",
-    "db:reset": "node prisma/clean.js"
+    "db:reset": "node prisma/clean.js",
+    "data:gunungkidul": "node scripts/data-gunungkidul.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

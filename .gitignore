@@ -48,3 +48,6 @@ next-env.d.ts
 
 # data kerja / master (belum final, jangan di-track)
 daftarposyandu.csv
+
+# pm2 logs
+/logs

@@ -7,7 +7,9 @@ async function main() {
   await prisma.user.deleteMany();
   await prisma.posyandu.deleteMany();
   await prisma.healthCenter.deleteMany();
-  console.log('Database 100% bersih! Semua akun, posyandu, puskesmas, pasien, dan pengukuran telah dihapus.');
+  await prisma.kalurahan.deleteMany();
+  await prisma.kapanewon.deleteMany();
+  console.log('Database 100% bersih! Semua data referensi & operasional telah dihapus.');
 }
 
 main()

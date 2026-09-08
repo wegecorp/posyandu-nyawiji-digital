@@ -45,6 +45,7 @@ export async function GET(req: Request) {
         patient: true,
         posyandu: {
           include: {
+            kalurahan: true,
             healthCenter: true,
           },
         },
@@ -85,7 +86,7 @@ export async function GET(req: Request) {
         Catatan: m.notes ?? '-',
         'Kader Pencatat': m.recordedBy || '-',
         Posyandu: m.posyandu.name,
-        Kalurahan: m.posyandu.kalurahan,
+        Kalurahan: m.posyandu.kalurahan.name,
         Padukuhan: m.posyandu.padukuhan,
         Puskesmas: m.posyandu.healthCenter.name,
       };

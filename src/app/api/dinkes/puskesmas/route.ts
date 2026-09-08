@@ -1,17 +1,17 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getAuthSession } from '@/lib/api-auth';
+import { requireRole } from '@/lib/api-auth';
 import { hashPassword } from '@/lib/password';
+import { generateHealthCenterCode, getDefaultPassword } from '@/lib/accounts';
 
 export async function GET() {
   try {
-    const session = await getAuthSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Tidak terautentikasi' }, { status: 401 });
-    }
+    const session = await requireRole(undefined, ['DINKES']);
+    if (session instanceof NextResponse) return session;
 
     const healthCenters = await prisma.healthCenter.findMany({
       include: {
+        kapanewon: { select: { name: true } },
         posyandus: true,
         users: {
           select: { username: true },
@@ -23,7 +23,13 @@ export async function GET() {
       orderBy: { name: 'asc' },
     });
 
-    return NextResponse.json({ success: true, data: healthCenters });
+    // Flatten relasi agar bentuk respons tetap stabil utk konsumen (dashboard).
+    const data = healthCenters.map((hc) => ({
+      ...hc,
+      kapanewon: hc.kapanewon.name,
+    }));
+
+    return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error('Error fetching puskesmas:', error);
     return NextResponse.json({ error: 'Gagal memuat data Puskesmas' }, { status: 500 });
@@ -32,48 +38,41 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const session = await getAuthSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Tidak terautentikasi' }, { status: 401 });
-    }
+    const session = await requireRole(req, ['DINKES']);
+    if (session instanceof NextResponse) return session;
 
-    if (session.role !== 'DINKES') {
-      return NextResponse.json({ error: 'Hanya Admin Dinkes yang dapat mendaftarkan Puskesmas' }, { status: 403 });
-    }
+    const { name, kapanewonId, username } = await req.json();
 
-    const { name, kapanewon, username, password } = await req.json();
-
-    if (!name || !kapanewon || !username || !password) {
+    if (!name || !kapanewonId || !username) {
       return NextResponse.json(
-        { error: 'Nama Puskesmas, Kapanewon, Username, dan Password wajib diisi' },
+        { error: 'Nama Puskesmas, Kapanewon, dan Username wajib diisi' },
         { status: 400 }
       );
     }
 
-    if (typeof password !== 'string' || password.length < 8) {
-      return NextResponse.json({ error: 'Password minimal 8 karakter' }, { status: 400 });
+    const kapanewon = await prisma.kapanewon.findUnique({ where: { id: kapanewonId } });
+    if (!kapanewon) {
+      return NextResponse.json({ error: 'Kapanewon tidak ditemukan.' }, { status: 400 });
     }
 
     const cleanUsername = username.toLowerCase().trim();
     const existingUser = await prisma.user.findUnique({
       where: { username: cleanUsername },
     });
-
     if (existingUser) {
       return NextResponse.json({ error: 'Username puskesmas ini sudah digunakan' }, { status: 400 });
     }
 
-    const count = await prisma.healthCenter.count();
-    const code = `PKM-GK-${String(count + 1).padStart(3, '0')}`;
-
-    const hashedPassword = await hashPassword(password.trim());
+    const code = await generateHealthCenterCode(kapanewon.code);
+    const defaultPassword = getDefaultPassword();
+    const hashedPassword = await hashPassword(defaultPassword);
 
     const result = await prisma.$transaction(async (tx) => {
       const healthCenter = await tx.healthCenter.create({
         data: {
           code,
           name: name.trim(),
-          kapanewon: kapanewon.trim(),
+          kapanewonId: kapanewon.id,
         },
       });
 
@@ -84,10 +83,19 @@ export async function POST(req: Request) {
           name: name.trim(),
           role: 'PUSKESMAS',
           healthCenterId: healthCenter.id,
+          mustChangePassword: true,
         },
       });
 
-      return { healthCenter, user: { id: user.id, username: user.username, name: user.name, role: user.role } };
+      return {
+        healthCenter: {
+          id: healthCenter.id,
+          code: healthCenter.code,
+          name: healthCenter.name,
+          kapanewon: kapanewon.name,
+        },
+        user: { id: user.id, username: user.username, name: user.name, role: user.role },
+      };
     });
 
     return NextResponse.json({ success: true, data: result });

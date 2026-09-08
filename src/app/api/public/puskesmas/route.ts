@@ -2,38 +2,27 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 // GET /api/public/puskesmas
-// Public list of health centers for Posyandu registration dropdown
+// Daftar puskesmas publik (langkah pertama login cascade kader posyandu).
 export async function GET() {
   try {
-    let healthCenters = await prisma.healthCenter.findMany({
+    const healthCenters = await prisma.healthCenter.findMany({
       select: {
         id: true,
         code: true,
         name: true,
-        kapanewon: true,
+        kapanewon: { select: { name: true } },
       },
       orderBy: { name: 'asc' },
     });
 
-    // Auto-bootstrap default Puskesmas if database is fresh/empty
-    if (healthCenters.length === 0) {
-      const defaultHc = await prisma.healthCenter.create({
-        data: {
-          code: 'PKM-GK-001',
-          name: 'Puskesmas Wonosari I',
-          kapanewon: 'Wonosari',
-        },
-        select: {
-          id: true,
-          code: true,
-          name: true,
-          kapanewon: true,
-        },
-      });
-      healthCenters = [defaultHc];
-    }
+    const data = healthCenters.map((hc) => ({
+      id: hc.id,
+      code: hc.code,
+      name: hc.name,
+      kapanewon: hc.kapanewon.name,
+    }));
 
-    return NextResponse.json({ success: true, data: healthCenters });
+    return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error('Error fetching public puskesmas list:', error);
     return NextResponse.json({ error: 'Gagal memuat data Puskesmas' }, { status: 500 });

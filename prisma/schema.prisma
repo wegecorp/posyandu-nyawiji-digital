@@ -7,23 +7,46 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model Kapanewon {
+  id             String         @id @default(cuid())
+  code           String         @unique // e.g. WNS
+  name           String         // e.g. Wonosari
+  healthCenters  HealthCenter[]
+  kalurahan      Kalurahan[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Kalurahan {
+  id            String      @id @default(cuid())
+  code          String      @unique // e.g. WNS-BLH
+  name          String      // e.g. Baleharjo
+  kapanewonId   String
+  kapanewon     Kapanewon   @relation(fields: [kapanewonId], references: [id], onDelete: Cascade)
+  posyandus     Posyandu[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
 model HealthCenter {
-  id          String     @id @default(cuid())
-  code        String     @unique // e.g. PKM-WONOSARI-1
-  name        String     // e.g. Puskesmas Wonosari I
-  kapanewon   String     // e.g. Wonosari
+  id          String      @id @default(cuid())
+  code        String      @unique // e.g. PKM-WONOSARI-1
+  name        String      // e.g. Puskesmas Wonosari I
+  kapanewonId String
+  kapanewon   Kapanewon   @relation(fields: [kapanewonId], references: [id], onDelete: Restrict)
   users       User[]
   posyandus   Posyandu[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 model Posyandu {
   id              String        @id @default(cuid())
   code            String        @unique // e.g. POS-WNS-01
   name            String        // e.g. Posyandu Melati Padukuhan Purbosari
-  kalurahan       String        // e.g. Wonosari
-  padukuhan       String        // e.g. Purbosari
+  kalurahanId     String
+  kalurahan       Kalurahan     @relation(fields: [kalurahanId], references: [id], onDelete: Restrict)
+  padukuhan       String        @default("-") // e.g. Purbosari
   healthCenterId  String
   healthCenter    HealthCenter  @relation(fields: [healthCenterId], references: [id], onDelete: Cascade)
   users           User[]
@@ -34,17 +57,18 @@ model Posyandu {
 }
 
 model User {
-  id              String        @id @default(cuid())
-  username        String        @unique
-  password        String        // 1 akun 1 password
-  name            String        // Nama entitas / institusi
-  role            String        @default("POSYANDU") // DINKES, PUSKESMAS, POSYANDU
-  healthCenterId  String?
-  healthCenter    HealthCenter? @relation(fields: [healthCenterId], references: [id], onDelete: Cascade)
-  posyanduId      String?
-  posyandu        Posyandu?     @relation(fields: [posyanduId], references: [id], onDelete: Cascade)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id                  String        @id @default(cuid())
+  username            String        @unique // kode internal; dipakai login hanya utk role staf
+  password            String        // 1 akun 1 password
+  name                String        // Nama entitas / institusi
+  role                String        @default("POSYANDU") // DINKES, PUSKESMAS, POSYANDU
+  mustChangePassword  Boolean       @default(true) // akun baru wajib aktivasi (ganti password default)
+  healthCenterId      String?
+  healthCenter        HealthCenter? @relation(fields: [healthCenterId], references: [id], onDelete: Cascade)
+  posyanduId          String?
+  posyandu            Posyandu?     @relation(fields: [posyanduId], references: [id], onDelete: Cascade)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 }
 
 model Patient {

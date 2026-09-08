@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 
 export default function PosyanduApp() {
-  const { user, isLoading, switchActivePosyandu } = useAuth();
+  const { user, isLoading: authLoading, switchActivePosyandu } = useAuth();
   const [patients, setPatients] = useState<PatientData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -156,7 +156,7 @@ export default function PosyanduApp() {
   };
 
   // 0. Still validating session against server — show splash to avoid flash of login page
-  if (isLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f0f7ff]">
         <div className="text-center space-y-2">

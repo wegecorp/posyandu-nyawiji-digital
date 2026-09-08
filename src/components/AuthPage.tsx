@@ -8,189 +8,271 @@ import {
   Key,
   ArrowRight,
   ArrowLeft,
-  AlertCircle,
   AlertTriangle,
   Building2,
-  Building,
-  PlusCircle,
   Eye,
   EyeOff,
-  ChevronDown,
   CheckCircle2,
   Stethoscope,
-  Landmark,
-  Hospital,
-  Sprout,
+  MapPin,
+  Home,
+  RefreshCw,
+  ShieldCheck,
+  Info,
 } from 'lucide-react';
 
-type AuthView = 'login' | 'signup_choose' | 'signup_puskesmas' | 'signup_posyandu';
+type LoginTab = 'posyandu' | 'staf';
+type CascadeStep = 0 | 1 | 2 | 3; // 0:puskesmas 1:kalurahan 2:posyandu 3:password
+
+interface Identity {
+  mode: 'posyandu' | 'staff';
+  username?: string;
+  posyanduId?: string | null;
+  label: string;
+}
+
+interface PuskesmasItem { id: string; code: string; name: string; kapanewon: string }
+interface KalurahanItem { id: string; name: string; posyanduCount: number }
+interface PosyanduItem { id: string; code: string; name: string; padukuhan: string }
+
+function getErrMsg(err: unknown): string {
+  return err instanceof Error ? err.message : 'Terjadi kesalahan';
+}
 
 export function AuthPage() {
   const { login } = useAuth();
-  const [view, setView] = useState<AuthView>('login');
 
-  // --- Login State ---
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [tab, setTab] = useState<LoginTab>('posyandu');
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // --- Signup Puskesmas State ---
-  const [pkmName, setPkmName] = useState('');
-  const [pkmKapanewon, setPkmKapanewon] = useState('');
-  const [pkmUsername, setPkmUsername] = useState('');
-  const [pkmPassword, setPkmPassword] = useState('');
-  const [pkmShowPassword, setPkmShowPassword] = useState(false);
+  // --- Cascade Posyandu ---
+  const [step, setStep] = useState<CascadeStep>(0);
+  const [puskesmasList, setPuskesmasList] = useState<PuskesmasItem[]>([]);
+  const [kalurahanList, setKalurahanList] = useState<KalurahanItem[]>([]);
+  const [posyanduList, setPosyanduList] = useState<PosyanduItem[]>([]);
+  const [selectedPuskesmas, setSelectedPuskesmas] = useState<PuskesmasItem | null>(null);
+  const [selectedKalurahan, setSelectedKalurahan] = useState<KalurahanItem | null>(null);
+  const [selectedPosyandu, setSelectedPosyandu] = useState<PosyanduItem | null>(null);
+  const [kaderPassword, setKaderPassword] = useState('');
+  const [filterText, setFilterText] = useState('');
 
-  // --- Signup Posyandu State ---
-  const [posName, setPosName] = useState('');
-  const [posKalurahan, setPosKalurahan] = useState('');
-  const [posPadukuhan, setPosPadukuhan] = useState('');
-  const [posHealthCenterId, setPosHealthCenterId] = useState('');
-  const [posUsername, setPosUsername] = useState('');
-  const [posPassword, setPosPassword] = useState('');
-  const [posShowPassword, setPosShowPassword] = useState(false);
-  const [healthCenterList, setHealthCenterList] = useState<any[]>([]);
+  // --- Staf ---
+  const [staffUsername, setStaffUsername] = useState('');
+  const [staffPassword, setStaffPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
 
-  // Fetch list of Puskesmas for Posyandu signup dropdown
+  // --- Aktivasi akun baru ---
+  const [activation, setActivation] = useState<{ identity: Identity; currentPassword: string } | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [activationMsg, setActivationMsg] = useState('');
+
+  // Ambil daftar puskesmas saat tab posyandu aktif di step awal
   useEffect(() => {
-    if (view === 'signup_posyandu') {
+    if (tab === 'posyandu' && step === 0 && puskesmasList.length === 0) {
       fetch('/api/public/puskesmas')
         .then((r) => r.json())
-        .then((data) => {
-          if (data.success && Array.isArray(data.data)) {
-            setHealthCenterList(data.data);
-            if (data.data.length > 0) {
-              setPosHealthCenterId(data.data[0].id);
-            }
-          }
+        .then((json) => {
+          if (json.success && Array.isArray(json.data)) setPuskesmasList(json.data);
         })
-        .catch(console.error);
+        .catch((e) => console.error('Gagal memuat puskesmas:', e));
     }
-  }, [view]);
+  }, [tab, step, puskesmasList.length]);
 
-  const resetAll = () => {
-    setErrorMsg('');
-    setUsername('');
-    setPassword('');
-    setPkmName('');
-    setPkmKapanewon('');
-    setPkmUsername('');
-    setPkmPassword('');
-    setPosName('');
-    setPosKalurahan('');
-    setPosPadukuhan('');
-    setPosUsername('');
-    setPosPassword('');
+  const resetCascade = () => {
+    setStep(0);
+    setSelectedPuskesmas(null);
+    setSelectedKalurahan(null);
+    setSelectedPosyandu(null);
+    setKalurahanList([]);
+    setPosyanduList([]);
+    setKaderPassword('');
+    setFilterText('');
   };
 
-  // --- Login Handler ---
-  const handleLogin = async (e: React.FormEvent) => {
+  const switchTab = (next: LoginTab) => {
+    setTab(next);
+    setErrorMsg('');
+    setFilterText('');
+    if (next === 'posyandu') resetCascade();
+    else {
+      setStaffUsername('');
+      setStaffPassword('');
+    }
+  };
+
+  // Langkah 1: pilih puskesmas -> ambil kalurahan
+  const choosePuskesmas = async (pkm: PuskesmasItem) => {
+    setSelectedPuskesmas(pkm);
+    setErrorMsg('');
+    setIsLoading(true);
+    setKalurahanList([]);
+    setPosyanduList([]);
+    setFilterText('');
+    try {
+      const res = await fetch(`/api/public/puskesmas/${pkm.id}/kalurahan`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Gagal memuat kalurahan');
+      setKalurahanList(json.data);
+      setStep(1);
+    } catch (err) {
+      setErrorMsg(getErrMsg(err));
+      setSelectedPuskesmas(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Langkah 2: pilih kalurahan -> ambil posyandu
+  const chooseKalurahan = async (kal: KalurahanItem) => {
+    if (!selectedPuskesmas) return;
+    setSelectedKalurahan(kal);
+    setErrorMsg('');
+    setIsLoading(true);
+    setPosyanduList([]);
+    setFilterText('');
+    try {
+      const res = await fetch(`/api/public/puskesmas/${selectedPuskesmas.id}/posyandu?kalurahanId=${kal.id}`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Gagal memuat posyandu');
+      setPosyanduList(json.data);
+      setStep(2);
+    } catch (err) {
+      setErrorMsg(getErrMsg(err));
+      setSelectedKalurahan(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const goBack = () => {
+    setErrorMsg('');
+    setFilterText('');
+    if (step === 1) {
+      resetCascade();
+    } else if (step === 2) {
+      setStep(1);
+      setSelectedKalurahan(null);
+      setPosyanduList([]);
+    } else if (step === 3) {
+      setStep(2);
+      setSelectedPosyandu(null);
+      setKaderPassword('');
+    }
+  };
+
+  const submitPosyanduLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !password.trim()) {
-      setErrorMsg('Username dan password wajib diisi');
+    if (!selectedPosyandu || !kaderPassword.trim()) {
+      setErrorMsg('Pilih posyandu dan isi password');
       return;
     }
-
     setIsLoading(true);
     setErrorMsg('');
-
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim(), password }),
+        body: JSON.stringify({ mode: 'posyandu', posyanduId: selectedPosyandu.id, password: kaderPassword }),
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Login gagal');
-
-      login(data.user);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Terjadi kesalahan');
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Login gagal');
+      if (json.needsActivation) {
+        setActivation({
+          identity: json.identity,
+          currentPassword: kaderPassword,
+        });
+        return;
+      }
+      login(json.user);
+    } catch (err) {
+      setErrorMsg(getErrMsg(err));
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- Signup Puskesmas Handler ---
-  const handleSignupPuskesmas = async (e: React.FormEvent) => {
+  const submitStaffLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pkmName.trim() || !pkmKapanewon.trim() || !pkmUsername.trim() || !pkmPassword.trim()) {
-      setErrorMsg('Semua kolom wajib diisi');
+    if (!staffUsername.trim() || !staffPassword.trim()) {
+      setErrorMsg('Username dan password wajib diisi');
       return;
     }
-
     setIsLoading(true);
     setErrorMsg('');
-
     try {
-      const res = await fetch('/api/auth/signup', {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'staff', username: staffUsername, password: staffPassword }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Login gagal');
+      if (json.needsActivation) {
+        setActivation({
+          identity: json.identity,
+          currentPassword: staffPassword,
+        });
+        return;
+      }
+      login(json.user);
+    } catch (err) {
+      setErrorMsg(getErrMsg(err));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // --- Aktivasi: ganti password default -> password pribadi ---
+  const submitActivation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activation) return;
+    if (newPassword.trim().length < 8) {
+      setActivationMsg('Password baru minimal 8 karakter');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setActivationMsg('Konfirmasi password tidak cocok');
+      return;
+    }
+    setIsLoading(true);
+    setActivationMsg('');
+    try {
+      const res = await fetch('/api/auth/activate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: 'PUSKESMAS',
-          name: pkmName.trim(),
-          kapanewon: pkmKapanewon.trim(),
-          username: pkmUsername.trim(),
-          password: pkmPassword.trim(),
+          mode: activation.identity.mode,
+          username: activation.identity.username,
+          posyanduId: activation.identity.posyanduId,
+          currentPassword: activation.currentPassword,
+          newPassword,
         }),
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal mendaftarkan Puskesmas');
-
-      // Auto-login after successful signup
-      login(data.user);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Terjadi kesalahan');
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Aktivasi gagal');
+      login(json.user);
+    } catch (err) {
+      setActivationMsg(getErrMsg(err));
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- Signup Posyandu Handler ---
-  const handleSignupPosyandu = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!posName.trim() || !posHealthCenterId || !posUsername.trim() || !posPassword.trim()) {
-      setErrorMsg('Nama Posyandu, Puskesmas Pembina, Username, dan Password wajib diisi');
-      return;
-    }
-
-    setIsLoading(true);
-    setErrorMsg('');
-
-    try {
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'POSYANDU',
-          name: posName.trim(),
-          kalurahan: posKalurahan.trim(),
-          padukuhan: posPadukuhan.trim(),
-          healthCenterId: posHealthCenterId,
-          username: posUsername.trim(),
-          password: posPassword.trim(),
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal mendaftarkan Posyandu');
-
-      login(data.user);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Terjadi kesalahan');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const q = filterText.toLowerCase().trim();
+  const shownPuskesmas = q
+    ? puskesmasList.filter((p) => p.name.toLowerCase().includes(q) || p.kapanewon.toLowerCase().includes(q))
+    : puskesmasList;
+  const shownKalurahan = q ? kalurahanList.filter((k) => k.name.toLowerCase().includes(q)) : kalurahanList;
+  const shownPosyandu = q
+    ? posyanduList.filter((p) => p.name.toLowerCase().includes(q) || (p.padukuhan || '').toLowerCase().includes(q))
+    : posyanduList;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#f0f2f5] text-[#111b21]">
-      {/* Logo / Branding */}
-      <div className="text-center mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
+      {/* Branding */}
+      <div className="text-center mb-5 animate-in fade-in slide-in-from-top-4 duration-300">
         <div className="w-16 h-16 bg-[#075e54] text-[#25d366] rounded-full flex items-center justify-center mx-auto mb-3 shadow-md border-2 border-white">
           <Stethoscope className="w-8 h-8" />
         </div>
@@ -198,473 +280,345 @@ export function AuthPage() {
         <p className="text-sm text-[#54656f] font-bold">Kabupaten Gunungkidul — D.I. Yogyakarta</p>
       </div>
 
-      {/* Auth Card */}
-      <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-300 delay-100">
+      <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-300">
         <div className="bg-white rounded-3xl shadow-xl border border-[#e9edef] overflow-hidden">
 
-          {/* ===== LOGIN VIEW ===== */}
-          {view === 'login' && (
-            <>
-              <div className="bg-[#075e54] text-white p-5">
+          {/* ====== AKTIVASI AKUN BARU ====== */}
+          {activation ? (
+            <form onSubmit={submitActivation} className="p-5 space-y-4">
+              <div className="bg-[#075e54] -mx-5 -mt-5 px-5 py-4 text-white mb-1">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-white/10 rounded-full">
-                    <Lock className="w-5 h-5 text-[#25d366]" />
+                    <ShieldCheck className="w-5 h-5 text-[#25d366]" />
                   </div>
                   <div>
-                    <h2 className="font-extrabold text-white text-lg leading-tight">Masuk ke Sistem</h2>
-                    <p className="text-xs text-white/80 mt-0.5 flex items-center gap-1 font-medium">
-                      <span>Dinas</span> <ArrowRight className="w-3 h-3 inline text-[#25d366]" /> <span>Puskesmas</span> <ArrowRight className="w-3 h-3 inline text-[#25d366]" /> <span>Posyandu</span>
-                    </p>
+                    <h2 className="font-extrabold text-white text-lg leading-tight">Aktivasi Akun</h2>
+                    <p className="text-xs text-white/80 mt-0.5">Satu langkah lagi — buat password pribadi</p>
                   </div>
                 </div>
               </div>
 
-              <form onSubmit={handleLogin} className="p-5 space-y-4">
-                {errorMsg && (
-                  <div className="p-3 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl text-xs text-[#ef4444] font-bold flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 shrink-0 text-[#ef4444]" />
-                    <span>{errorMsg}</span>
-                  </div>
-                )}
+              <div className="p-3.5 bg-[#e7fceb] border border-[#25d366]/30 rounded-2xl text-xs text-[#075e54] space-y-1">
+                <p className="font-black">Halo, {activation.identity.label}</p>
+                <p className="font-medium text-[#075e54]/90">
+                  Akun kamu masih memakai password default. Ganti dengan password pribadi sebelum memakai aplikasi.
+                </p>
+              </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-[#111b21] mb-1.5">Username</label>
-                  <div className="relative">
-                    <User className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Masukkan username akun..."
-                      autoComplete="username"
-                      required
-                      className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
-                    />
+              {activationMsg && (
+                <div className="p-3 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl text-xs text-[#ef4444] font-bold flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-[#ef4444]" />
+                  <span>{activationMsg}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-[#111b21] mb-1.5">Password Baru</label>
+                <div className="relative">
+                  <Key className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Minimal 8 karakter"
+                    autoComplete="new-password"
+                    required
+                    className="w-full pl-10 pr-10 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
+                  />
+                  <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3.5 top-3 text-[#8696a0] hover:text-[#111b21]">
+                    {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#111b21] mb-1.5">Konfirmasi Password Baru</label>
+                <div className="relative">
+                  <Key className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Ulangi password baru"
+                    autoComplete="new-password"
+                    required
+                    className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3 bg-[#128c7e] hover:bg-[#075e54] text-white font-bold rounded-full text-sm shadow-md transition-all flex items-center justify-center gap-2 touch-press disabled:opacity-50"
+              >
+                {isLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                <span>{isLoading ? 'Mengaktifkan...' : 'Aktifkan & Masuk'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActivation(null);
+                  setNewPassword('');
+                  setConfirmPassword('');
+                  setActivationMsg('');
+                  setErrorMsg('');
+                  resetCascade();
+                }}
+                className="w-full py-2 text-xs text-[#54656f] font-bold hover:text-[#111b21] transition-all flex items-center justify-center gap-1"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Mulai ulang login</span>
+              </button>
+            </form>
+          ) : (
+            <>
+              {/* Tab pemilih jenis login */}
+              <div className="p-3 bg-[#f0f2f5] border-b border-[#e9edef]">
+                <div className="flex bg-white p-1 rounded-2xl border border-[#e9edef] text-xs font-bold shadow-xs">
+                  <button
+                    type="button"
+                    onClick={() => switchTab('posyandu')}
+                    className={`flex-1 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                      tab === 'posyandu' ? 'bg-[#075e54] text-white shadow-sm' : 'text-[#54656f] hover:text-[#111b21]'
+                    }`}
+                  >
+                    <Home className="w-3.5 h-3.5" />
+                    <span>Kader Posyandu</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => switchTab('staf')}
+                    className={`flex-1 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                      tab === 'staf' ? 'bg-[#128c7e] text-white shadow-sm' : 'text-[#54656f] hover:text-[#111b21]'
+                    }`}
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>Puskesmas / Dinkes</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* ====== LOGIN KADER (CASCADE) ====== */}
+              {tab === 'posyandu' && step === 0 && (
+                <div className="max-h-[68vh] overflow-y-auto">
+                  <div className="bg-[#075e54] text-white p-5">
+                    <h2 className="font-extrabold text-white text-lg leading-tight">Masuk Akun Posyandu</h2>
+                    <p className="text-xs text-white/80 mt-0.5 font-medium">Pilih lokasi posyandu Anda</p>
+                  </div>
+                  {errorMsg && <ErrorBanner msg={errorMsg} />}
+                  <div className="p-3 space-y-2">
+                    {isLoading ? (
+                      <div className="p-10 flex flex-col items-center gap-2 text-xs font-bold text-[#54656f]">
+                        <RefreshCw className="w-5 h-5 animate-spin text-[#075e54]" />
+                        Memuat daftar puskesmas...
+                      </div>
+                    ) : puskesmasList.length === 0 ? (
+                      <EmptyState msg="Belum ada Puskesmas terdaftar. Hubungi Dinas Kesehatan untuk pembuatan akun." />
+                    ) : (
+                      <>
+                        <StepFilter value={filterText} onChange={setFilterText} placeholder="Cari puskesmas / kapanewon..." />
+                        {shownPuskesmas.map((pkm) => (
+                          <SelectableCard
+                            key={pkm.id}
+                            title={pkm.name}
+                            subtitle={`Kapanewon ${pkm.kapanewon}`}
+                            icon={<Building2 className="w-4 h-4" />}
+                            onClick={() => choosePuskesmas(pkm)}
+                          />
+                        ))}
+                      </>
+                    )}
                   </div>
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-xs font-bold text-[#111b21] mb-1.5">Password</label>
-                  <div className="relative">
-                    <Key className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      autoComplete="current-password"
-                      required
-                      className="w-full pl-10 pr-10 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-3 text-[#8696a0] hover:text-[#111b21] transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {tab === 'posyandu' && step === 1 && (
+                <div className="max-h-[68vh] overflow-y-auto">
+                  <StepHeader
+                    title={`Pilih Kalurahan`}
+                    subtitle={selectedPuskesmas ? `${selectedPuskesmas.name} — Kapanewon ${selectedPuskesmas.kapanewon}` : ''}
+                    onBack={goBack}
+                  />
+                  {errorMsg && <ErrorBanner msg={errorMsg} />}
+                  <div className="p-3 space-y-2">
+                    {kalurahanList.length === 0 ? (
+                      <EmptyState msg="Belum ada posyandu terdaftar di puskesmas ini." />
+                    ) : (
+                      <>
+                        <StepFilter value={filterText} onChange={setFilterText} placeholder="Cari kalurahan..." />
+                        {shownKalurahan.map((kal) => (
+                          <SelectableCard
+                            key={kal.id}
+                            title={kal.name}
+                            subtitle={`${kal.posyanduCount} posyandu`}
+                            icon={<MapPin className="w-4 h-4" />}
+                            onClick={() => chooseKalurahan(kal)}
+                          />
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {tab === 'posyandu' && step === 2 && (
+                <div className="max-h-[68vh] overflow-y-auto">
+                  <StepHeader
+                    title={`Pilih Posyandu`}
+                    subtitle={selectedKalurahan ? `Kalurahan ${selectedKalurahan.name}` : ''}
+                    onBack={goBack}
+                  />
+                  {errorMsg && <ErrorBanner msg={errorMsg} />}
+                  <div className="p-3 space-y-2">
+                    {posyanduList.length === 0 ? (
+                      <EmptyState msg="Belum ada posyandu di kalurahan ini." />
+                    ) : (
+                      <>
+                        <StepFilter value={filterText} onChange={setFilterText} placeholder="Cari nama posyandu..." />
+                        {shownPosyandu.map((pos) => (
+                          <SelectableCard
+                            key={pos.id}
+                            title={pos.name}
+                            subtitle={`${pos.padukuhan && pos.padukuhan !== '-' ? `Padukuhan ${pos.padukuhan} · ` : ''}Kalurahan ${selectedKalurahan?.name || ''}`}
+                            icon={<Home className="w-4 h-4" />}
+                            selected={selectedPosyandu?.id === pos.id}
+                            onClick={() => {
+                              setSelectedPosyandu(pos);
+                              setKaderPassword('');
+                              setErrorMsg('');
+                              setStep(3);
+                            }}
+                          />
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {tab === 'posyandu' && step === 3 && selectedPosyandu && (
+                <form onSubmit={submitPosyanduLogin} className="p-5 space-y-4">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#128c7e]">
+                    <button type="button" onClick={goBack} className="flex items-center gap-1 hover:text-[#075e54] transition-colors">
+                      <ArrowLeft className="w-3.5 h-3.5" /> Ubah posyandu
                     </button>
                   </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full py-3 bg-[#128c7e] hover:bg-[#075e54] text-white font-bold rounded-full text-sm shadow-md transition-all flex items-center justify-center gap-2 touch-press disabled:opacity-50"
-                >
-                  <span>{isLoading ? 'Memverifikasi...' : 'Masuk'}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </form>
-
-              {/* Signup CTA */}
-              <div className="px-5 pb-5 pt-1 border-t border-[#e9edef]">
-                <p className="text-xs text-[#54656f] text-center mb-3 font-medium">Belum punya akun?</p>
-                <button
-                  onClick={() => { resetAll(); setView('signup_choose'); }}
-                  className="w-full py-3 bg-[#f0f2f5] hover:bg-[#e9edef] text-[#111b21] font-bold rounded-full text-xs transition-all flex items-center justify-center gap-2 touch-press border border-[#e9edef]"
-                >
-                  <PlusCircle className="w-4 h-4 text-[#128c7e]" />
-                  <span>Daftarkan Akun Puskesmas / Posyandu</span>
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* ===== SIGNUP CHOOSE VIEW ===== */}
-          {view === 'signup_choose' && (
-            <>
-              <div className="bg-[#075e54] text-white p-5">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-white/10 rounded-full">
-                    <PlusCircle className="w-5 h-5 text-[#25d366]" />
+                  <div className="p-3.5 bg-[#f0f2f5] rounded-2xl border border-[#e9edef]">
+                    <p className="text-[11px] font-bold text-[#128c7e] uppercase tracking-wider">Akun Posyandu</p>
+                    <p className="font-black text-[#111b21] text-base mt-1">{selectedPosyandu.name}</p>
+                    <p className="text-xs text-[#54656f] font-medium mt-0.5 flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5" />
+                      {selectedKalurahan?.name}
+                      {selectedPosyandu.padukuhan && selectedPosyandu.padukuhan !== '-' ? ` · ${selectedPosyandu.padukuhan}` : ''}
+                    </p>
                   </div>
+                  {errorMsg && <ErrorBanner msg={errorMsg} />}
                   <div>
-                    <h2 className="font-extrabold text-white text-lg leading-tight">Pendaftaran Akun</h2>
-                    <p className="text-xs text-[#e9edef] mt-0.5">Pilih jenis akun yang ingin didaftarkan</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-5 space-y-3.5">
-                <p className="text-xs text-[#54656f] leading-relaxed font-medium">
-                  Sistem Posyandu Digital menggunakan <strong>akun institusi berjenjang</strong>. Setiap lembaga mendaftar satu akun dengan satu username & password.
-                </p>
-
-                {/* Option: Puskesmas */}
-                <button
-                  onClick={() => { resetAll(); setView('signup_puskesmas'); }}
-                  className="w-full p-4 bg-white hover:bg-[#f0f2f5] border-2 border-[#e9edef] hover:border-[#128c7e] rounded-2xl text-left transition-all touch-press group shadow-xs"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <div className="p-3 bg-[#128c7e] text-white rounded-full shadow-xs group-hover:scale-105 transition-transform">
-                      <Building2 className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-black text-[#111b21] text-sm">Daftar sebagai Puskesmas</h3>
-                      <p className="text-xs text-[#54656f] mt-0.5 font-medium">
-                        Puskesmas membuat akun untuk mengelola Posyandu di wilayah binaan
-                      </p>
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-[#8696a0] group-hover:text-[#128c7e] transition-colors shrink-0" />
-                  </div>
-                </button>
-
-                {/* Option: Posyandu */}
-                <button
-                  onClick={() => { resetAll(); setView('signup_posyandu'); }}
-                  className="w-full p-4 bg-white hover:bg-[#f0f2f5] border-2 border-[#e9edef] hover:border-[#075e54] rounded-2xl text-left transition-all touch-press group shadow-xs"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <div className="p-3 bg-[#075e54] text-white rounded-full shadow-xs group-hover:scale-105 transition-transform">
-                      <Building className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-black text-[#111b21] text-sm">Daftar sebagai Posyandu</h3>
-                      <p className="text-xs text-[#54656f] mt-0.5 font-medium">
-                        Posyandu mendaftar di bawah Puskesmas pembina untuk catat pengukuran
-                      </p>
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-[#8696a0] group-hover:text-[#075e54] transition-colors shrink-0" />
-                  </div>
-                </button>
-
-                {/* Hierarchy Explanation */}
-                <div className="bg-[#f0f2f5] p-3.5 rounded-2xl border border-[#e9edef] text-xs text-[#54656f] space-y-2 font-medium">
-                  <span className="font-bold text-[#111b21]">Alur Jenjang Akun:</span>
-                  <div className="flex items-center gap-2 text-[11px] flex-wrap">
-                    <span className="bg-[#8b5cf6]/10 text-[#8b5cf6] px-2.5 py-1 rounded-full font-bold border border-[#8b5cf6]/20 flex items-center gap-1">
-                      <Landmark className="w-3 h-3" /> Dinas Kesehatan
-                    </span>
-                    <ArrowRight className="w-3.5 h-3.5 text-[#8696a0]" />
-                    <span className="bg-[#128c7e]/10 text-[#128c7e] px-2.5 py-1 rounded-full font-bold border border-[#128c7e]/20 flex items-center gap-1">
-                      <Hospital className="w-3 h-3" /> Puskesmas
-                    </span>
-                    <ArrowRight className="w-3.5 h-3.5 text-[#8696a0]" />
-                    <span className="bg-[#075e54]/10 text-[#075e54] px-2.5 py-1 rounded-full font-bold border border-[#075e54]/20 flex items-center gap-1">
-                      <Sprout className="w-3 h-3" /> Posyandu
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-[#54656f]">
-                    Dinas sudah tersedia. Puskesmas mendaftar sendiri. Posyandu mendaftar di bawah Puskesmas.
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => { resetAll(); setView('login'); }}
-                  className="w-full py-2.5 text-xs text-[#54656f] font-bold hover:text-[#111b21] transition-all flex items-center justify-center gap-1"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Kembali ke halaman Login</span>
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* ===== SIGNUP PUSKESMAS VIEW ===== */}
-          {view === 'signup_puskesmas' && (
-            <>
-              <div className="bg-[#075e54] text-white p-5">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-white/10 rounded-full">
-                    <Building2 className="w-5 h-5 text-[#25d366]" />
-                  </div>
-                  <div>
-                    <h2 className="font-extrabold text-white text-lg leading-tight">Daftar Akun Puskesmas</h2>
-                    <p className="text-xs text-[#e9edef] mt-0.5">1 akun institusi — 1 username & password</p>
-                  </div>
-                </div>
-              </div>
-
-              <form onSubmit={handleSignupPuskesmas} className="p-5 space-y-4">
-                {errorMsg && (
-                  <div className="p-3 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl text-xs text-[#ef4444] font-bold flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 shrink-0 text-[#ef4444]" />
-                    <span>{errorMsg}</span>
-                  </div>
-                )}
-
-                {/* Info Institusi */}
-                <div className="space-y-3">
-                  <span className="text-[11px] font-bold text-[#128c7e] uppercase tracking-wider">Data Puskesmas</span>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#111b21] mb-1">Nama Puskesmas <span className="text-[#ef4444]">*</span></label>
-                    <input
-                      type="text"
-                      value={pkmName}
-                      onChange={(e) => setPkmName(e.target.value)}
-                      placeholder="Contoh: Puskesmas Semanu I"
-                      required
-                      className="w-full px-3.5 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#111b21] mb-1">Kapanewon / Kecamatan <span className="text-[#ef4444]">*</span></label>
-                    <input
-                      type="text"
-                      value={pkmKapanewon}
-                      onChange={(e) => setPkmKapanewon(e.target.value)}
-                      placeholder="Contoh: Semanu"
-                      required
-                      className="w-full px-3.5 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
-                    />
-                  </div>
-                </div>
-
-                {/* Credentials */}
-                <div className="space-y-3 pt-3 border-t border-[#e9edef]">
-                  <div className="flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-[#128c7e]" />
-                    <span className="text-[11px] font-bold text-[#128c7e] uppercase tracking-wider">Kredensial Login</span>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#111b21] mb-1">Username <span className="text-[#ef4444]">*</span></label>
-                    <div className="relative">
-                      <User className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
-                      <input
-                        type="text"
-                        value={pkmUsername}
-                        onChange={(e) => setPkmUsername(e.target.value)}
-                        placeholder="Contoh: pkm_semanu1"
-                        autoComplete="username"
-                        required
-                        className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-mono font-medium text-[#111b21] transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#111b21] mb-1">Password <span className="text-[#ef4444]">*</span></label>
+                    <label className="block text-xs font-bold text-[#111b21] mb-1.5">Password</label>
                     <div className="relative">
                       <Key className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
                       <input
-                        type={pkmShowPassword ? 'text' : 'password'}
-                        value={pkmPassword}
-                        onChange={(e) => setPkmPassword(e.target.value)}
-                        placeholder="Buat password yang aman"
-                        autoComplete="new-password"
+                        type={showPass ? 'text' : 'password'}
+                        value={kaderPassword}
+                        onChange={(e) => setKaderPassword(e.target.value)}
+                        placeholder="Masukkan password"
+                        autoComplete="current-password"
                         required
                         className="w-full pl-10 pr-10 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
                       />
-                      <button type="button" onClick={() => setPkmShowPassword(!pkmShowPassword)} className="absolute right-3.5 top-3 text-[#8696a0] hover:text-[#111b21]">
-                        {pkmShowPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3.5 top-3 text-[#8696a0] hover:text-[#111b21]">
+                        {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
-                </div>
+                  <button
+                    type="submit"
+                    disabled={isLoading || !kaderPassword.trim()}
+                    className="w-full py-3 bg-[#128c7e] hover:bg-[#075e54] text-white font-bold rounded-full text-sm shadow-md transition-all flex items-center justify-center gap-2 touch-press disabled:opacity-50"
+                  >
+                    {isLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                    <span>{isLoading ? 'Memverifikasi...' : 'Masuk'}</span>
+                  </button>
+                </form>
+              )}
 
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full py-3 bg-[#128c7e] hover:bg-[#075e54] text-white font-bold rounded-full text-sm shadow-md transition-all flex items-center justify-center gap-2 touch-press disabled:opacity-50"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>{isLoading ? 'Mendaftarkan...' : 'Daftarkan Puskesmas & Masuk'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => { resetAll(); setView('signup_choose'); }}
-                  className="w-full py-2 text-xs text-[#54656f] font-bold hover:text-[#111b21] transition-all flex items-center justify-center gap-1"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Kembali pilih jenis akun</span>
-                </button>
-              </form>
-            </>
-          )}
-
-          {/* ===== SIGNUP POSYANDU VIEW ===== */}
-          {view === 'signup_posyandu' && (
-            <>
-              <div className="bg-[#075e54] text-white p-5">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-white/10 rounded-full">
-                    <Building className="w-5 h-5 text-[#25d366]" />
-                  </div>
-                  <div>
-                    <h2 className="font-extrabold text-white text-lg leading-tight">Daftar Akun Posyandu</h2>
-                    <p className="text-xs text-[#e9edef] mt-0.5">Wajib memilih Puskesmas Pembina</p>
-                  </div>
-                </div>
-              </div>
-
-              <form onSubmit={handleSignupPosyandu} className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
-                {errorMsg && (
-                  <div className="p-3 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl text-xs text-[#ef4444] font-bold flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 shrink-0 text-[#ef4444]" />
-                    <span>{errorMsg}</span>
-                  </div>
-                )}
-
-                {/* Puskesmas Pembina Dropdown */}
-                <div>
-                  <label className="block text-xs font-bold text-[#111b21] mb-1">
-                    Puskesmas Pembina <span className="text-[#ef4444]">*</span>
-                  </label>
-                  {healthCenterList.length === 0 ? (
-                    <div className="p-3.5 bg-[#f59e0b]/10 border border-[#f59e0b]/40 rounded-2xl text-xs text-[#111b21] font-bold space-y-2">
-                      <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-[#f59e0b] shrink-0" />
-                        <span>Belum ada Puskesmas terdaftar. Puskesmas harus mendaftar terlebih dahulu agar Posyandu bisa mendaftar di bawahnya.</span>
+              {/* ====== LOGIN STAF ====== */}
+              {tab === 'staf' && (
+                <form onSubmit={submitStaffLogin} className="p-5 space-y-4">
+                  <div className="bg-[#128c7e] -mx-5 -mt-5 px-5 py-4 text-white mb-1">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-white/10 rounded-full">
+                        <Building2 className="w-5 h-5 text-[#25d366]" />
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setView('signup_puskesmas')}
-                        className="w-full py-1.5 px-3 bg-[#128c7e] hover:bg-[#075e54] text-white rounded-xl font-bold transition-all text-xs flex items-center justify-center gap-1.5"
-                      >
-                        <Building2 className="w-3.5 h-3.5" />
-                        <span>Daftarkan Puskesmas Sekarang</span>
-                      </button>
+                      <div>
+                        <h2 className="font-extrabold text-white text-lg leading-tight">Login Staf</h2>
+                        <p className="text-xs text-white/80 mt-0.5">Puskesmas / Dinas Kesehatan</p>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="relative">
-                      <Building2 className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
-                      <select
-                        value={posHealthCenterId}
-                        onChange={(e) => setPosHealthCenterId(e.target.value)}
-                        required
-                        className="w-full pl-10 pr-8 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] appearance-none transition-all"
-                      >
-                        {healthCenterList.map((hc) => (
-                          <option key={hc.id} value={hc.id}>
-                            {hc.name} — Kapanewon {hc.kapanewon}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="w-4 h-4 text-[#8696a0] absolute right-3.5 top-3.5 pointer-events-none" />
-                    </div>
-                  )}
-                </div>
+                  </div>
 
-                {/* Posyandu Info */}
-                <div className="space-y-3">
-                  <span className="text-[11px] font-bold text-[#128c7e] uppercase tracking-wider">Data Posyandu</span>
+                  {errorMsg && <ErrorBanner msg={errorMsg} />}
 
                   <div>
-                    <label className="block text-xs font-bold text-[#111b21] mb-1">Nama Posyandu <span className="text-[#ef4444]">*</span></label>
-                    <input
-                      type="text"
-                      value={posName}
-                      onChange={(e) => setPosName(e.target.value)}
-                      placeholder="Contoh: Posyandu Dahlia"
-                      required
-                      className="w-full px-3.5 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div>
-                      <label className="block text-xs font-bold text-[#111b21] mb-1">Kalurahan</label>
-                      <input
-                        type="text"
-                        value={posKalurahan}
-                        onChange={(e) => setPosKalurahan(e.target.value)}
-                        placeholder="Wonosari"
-                        className="w-full px-3.5 py-2 text-xs bg-[#f0f2f5] border border-[#e9edef] rounded-xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] text-[#111b21]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-[#111b21] mb-1">Padukuhan</label>
-                      <input
-                        type="text"
-                        value={posPadukuhan}
-                        onChange={(e) => setPosPadukuhan(e.target.value)}
-                        placeholder="Purbosari"
-                        className="w-full px-3.5 py-2 text-xs bg-[#f0f2f5] border border-[#e9edef] rounded-xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] text-[#111b21]"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Credentials */}
-                <div className="space-y-3 pt-3 border-t border-[#e9edef]">
-                  <div className="flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-[#128c7e]" />
-                    <span className="text-[11px] font-bold text-[#128c7e] uppercase tracking-wider">Kredensial Login Posyandu</span>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#111b21] mb-1">Username <span className="text-[#ef4444]">*</span></label>
+                    <label className="block text-xs font-bold text-[#111b21] mb-1.5">Username</label>
                     <div className="relative">
                       <User className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
                       <input
                         type="text"
-                        value={posUsername}
-                        onChange={(e) => setPosUsername(e.target.value)}
-                        placeholder="Contoh: pos_dahlia"
+                        value={staffUsername}
+                        onChange={(e) => setStaffUsername(e.target.value)}
+                        placeholder="Username akun staf"
                         autoComplete="username"
                         required
-                        className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-mono font-medium text-[#111b21] transition-all"
+                        className="w-full pl-10 pr-3 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#111b21] mb-1">Password <span className="text-[#ef4444]">*</span></label>
+                    <label className="block text-xs font-bold text-[#111b21] mb-1.5">Password</label>
                     <div className="relative">
                       <Key className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-3.5" />
                       <input
-                        type={posShowPassword ? 'text' : 'password'}
-                        value={posPassword}
-                        onChange={(e) => setPosPassword(e.target.value)}
-                        placeholder="Buat password yang aman"
-                        autoComplete="new-password"
+                        type={showPass ? 'text' : 'password'}
+                        value={staffPassword}
+                        onChange={(e) => setStaffPassword(e.target.value)}
+                        placeholder="Password"
+                        autoComplete="current-password"
                         required
                         className="w-full pl-10 pr-10 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
                       />
-                      <button type="button" onClick={() => setPosShowPassword(!posShowPassword)} className="absolute right-3.5 top-3 text-[#8696a0] hover:text-[#111b21]">
-                        {posShowPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3.5 top-3 text-[#8696a0] hover:text-[#111b21]">
+                        {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
-                </div>
 
-                <button
-                  type="submit"
-                  disabled={isLoading || healthCenterList.length === 0}
-                  className="w-full py-3 bg-[#128c7e] hover:bg-[#075e54] text-white font-bold rounded-full text-sm shadow-md transition-all flex items-center justify-center gap-2 touch-press disabled:opacity-50"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>{isLoading ? 'Mendaftarkan...' : 'Daftarkan Posyandu & Masuk'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => { resetAll(); setView('signup_choose'); }}
-                  className="w-full py-2 text-xs text-[#54656f] font-bold hover:text-[#111b21] transition-all flex items-center justify-center gap-1"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Kembali pilih jenis akun</span>
-                </button>
-              </form>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full py-3 bg-[#128c7e] hover:bg-[#075e54] text-white font-bold rounded-full text-sm shadow-md transition-all flex items-center justify-center gap-2 touch-press disabled:opacity-50"
+                  >
+                    {isLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                    <span>{isLoading ? 'Memverifikasi...' : 'Masuk'}</span>
+                  </button>
+                </form>
+              )}
             </>
           )}
         </div>
 
-        {/* Footer */}
+        {/* Catatan kebijakan akun */}
+        <div className="mt-4 p-3.5 bg-white/70 border border-[#e9edef] rounded-2xl text-[11px] text-[#54656f] leading-relaxed font-medium flex gap-2.5">
+          <Info className="w-4 h-4 shrink-0 text-[#128c7e] mt-0.5" />
+          <p>
+            Akun dibuat oleh jenjang di atasnya (Posyandu oleh Puskesmas, Puskesmas oleh Dinas Kesehatan).
+            Akun baru memakai password default dan <strong>wajib diganti saat pertama masuk</strong>.
+          </p>
+        </div>
+
         <div className="text-center mt-4 text-xs text-[#54656f]">
           <p>© 2026 Posyandu Digital — Dinas Kesehatan Kab. Gunungkidul</p>
         </div>
@@ -673,3 +627,79 @@ export function AuthPage() {
   );
 }
 
+function ErrorBanner({ msg }: { msg: string }) {
+  return (
+    <div className="mx-5 mt-4 p-3 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl text-xs text-[#ef4444] font-bold flex items-center gap-2">
+      <AlertTriangle className="w-4 h-4 shrink-0 text-[#ef4444]" />
+      <span>{msg}</span>
+    </div>
+  );
+}
+
+function EmptyState({ msg }: { msg: string }) {
+  return (
+    <div className="p-6 text-center">
+      <div className="w-12 h-12 bg-[#f0f2f5] text-[#8696a0] rounded-full flex items-center justify-center mx-auto mb-2">
+        <AlertTriangle className="w-5 h-5" />
+      </div>
+      <p className="text-xs text-[#54656f] font-bold">{msg}</p>
+    </div>
+  );
+}
+
+function StepFilter({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full px-3.5 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
+    />
+  );
+}
+
+function StepHeader({ title, subtitle, onBack }: { title: string; subtitle?: string; onBack: () => void }) {
+  return (
+    <div className="bg-[#075e54] text-white p-5">
+      <button type="button" onClick={onBack} className="text-xs font-bold text-white/80 hover:text-white transition-colors flex items-center gap-1 mb-1.5">
+        <ArrowLeft className="w-3.5 h-3.5" /> Kembali
+      </button>
+      <h2 className="font-extrabold text-white text-lg leading-tight">{title}</h2>
+      {subtitle && <p className="text-xs text-white/80 mt-0.5 font-medium">{subtitle}</p>}
+    </div>
+  );
+}
+
+function SelectableCard({
+  title,
+  subtitle,
+  icon,
+  onClick,
+  selected,
+}: {
+  title: string;
+  subtitle?: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  selected?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full p-3.5 bg-white hover:bg-[#f0f2f5] border-2 rounded-2xl text-left transition-all touch-press shadow-xs flex items-center gap-3 ${
+        selected ? 'border-[#128c7e]' : 'border-[#e9edef] hover:border-[#128c7e]'
+      }`}
+    >
+      <div className={`p-2.5 rounded-full shrink-0 ${selected ? 'bg-[#128c7e] text-white' : 'bg-[#f0f2f5] text-[#075e54]'}`}>
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="font-black text-[#111b21] text-sm truncate">{title}</h3>
+        {subtitle && <p className="text-[11px] text-[#54656f] font-medium mt-0.5 truncate">{subtitle}</p>}
+      </div>
+      <ArrowRight className="w-4 h-4 text-[#8696a0] shrink-0" />
+    </button>
+  );
+}

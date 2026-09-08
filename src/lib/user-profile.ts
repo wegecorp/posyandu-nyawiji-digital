@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import type { UserSession } from './types';
 
 const POSYANDU_INCLUDE = {
   posyandu: {
@@ -19,12 +20,12 @@ export async function getUserBySession(sessionUserId: string) {
 }
 
 /** Ubah row User (sudah include relasi lokasi) ke bentuk aman utk dikirim ke client. */
-export function serializeUser(user: NonNullable<Awaited<ReturnType<typeof getUserBySession>>>) {
-  const base: Record<string, any> = {
+export function serializeUser(user: NonNullable<Awaited<ReturnType<typeof getUserBySession>>>): UserSession {
+  const base: UserSession = {
     id: user.id,
     username: user.username,
     name: user.name,
-    role: user.role,
+    role: user.role as UserSession['role'],
   };
 
   if (user.role === 'POSYANDU' && user.posyandu) {

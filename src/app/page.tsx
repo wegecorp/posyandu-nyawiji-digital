@@ -167,7 +167,7 @@ export default function PosyanduApp() {
     );
   }
 
-  // 1. IF NOT LOGGED IN — show full-page login/signup
+  // 1. IF NOT LOGGED IN — show login (cascade kader / staf)
   if (!user) {
     return <AuthPage />;
   }

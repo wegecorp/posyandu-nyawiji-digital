@@ -21,7 +21,6 @@ export function buildPuskesmasUsername(healthCenterCode: string): string {
 async function uniqueCode(base: string, exists: (code: string) => Promise<boolean>): Promise<string> {
   let code = base;
   let n = 1;
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     if (!(await exists(code))) return code;
     code = `${base}-${String(++n).padStart(2, '0')}`;

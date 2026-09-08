@@ -43,13 +43,19 @@ npm install
 Buat file `.env` di root folder (atau sesuaikan jika sudah ada):
 ```env
 DATABASE_URL="file:./dev.db"
-NEXT_PUBLIC_APP_NAME="Posyandu Digital"
+NEXT_PUBLIC_APP_NAME="Posyandu Digital Gunungkidul"
+SESSION_SECRET="ganti_dengan_string_acak_panjang"
+DINKES_ADMIN_USERNAME="dinkes_gk"
+DINKES_ADMIN_PASSWORD="ganti_password_admin"
+POSYANDU_DEFAULT_PASSWORD="posyandu2026"
 ```
 
 ### 4. Setup Database Prisma
 Jalankan perintah berikut untuk membuat database SQLite lokal:
 ```bash
 npx prisma db push
+npm run db:seed        # seed 18 Kapanewon + akun DINKES (tidak menimpa password lama)
+npm run db:dev         # (opsional) data uji: 1 Puskesmas + beberapa Posyandu
 ```
 
 ### 5. Jalankan Development Server

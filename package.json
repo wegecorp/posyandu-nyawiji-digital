@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:seed": "prisma db seed",
+    "db:dev": "node prisma/dev-data.js",
     "db:reset": "node prisma/clean.js"
   },
   "prisma": {

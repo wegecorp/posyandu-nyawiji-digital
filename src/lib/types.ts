@@ -38,6 +38,12 @@ export interface MeasurementData {
   cholesterol?: number | null;
   uricAcid?: number | null;
   hemoglobin?: number | null;
+  waistCircumference?: number | null;
+  imt?: number | null;
+  visionStatus?: string | null;
+  hearingStatus?: string | null;
+  noteSource?: string | null;
+  category?: string | null;
   notes?: string | null;
   recordedBy?: string | null;
   createdAt?: string;

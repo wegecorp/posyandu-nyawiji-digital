@@ -109,6 +109,12 @@ model Measurement {
   cholesterol       Float?    // Kolesterol (mg/dL)
   uricAcid          Float?    // Asam Urat (mg/dL)
   hemoglobin        Float?    // Hemoglobin / HB (g/dL)
+  waistCircumference Float?   // Lingkar Perut (cm)
+  imt               Float?    // IMT (auto hitung dari BB/TB)
+  visionStatus      String?   // Skrining mata: Normal / Tidak Normal
+  hearingStatus     String?   // Skrining telinga: Normal / Tidak Normal
+  noteSource        String?   // Sumber catatan: Kader / Nakes
+  category          String?   // Snapshot kategori saat pengukuran
   notes             String?   // Catatan kader
   
   recordedBy        String?   // Nama / username posyandu/kader

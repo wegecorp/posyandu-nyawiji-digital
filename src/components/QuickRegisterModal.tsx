@@ -28,6 +28,7 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
   const [showOptional, setShowOptional] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [duplicate, setDuplicate] = useState<{ regNumber: string; name: string } | null>(null);
 
   if (!isOpen) return null;
 
@@ -58,9 +59,22 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
       setErrorMsg('Pilih Posyandu aktif terlebih dahulu');
       return;
     }
+    await doSubmit(false);
+  };
+
+  const handleForceRegister = async () => {
+    await doSubmit(true);
+  };
+
+  const doSubmit = async (force: boolean) => {
+    if (!user || !user.posyanduId) {
+      setErrorMsg('Pilih Posyandu aktif terlebih dahulu');
+      return;
+    }
 
     setIsSubmitting(true);
     setErrorMsg('');
+    setDuplicate(null);
 
     try {
       const res = await fetch('/api/patients', {
@@ -78,10 +92,17 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
           phone: phone.trim() || undefined,
           isPregnant,
           posyanduId: user.posyanduId,
+          force,
         }),
       });
 
       const data = await res.json();
+
+      if (res.status === 409 && data.duplicate) {
+        setDuplicate(data.existing);
+        return;
+      }
+
       if (!res.ok) {
         throw new Error(data.error || 'Gagal mendaftar pasien');
       }
@@ -132,6 +153,34 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
             <div className="p-3 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl text-xs text-[#ef4444] font-bold flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0 text-[#ef4444]" />
               <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {duplicate && (
+            <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-2xl text-xs space-y-3">
+              <div className="flex items-start gap-2 text-[#b45309] font-bold">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>
+                  Pasien mirip sudah terdaftar: <strong>{duplicate.name}</strong> (No. {duplicate.regNumber})
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDuplicate(null)}
+                  className="flex-1 py-2 px-3 bg-white border border-amber-300 text-[#b45309] font-bold rounded-full text-xs"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleForceRegister}
+                  disabled={isSubmitting}
+                  className="flex-1 py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-full text-xs disabled:opacity-50"
+                >
+                  Tetap Daftar Baru
+                </button>
+              </div>
             </div>
           )}
 

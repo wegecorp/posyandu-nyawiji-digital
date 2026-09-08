@@ -111,6 +111,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Tanggal lahir wajib diisi' }, { status: 400 });
     }
 
+    if (gender !== 'L' && gender !== 'P') {
+      return NextResponse.json({ error: 'Jenis kelamin wajib dipilih (Laki-laki / Perempuan)' }, { status: 400 });
+    }
+
     const updatedPatient = await prisma.patient.update({
       where: { id },
       data: {

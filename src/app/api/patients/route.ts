@@ -107,7 +107,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, birthDate, posyanduId, gender, address, guardianName, phone, isPregnant } = body;
+    const { name, birthDate, posyanduId, gender, address, guardianName, phone, isPregnant, force } = body;
 
     const targetPosyanduId = posyanduId || session.posyanduId;
 
@@ -123,12 +123,42 @@ export async function POST(req: Request) {
       );
     }
 
+    if (gender !== 'L' && gender !== 'P') {
+      return NextResponse.json({ error: 'Jenis kelamin wajib dipilih (Laki-laki / Perempuan)' }, { status: 400 });
+    }
+
     const posyandu = await prisma.posyandu.findUnique({
       where: { id: targetPosyanduId },
     });
 
     if (!posyandu) {
       return NextResponse.json({ error: 'Posyandu tidak valid' }, { status: 404 });
+    }
+
+    // Cek duplikat: nama (ignore case) + tanggal lahir sama di posyandu sama.
+    if (!force) {
+      const bd = new Date(birthDate);
+      const start = new Date(bd.getFullYear(), bd.getMonth(), bd.getDate());
+      const end = new Date(bd.getFullYear(), bd.getMonth(), bd.getDate() + 1);
+      const candidates = await prisma.patient.findMany({
+        where: {
+          posyanduId: targetPosyanduId,
+          birthDate: { gte: start, lt: end },
+        },
+        select: { id: true, name: true, birthDate: true, gender: true, regNumber: true },
+      });
+      const normName = name.trim().toLowerCase();
+      const duplicate = candidates.find((c) => c.name.trim().toLowerCase() === normName);
+      if (duplicate) {
+        return NextResponse.json(
+          {
+            error: 'Pasien dengan nama & tanggal lahir yang sama sudah terdaftar',
+            duplicate: true,
+            existing: duplicate,
+          },
+          { status: 409 }
+        );
+      }
     }
 
     // Generate unique sequential registration number: e.g. POS-WNS-01-2026-0042

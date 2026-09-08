@@ -19,8 +19,11 @@ import {
   History,
   RefreshCw,
   TestTube,
+  Eye,
+  Ear,
 } from 'lucide-react';
 import { getCategoryBadge, formatIndoDate } from '@/lib/utils';
+import { validateMeasurementValue, validateBloodPressure, computeImt } from '@/lib/validation';
 
 interface DynamicMeasurementFormProps {
   patient: PatientData;
@@ -51,7 +54,13 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   const [cholesterol, setCholesterol] = useState<string>('');
   const [uricAcid, setUricAcid] = useState<string>('');
   const [hemoglobin, setHemoglobin] = useState<string>('');
+  const [waistCircumference, setWaistCircumference] = useState<string>('');
+  const [visionStatus, setVisionStatus] = useState<string>('');
+  const [hearingStatus, setHearingStatus] = useState<string>('');
+  const [noteSource, setNoteSource] = useState<string>('Kader');
   const [notes, setNotes] = useState<string>('');
+  const [sessionDate, setSessionDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [activeTab, setActiveTab] = useState<'form' | 'history'>('form');
   const [historyList, setHistoryList] = useState<MeasurementData[]>([]);
@@ -85,6 +94,10 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
           if (tm.cholesterol != null) setCholesterol(String(tm.cholesterol));
           if (tm.uricAcid != null) setUricAcid(String(tm.uricAcid));
           if (tm.hemoglobin != null) setHemoglobin(String(tm.hemoglobin));
+          if (tm.waistCircumference != null) setWaistCircumference(String(tm.waistCircumference));
+          if (tm.visionStatus) setVisionStatus(tm.visionStatus);
+          if (tm.hearingStatus) setHearingStatus(tm.hearingStatus);
+          if (tm.noteSource) setNoteSource(tm.noteSource);
           if (tm.notes) setNotes(tm.notes);
         }
         if (p.measurements) {
@@ -100,6 +113,29 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   const isReadOnly = user?.role === 'PUSKESMAS' || user?.role === 'DINKES';
 
   // Handle live field change with instant auto-save
+  const validateFieldChange = (fieldName: string, value: string): boolean => {
+    const errs: Record<string, string> = {};
+    if (fieldName === 'systolic' || fieldName === 'diastolic') {
+      const sys = fieldName === 'systolic' ? value : systolic;
+      const dia = fieldName === 'diastolic' ? value : diastolic;
+      const bp = validateBloodPressure(sys, dia);
+      if (!bp.valid && bp.message) {
+        errs.systolic = bp.message;
+        errs.diastolic = bp.message;
+      } else {
+        const s = validateMeasurementValue('systolic', sys);
+        const d = validateMeasurementValue('diastolic', dia);
+        if (!s.valid && s.message) errs.systolic = s.message;
+        if (!d.valid && d.message) errs.diastolic = d.message;
+      }
+    } else {
+      const r = validateMeasurementValue(fieldName, value);
+      if (!r.valid && r.message) errs[fieldName] = r.message;
+    }
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleFieldChange = (fieldName: string, value: string) => {
     if (isReadOnly) return;
 
@@ -115,6 +151,9 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
         break;
       case 'armCircumference':
         setArmCircumference(value);
+        break;
+      case 'waistCircumference':
+        setWaistCircumference(value);
         break;
       case 'systolic':
         setSystolic(value);
@@ -137,13 +176,31 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
       case 'hemoglobin':
         setHemoglobin(value);
         break;
+      case 'visionStatus':
+        setVisionStatus(value);
+        break;
+      case 'hearingStatus':
+        setHearingStatus(value);
+        break;
+      case 'noteSource':
+        setNoteSource(value);
+        break;
+      case 'sessionDate':
+        setSessionDate(value);
+        break;
       case 'notes':
         setNotes(value);
         break;
     }
 
+    if (!validateFieldChange(fieldName, value)) return;
+
+    // Sertakan tanggal sesi supaya nilai tersimpan ke tanggal yang dipilih, bukan default hari ini.
+    const payload: Record<string, string> = { [fieldName]: value };
+    if (fieldName !== 'sessionDate') payload.sessionDate = sessionDate;
+
     // Trigger debounced autosave
-    triggerAutoSave({ [fieldName]: value });
+    triggerAutoSave(payload);
     if (onMeasurementUpdated) onMeasurementUpdated();
   };
 
@@ -232,9 +289,16 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
         <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-white border border-[#e9edef] rounded-2xl text-xs shadow-xs">
           <div className="flex items-center gap-2 text-[#54656f] min-w-0">
             <Calendar className="w-3.5 h-3.5 text-[#128c7e] shrink-0" />
-            <span className="text-[11px] truncate">
-              Sesi: <strong className="text-[#075e54]">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</strong>
-            </span>
+            <label className="text-[11px] flex items-center gap-1.5 truncate">
+              Sesi:
+              <input
+                type="date"
+                value={sessionDate}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => handleFieldChange('sessionDate', e.target.value)}
+                className="text-[11px] font-bold text-[#075e54] bg-[#f0f2f5] border border-[#e9edef] rounded-lg px-2 py-1 outline-none focus:border-[#128c7e]"
+              />
+            </label>
           </div>
 
           <div className="flex items-center shrink-0">
@@ -277,6 +341,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 value={weight}
                 onChange={(v) => handleFieldChange('weight', v)}
                 step="0.05"
+                error={errors.weight}
               />
               <MetricField
                 label={category === 'BALITA' ? 'Panjang / TB' : 'Tinggi Badan (TB)'}
@@ -284,7 +349,15 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 value={height}
                 onChange={(v) => handleFieldChange('height', v)}
                 step="0.1"
+                error={errors.height}
               />
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <span className="text-[11px] font-bold text-[#54656f]">Indeks Massa Tubuh (IMT)</span>
+              <span className="text-[11px] font-extrabold text-[#075e54] bg-[#e7fceb] border border-[#25d366]/30 rounded-lg px-2.5 py-1">
+                {computeImt(weight, height) != null ? `${computeImt(weight, height)} kg/m²` : '—'}
+              </span>
             </div>
           </SectionCard>
 
@@ -302,27 +375,37 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 value={headCircumference}
                 onChange={(v) => handleFieldChange('headCircumference', v)}
                 step="0.1"
+                error={errors.headCircumference}
               />
             </SectionCard>
           )}
 
-          {/* C. Ukur Khusus Anak (5-9 th) */}
-          {category === 'ANAK' && (
-            <SectionCard>
-              <SectionHeader
-                icon={Ruler}
-                title="Ukur Khusus Anak (5–9 th)"
-                hint="Lingkar lengan atas (LiLA) deteksi gizi kurang"
-              />
+          {/* Ukur Tambahan — semua kategori (opsional) */}
+          <SectionCard>
+            <SectionHeader
+              icon={Ruler}
+              title="Ukur Tambahan"
+              hint="Opsional — untuk semua kategori"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <MetricField
                 label="Lingkar Lengan Atas (LiLA)"
                 unit="cm"
                 value={armCircumference}
                 onChange={(v) => handleFieldChange('armCircumference', v)}
                 step="0.1"
+                error={errors.armCircumference}
               />
-            </SectionCard>
-          )}
+              <MetricField
+                label="Lingkar Perut"
+                unit="cm"
+                value={waistCircumference}
+                onChange={(v) => handleFieldChange('waistCircumference', v)}
+                step="0.1"
+                error={errors.waistCircumference}
+              />
+            </div>
+          </SectionCard>
 
           {/* D. Ukur Khusus Remaja (10-17 th) */}
           {category === 'REMAJA' && (
@@ -330,23 +413,15 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
               <SectionHeader
                 icon={HeartPulse}
                 title="Ukur Khusus Remaja"
-                hint="LiLA + tekanan darah"
+                hint="Tekanan darah"
               />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <MetricField
-                  label="Lingkar Lengan Atas (LiLA)"
-                  unit="cm"
-                  value={armCircumference}
-                  onChange={(v) => handleFieldChange('armCircumference', v)}
-                  step="0.1"
-                />
-                <BloodPressureField
-                  systolic={systolic}
-                  diastolic={diastolic}
-                  onSystolic={(v) => handleFieldChange('systolic', v)}
-                  onDiastolic={(v) => handleFieldChange('diastolic', v)}
-                />
-              </div>
+              <BloodPressureField
+                systolic={systolic}
+                diastolic={diastolic}
+                onSystolic={(v) => handleFieldChange('systolic', v)}
+                onDiastolic={(v) => handleFieldChange('diastolic', v)}
+                error={errors.systolic || errors.diastolic}
+              />
             </SectionCard>
           )}
 
@@ -363,6 +438,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 diastolic={diastolic}
                 onSystolic={(v) => handleFieldChange('systolic', v)}
                 onDiastolic={(v) => handleFieldChange('diastolic', v)}
+                error={errors.systolic || errors.diastolic}
               />
             </SectionCard>
           )}
@@ -373,16 +449,9 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
               <SectionHeader
                 icon={HeartPulse}
                 title="Pemeriksaan Ibu Hamil"
-                hint="LiLA, usia kehamilan & tekanan darah"
+                hint="Usia kehamilan & tekanan darah"
               />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <MetricField
-                  label="Lingkar Lengan Atas (LiLA)"
-                  unit="cm"
-                  value={armCircumference}
-                  onChange={(v) => handleFieldChange('armCircumference', v)}
-                  step="0.1"
-                />
                 <MetricField
                   label="Usia Kehamilan"
                   unit="minggu"
@@ -391,6 +460,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                   step="1"
                   inputMode="numeric"
                   placeholder="0"
+                  error={errors.gestationalAge}
                 />
               </div>
               <BloodPressureField
@@ -398,9 +468,33 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 diastolic={diastolic}
                 onSystolic={(v) => handleFieldChange('systolic', v)}
                 onDiastolic={(v) => handleFieldChange('diastolic', v)}
+                error={errors.systolic || errors.diastolic}
               />
             </SectionCard>
           )}
+
+          {/* Skrining Indra — semua kategori (opsional) */}
+          <SectionCard>
+            <SectionHeader
+              icon={Eye}
+              title="Skrining Indra"
+              hint="Hasil pemeriksaan mata & telinga"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <ScreeningField
+                icon={Eye}
+                label="Skrining Mata"
+                value={visionStatus}
+                onChange={(v) => handleFieldChange('visionStatus', v)}
+              />
+              <ScreeningField
+                icon={Ear}
+                label="Skrining Telinga"
+                value={hearingStatus}
+                onChange={(v) => handleFieldChange('hearingStatus', v)}
+              />
+            </div>
+          </SectionCard>
 
           {/* G. Lab Sederhana */}
           <SectionCard>
@@ -419,6 +513,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 inputMode="numeric"
                 placeholder="0"
                 size="sm"
+                error={errors.bloodSugar}
               />
               <MetricField
                 label="Kolesterol Total"
@@ -429,6 +524,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 inputMode="numeric"
                 placeholder="0"
                 size="sm"
+                error={errors.cholesterol}
               />
               <MetricField
                 label="Asam Urat"
@@ -438,6 +534,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 step="0.1"
                 placeholder="0.0"
                 size="sm"
+                error={errors.uricAcid}
               />
               <MetricField
                 label="Hemoglobin (HB)"
@@ -447,6 +544,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 step="0.1"
                 placeholder="0.0"
                 size="sm"
+                error={errors.hemoglobin}
               />
             </div>
           </SectionCard>
@@ -458,6 +556,23 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
               title="Catatan"
               hint="Keluhan, vitamin, atau tindak lanjut"
             />
+            <div className="flex items-center gap-2 text-[11px] font-bold text-[#54656f]">
+              <span>Ditulis oleh:</span>
+              {(['Kader', 'Nakes'] as const).map((src) => (
+                <button
+                  key={src}
+                  type="button"
+                  onClick={() => handleFieldChange('noteSource', src)}
+                  className={`px-3 py-1.5 rounded-full border transition-all ${
+                    noteSource === src
+                      ? 'bg-[#075e54] text-white border-[#075e54]'
+                      : 'bg-white text-[#54656f] border-[#e9edef] hover:bg-[#f0f2f5]'
+                  }`}
+                >
+                  {src}
+                </button>
+              ))}
+            </div>
             <textarea
               rows={3}
               value={notes}
@@ -505,6 +620,12 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                   {hist.armCircumference && (
                     <MetricChip label="LiLA" value={`${hist.armCircumference} cm`} />
                   )}
+                  {hist.waistCircumference && (
+                    <MetricChip label="Lingkar Perut" value={`${hist.waistCircumference} cm`} />
+                  )}
+                  {hist.imt && (
+                    <MetricChip label="IMT" value={`${hist.imt} kg/m²`} />
+                  )}
                   {hist.systolic && (
                     <MetricChip label="Tensi" value={`${hist.systolic}/${hist.diastolic} mmHg`} />
                   )}
@@ -520,11 +641,17 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                   {hist.hemoglobin && (
                     <MetricChip label="HB" value={`${hist.hemoglobin} g/dL`} />
                   )}
+                  {hist.visionStatus && (
+                    <MetricChip label="Mata" value={hist.visionStatus} />
+                  )}
+                  {hist.hearingStatus && (
+                    <MetricChip label="Telinga" value={hist.hearingStatus} />
+                  )}
                 </div>
 
                 {hist.notes && (
                   <p className="text-[11px] text-[#54656f] italic bg-[#f0f2f5] p-2.5 rounded-xl border border-[#e9edef]">
-                    &quot;{hist.notes}&quot;
+                    {hist.noteSource ? `(${hist.noteSource}) ` : ''}&quot;{hist.notes}&quot;
                   </p>
                 )}
               </div>
@@ -598,6 +725,7 @@ function MetricField({
   step = '0.1',
   inputMode = 'decimal',
   size = 'lg',
+  error,
 }: {
   label: string;
   unit: string;
@@ -607,26 +735,40 @@ function MetricField({
   step?: string;
   inputMode?: 'decimal' | 'numeric';
   size?: 'lg' | 'sm';
+  error?: string;
 }) {
   return (
-    <div className="flex items-center gap-2 bg-[#f0f2f5] border border-[#e9edef] rounded-2xl px-3.5 py-2.5 focus-within:bg-white focus-within:border-[#128c7e] focus-within:ring-2 focus-within:ring-[#128c7e]/15 transition-all">
-      <div className="min-w-0 flex-1">
-        <label className="block text-[10px] font-bold text-[#667781] uppercase tracking-wide mb-0.5 truncate">
-          {label}
-        </label>
-        <input
-          type="number"
-          step={step}
-          inputMode={inputMode}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className={`${numInputCls} ${size === 'lg' ? 'text-2xl' : 'text-lg'}`}
-        />
+    <div>
+      <div
+        className={`flex items-center gap-2 bg-[#f0f2f5] border rounded-2xl px-3.5 py-2.5 focus-within:bg-white focus-within:ring-2 transition-all ${
+          error
+            ? 'border-[#ef4444] focus-within:border-[#ef4444] focus-within:ring-[#ef4444]/15'
+            : 'border-[#e9edef] focus-within:border-[#128c7e] focus-within:ring-[#128c7e]/15'
+        }`}
+      >
+        <div className="min-w-0 flex-1">
+          <label className="block text-[10px] font-bold text-[#667781] uppercase tracking-wide mb-0.5 truncate">
+            {label}
+          </label>
+          <input
+            type="number"
+            step={step}
+            inputMode={inputMode}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className={`${numInputCls} ${size === 'lg' ? 'text-2xl' : 'text-lg'}`}
+          />
+        </div>
+        <span className="text-[10px] font-extrabold text-[#075e54] bg-white border border-[#e9edef] rounded-lg px-2 py-1 shrink-0">
+          {unit}
+        </span>
       </div>
-      <span className="text-[10px] font-extrabold text-[#075e54] bg-white border border-[#e9edef] rounded-lg px-2 py-1 shrink-0">
-        {unit}
-      </span>
+      {error && (
+        <p className="text-[11px] text-[#ef4444] font-bold mt-1 flex items-center gap-1">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -636,38 +778,90 @@ function BloodPressureField({
   diastolic,
   onSystolic,
   onDiastolic,
+  error,
 }: {
   systolic: string;
   diastolic: string;
   onSystolic: (value: string) => void;
   onDiastolic: (value: string) => void;
+  error?: string;
 }) {
   return (
-    <div className="bg-[#f0f2f5] border border-[#e9edef] rounded-2xl px-3.5 py-2.5 focus-within:bg-white focus-within:border-[#128c7e] focus-within:ring-2 focus-within:ring-[#128c7e]/15 transition-all">
-      <label className="block text-[10px] font-bold text-[#667781] uppercase tracking-wide mb-1">
-        Tekanan Darah (Tensi)
+    <div>
+      <div
+        className={`bg-[#f0f2f5] border rounded-2xl px-3.5 py-2.5 focus-within:bg-white focus-within:ring-2 transition-all ${
+          error
+            ? 'border-[#ef4444] focus-within:border-[#ef4444] focus-within:ring-[#ef4444]/15'
+            : 'border-[#e9edef] focus-within:border-[#128c7e] focus-within:ring-[#128c7e]/15'
+        }`}
+      >
+        <label className="block text-[10px] font-bold text-[#667781] uppercase tracking-wide mb-1">
+          Tekanan Darah (Tensi)
+        </label>
+        <div className="flex items-center gap-1.5">
+          <input
+            type="number"
+            inputMode="numeric"
+            value={systolic}
+            onChange={(e) => onSystolic(e.target.value)}
+            placeholder="Sistolik"
+            className={`${numInputCls} text-xl`}
+          />
+          <span className="text-xl font-bold text-[#8696a0] shrink-0">/</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            value={diastolic}
+            onChange={(e) => onDiastolic(e.target.value)}
+            placeholder="Diastolik"
+            className={`${numInputCls} text-xl`}
+          />
+          <span className="text-[10px] font-extrabold text-[#075e54] bg-white border border-[#e9edef] rounded-lg px-2 py-1 shrink-0">
+            mmHg
+          </span>
+        </div>
+      </div>
+      {error && (
+        <p className="text-[11px] text-[#ef4444] font-bold mt-1 flex items-center gap-1">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ScreeningField({
+  icon: Icon,
+  label,
+  value,
+  onChange,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="bg-[#f0f2f5] border border-[#e9edef] rounded-2xl px-3.5 py-2.5">
+      <label className="flex items-center gap-1.5 text-[10px] font-bold text-[#667781] uppercase tracking-wide mb-1.5">
+        <Icon className="w-3.5 h-3.5 text-[#128c7e]" />
+        {label}
       </label>
-      <div className="flex items-center gap-1.5">
-        <input
-          type="number"
-          inputMode="numeric"
-          value={systolic}
-          onChange={(e) => onSystolic(e.target.value)}
-          placeholder="Sistolik"
-          className={`${numInputCls} text-xl`}
-        />
-        <span className="text-xl font-bold text-[#8696a0] shrink-0">/</span>
-        <input
-          type="number"
-          inputMode="numeric"
-          value={diastolic}
-          onChange={(e) => onDiastolic(e.target.value)}
-          placeholder="Diastolik"
-          className={`${numInputCls} text-xl`}
-        />
-        <span className="text-[10px] font-extrabold text-[#075e54] bg-white border border-[#e9edef] rounded-lg px-2 py-1 shrink-0">
-          mmHg
-        </span>
+      <div className="grid grid-cols-2 bg-white p-1 rounded-xl border border-[#e9edef] gap-1">
+        {(['Normal', 'Tidak Normal'] as const).map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onChange(opt)}
+            className={`py-2 rounded-lg text-[11px] font-bold transition-all ${
+              value === opt
+                ? 'bg-[#075e54] text-white shadow-xs'
+                : 'text-[#54656f] hover:bg-[#f0f2f5]'
+            }`}
+          >
+            {opt}
+          </button>
+        ))}
       </div>
     </div>
   );

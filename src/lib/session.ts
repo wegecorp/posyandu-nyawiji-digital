@@ -53,7 +53,22 @@ export async function getSessionFromCookies(): Promise<SessionPayload | null> {
   return verifySession(token);
 }
 
-export function buildSetCookieHeader(token: string): string {
+/**
+ * Deteksi apakah request datang via HTTPS. Percaya header X-Forwarded-Proto
+ * (dipakai reverse proxy Nginx), lalu fallback ke URL request.
+ */
+export function isSecureRequest(req: Request): boolean {
+  const proto = req.headers.get('x-forwarded-proto');
+  if (proto) return proto.split(',')[0].trim().toLowerCase() === 'https';
+  return req.url?.toLowerCase().startsWith('https://') ?? false;
+}
+
+/**
+ * Secure flag dipasang hanya bila koneksi benar-benar HTTPS. Browser menolak
+ * menyimpan cookie Secure dari koneksi HTTP -> sesi hilang tiap refresh.
+ * Bila akses masih via HTTP (mis. http://IP:3000), jangan pasang Secure.
+ */
+export function buildSetCookieHeader(token: string, options?: { secure?: boolean }): string {
   const parts = [
     `${SESSION_COOKIE_NAME}=${token}`,
     `Path=/`,
@@ -61,8 +76,7 @@ export function buildSetCookieHeader(token: string): string {
     `SameSite=Lax`,
     `Max-Age=${SESSION_MAX_AGE}`,
   ];
-  // Add Secure flag in production
-  if (process.env.NODE_ENV === 'production') {
+  if (options?.secure) {
     parts.push('Secure');
   }
   return parts.join('; ');

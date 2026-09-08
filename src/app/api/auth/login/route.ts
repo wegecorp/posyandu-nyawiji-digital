@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword, verifyPassword, isPasswordHashed } from '@/lib/password';
-import { createSession, buildSetCookieHeader, type SessionPayload } from '@/lib/session';
+import { createSession, buildSetCookieHeader, isSecureRequest, type SessionPayload } from '@/lib/session';
 import { isRateLimited, getClientKey } from '@/lib/rate-limit';
 import { getUserBySession, serializeUser } from '@/lib/user-profile';
 
@@ -108,7 +108,7 @@ export async function POST(req: Request) {
 
     const token = await createSession(sessionPayload);
     const response = NextResponse.json({ success: true, user: serializeUser(fresh) });
-    response.headers.set('Set-Cookie', buildSetCookieHeader(token));
+    response.headers.set('Set-Cookie', buildSetCookieHeader(token, { secure: isSecureRequest(req) }));
     return response;
   } catch (error) {
     console.error('Login error:', error);

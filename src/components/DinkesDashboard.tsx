@@ -13,6 +13,7 @@ import {
   RefreshCw,
   ShieldCheck,
   Info,
+  Upload,
 } from 'lucide-react';
 
 interface DinkesDashboardProps {
@@ -21,6 +22,14 @@ interface DinkesDashboardProps {
 }
 
 interface KapanewonRef { id: string; code: string; name: string }
+interface ImportReportShape {
+  rowsTotal: number;
+  puskesmasNotFound: number;
+  kalurahanCreated: number;
+  posyanduCreated: number;
+  posyanduSkipped: number;
+  errors: { rowNo: number; message: string }[];
+}
 interface PuskesmaRow {
   id: string;
   code: string;
@@ -55,6 +64,39 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
   const [resetTarget, setResetTarget] = useState<{ id: string; label: string; roleName: string } | null>(null);
   const [resetMsg, setResetMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [resetSubmitting, setResetSubmitting] = useState(false);
+
+  // Import modal
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importBusy, setImportBusy] = useState(false);
+  const [importReport, setImportReport] = useState<{ dryRun: boolean; report: ImportReportShape } | null>(null);
+  const [importError, setImportError] = useState('');
+
+  const openImport = () => {
+    setImportFile(null);
+    setImportReport(null);
+    setImportError('');
+    setIsImportOpen(true);
+  };
+
+  const runImport = async (dry: boolean) => {
+    if (!importFile) return;
+    setImportBusy(true);
+    setImportError('');
+    try {
+      const fd = new FormData();
+      fd.append('file', importFile);
+      const res = await fetch(`/api/dinkes/import${dry ? '?dry=1' : ''}`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Import gagal');
+      setImportReport({ dryRun: dry, report: data.report });
+      if (!dry) refresh();
+    } catch (err: unknown) {
+      setImportError(err instanceof Error ? err.message : 'Terjadi kesalahan');
+    } finally {
+      setImportBusy(false);
+    }
+  };
 
   const refresh = () => {
     setIsLoading(true);
@@ -204,18 +246,27 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
       </div>
 
       {/* Action header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
           <h2 className="text-sm font-black text-[#0f172a]">Daftar Puskesmas</h2>
           <p className="text-xs text-[#64748b]">Staf login dengan username & password (bukan cascade)</p>
         </div>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-1.5 bg-[#8b5cf6] hover:bg-[#8b5cf6]/90 text-white font-bold px-4 py-2 rounded-full text-xs shadow-xs transition-all touch-press"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>Daftarkan Puskesmas</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={openImport}
+            className="flex items-center gap-1.5 bg-white hover:bg-[#f0f7ff] text-[#0f172a] border border-[#cbd5e1] font-bold px-4 py-2 rounded-full text-xs shadow-xs transition-all touch-press"
+          >
+            <Upload className="w-4 h-4" />
+            <span>Import Posyandu</span>
+          </button>
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-1.5 bg-[#8b5cf6] hover:bg-[#8b5cf6]/90 text-white font-bold px-4 py-2 rounded-full text-xs shadow-xs transition-all touch-press"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>Daftarkan Puskesmas</span>
+          </button>
+        </div>
       </div>
 
       {/* List */}
@@ -359,6 +410,94 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
         </ModalShell>
       )}
 
+      {/* Modal: Import Posyandu */}
+      {isImportOpen && (
+        <ModalShell title="Import Data Posyandu (Massal)" subtitle="Dinas Kesehatan — upload CSV / Excel" accent="bg-[#0284c7]" onClose={() => setIsImportOpen(false)}>
+          <div className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+            <div className="p-3 bg-[#f0f7ff] rounded-2xl border border-[#cbd5e1] text-[11px] text-[#0f172a] font-medium flex gap-2">
+              <Info className="w-4 h-4 shrink-0 text-[#0284c7]" />
+              <p>
+                Format: kolom <strong>NAMA PUSKESMAS · NAMA KALURAHAN · NAMA PADUKUHAN · NAMA POSYANDU</strong>.
+                Puskesmas harus sudah didaftarkan lebih dulu (cocok berdasarkan nama). Import membuat akun posyandu
+                dengan password default (wajib aktivasi saat login pertama).
+              </p>
+            </div>
+
+            <label className="block">
+              <span className="text-xs font-bold text-[#0f172a] mb-1 block">Pilih File (.csv / .xlsx)</span>
+              <input
+                type="file"
+                accept=".csv,.xlsx"
+                onChange={(e) => {
+                  setImportFile(e.target.files?.[0] || null);
+                  setImportReport(null);
+                  setImportError('');
+                }}
+                className="block w-full text-xs text-[#64748b] file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#0284c7] file:text-white hover:file:bg-[#0369a1] cursor-pointer"
+              />
+            </label>
+            {importFile && (
+              <p className="text-[11px] font-bold text-[#0284c7]">
+                Terpilih: {importFile.name} ({(importFile.size / 1024).toFixed(1)} KB)
+              </p>
+            )}
+
+            {importError && <BannerError msg={importError} />}
+
+            {importReport && (
+              <div className="space-y-3">
+                <p className="text-[11px] font-black uppercase tracking-wider text-[#0284c7]">
+                  {importReport.dryRun ? 'Hasil Analisis (belum disimpan)' : 'Hasil Import'}
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-center">
+                  <SummaryCell label="Baris terbaca" value={importReport.report.rowsTotal} />
+                  <SummaryCell label="Puskesmas tak ditemukan" value={importReport.report.puskesmasNotFound} tone={importReport.report.puskesmasNotFound > 0 ? 'warn' : 'ok'} />
+                  <SummaryCell label="Kalurahan baru" value={importReport.report.kalurahanCreated} />
+                  <SummaryCell label="Posyandu dibuat" value={importReport.report.posyanduCreated} tone="ok" />
+                  <SummaryCell label="Duplikat (dilewati)" value={importReport.report.posyanduSkipped} />
+                </div>
+                {importReport.report.errors.length > 0 && (
+                  <div className="p-3 bg-[#ef4444]/5 border border-[#ef4444]/20 rounded-2xl text-[11px] text-[#0f172a] max-h-36 overflow-y-auto space-y-1">
+                    <p className="font-black text-[#ef4444] text-xs">Error ({importReport.report.errors.length}):</p>
+                    {importReport.report.errors.slice(0, 12).map((e, i) => (
+                      <p key={i} className="font-medium text-[#64748b]">
+                        <span className="text-[#ef4444] font-bold">Baris {e.rowNo}:</span> {e.message}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="pt-2 flex gap-2.5">
+              <button type="button" onClick={() => setIsImportOpen(false)} className="flex-1 py-3 bg-[#f0f7ff] hover:bg-[#e2e8f0] text-[#0f172a] font-bold rounded-full text-xs border border-[#cbd5e1]">
+                Tutup
+              </button>
+              {!importReport?.dryRun && (
+                <button
+                  onClick={() => runImport(true)}
+                  disabled={!importFile || importBusy}
+                  className="flex-2 py-3 bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold rounded-full text-xs shadow-xs transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  <RefreshCw className={`w-4 h-4 ${importBusy ? 'animate-spin' : ''}`} />
+                  <span>{importBusy ? 'Menganalisis...' : 'Analisis Dulu'}</span>
+                </button>
+              )}
+              {importReport?.dryRun && (
+                <button
+                  onClick={() => runImport(false)}
+                  disabled={importBusy}
+                  className="flex-2 py-3 bg-[#0284c7] hover:bg-[#0369a1] text-white font-extrabold rounded-full text-xs shadow-xs transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>{importBusy ? 'Mengimpor...' : 'Import Sekarang'}</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </ModalShell>
+      )}
+
       {/* Modal: Reset Password */}
       {resetTarget && (
         <ModalShell title={`Reset Password (${resetTarget.roleName})`} subtitle={resetTarget.label} accent="bg-[#0f172a]" onClose={() => setResetTarget(null)}>
@@ -443,6 +582,16 @@ function BannerOk({ msg }: { msg: string }) {
     <div className="p-3 bg-[#10b981]/10 border border-[#10b981]/30 rounded-2xl text-xs text-[#10b981] font-bold flex items-center gap-2">
       <Check className="w-4 h-4 shrink-0" />
       <span>{msg}</span>
+    </div>
+  );
+}
+
+function SummaryCell({ label, value, tone = 'normal' }: { label: string; value: number; tone?: 'normal' | 'ok' | 'warn' }) {
+  const color = tone === 'ok' ? 'text-[#047857]' : tone === 'warn' ? 'text-[#b45309]' : 'text-[#0f172a]';
+  return (
+    <div className="bg-[#f0f7ff] rounded-2xl p-3 border border-[#e2e8f0]">
+      <p className={`text-lg font-black ${color}`}>{value}</p>
+      <p className="text-[10px] text-[#64748b] font-bold mt-0.5">{label}</p>
     </div>
   );
 }

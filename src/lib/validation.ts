@@ -78,3 +78,41 @@ export function computeImt(
   const hMeter = h / 100;
   return Math.round((w / (hMeter * hMeter)) * 10) / 10;
 }
+
+export function validateBirthDate(value: string | null | undefined): FieldValidation {
+  if (!value) return { valid: false, message: 'Tanggal lahir wajib diisi' };
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return { valid: false, message: 'Tanggal lahir tidak valid' };
+  if (d.getTime() > Date.now()) return { valid: false, message: 'Tanggal lahir tidak boleh di masa depan' };
+  if (d.getFullYear() < 1900) return { valid: false, message: 'Tanggal lahir di luar rentang wajar' };
+  return { valid: true, message: null };
+}
+
+export function validatePhone(value: string | null | undefined): FieldValidation {
+  if (!value || String(value).trim() === '') return { valid: true, message: null };
+  const digits = String(value).replace(/\D/g, '');
+  if (digits.length < 8 || digits.length > 15) {
+    return { valid: false, message: 'Nomor HP harus 8–15 digit' };
+  }
+  return { valid: true, message: null };
+}
+
+export function validateTextLength(
+  value: string | null | undefined,
+  label: string,
+  max: number
+): FieldValidation {
+  if (value != null && String(value).length > max) {
+    return { valid: false, message: `${label} maksimal ${max} karakter` };
+  }
+  return { valid: true, message: null };
+}
+
+// Pengukuran dianggap lengkap bila BB & TB (wajib untuk semua kategori) terisi.
+export function isMeasurementComplete(m: {
+  weight?: number | null;
+  height?: number | null;
+} | null | undefined): boolean {
+  if (!m) return false;
+  return m.weight != null && m.height != null;
+}

@@ -30,6 +30,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
   const category = patient.category || 'BALITA';
   const badge = getCategoryBadge(category);
   const isMeasuredToday = Boolean(patient.todayMeasurement);
+  const isComplete = Boolean(patient.measurementComplete);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -93,7 +94,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
 
           {/* Status Ukur Hari Ini */}
           <div className="mt-1 flex items-center gap-2">
-            {isMeasuredToday ? (
+            {isComplete ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-[#0f766e] bg-[#f0fdf4] px-2.5 py-0.5 rounded-full border border-[#bbf7d0]">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#16a34a]" />
                 <span>
@@ -102,6 +103,11 @@ export const PatientCard: React.FC<PatientCardProps> = ({
                     ? ` (${patient.todayMeasurement.weight} kg)`
                     : ''}
                 </span>
+              </span>
+            ) : isMeasuredToday ? (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-[#b45309] bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300">
+                <CircleDashed className="w-3.5 h-3.5 text-[#d97706]" />
+                <span>Diukur sebagian (BB/TB belum lengkap)</span>
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-[#c2410c] bg-[#fff7ed] px-2.5 py-0.5 rounded-full border border-[#ffedd5]">

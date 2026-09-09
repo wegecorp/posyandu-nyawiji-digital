@@ -72,6 +72,27 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
     user?.name
   );
 
+  // Isi field sesuai measurement pada tanggal sesi terpilih (termasuk backdate).
+  const applyMeasurement = (tm: MeasurementData | null | undefined) => {
+    setWeight(tm?.weight != null ? String(tm.weight) : '');
+    setHeight(tm?.height != null ? String(tm.height) : '');
+    setHeadCircumference(tm?.headCircumference != null ? String(tm.headCircumference) : '');
+    setArmCircumference(tm?.armCircumference != null ? String(tm.armCircumference) : '');
+    setWaistCircumference(tm?.waistCircumference != null ? String(tm.waistCircumference) : '');
+    setSystolic(tm?.systolic != null ? String(tm.systolic) : '');
+    setDiastolic(tm?.diastolic != null ? String(tm.diastolic) : '');
+    setGestationalAge(tm?.gestationalAge != null ? String(tm.gestationalAge) : '');
+    setBloodSugar(tm?.bloodSugar != null ? String(tm.bloodSugar) : '');
+    setCholesterol(tm?.cholesterol != null ? String(tm.cholesterol) : '');
+    setUricAcid(tm?.uricAcid != null ? String(tm.uricAcid) : '');
+    setHemoglobin(tm?.hemoglobin != null ? String(tm.hemoglobin) : '');
+    setVisionStatus(tm?.visionStatus || '');
+    setHearingStatus(tm?.hearingStatus || '');
+    setNoteSource(tm?.noteSource || 'Kader');
+    setNotes(tm?.notes || '');
+    setErrors({});
+  };
+
   // Muat data pengukuran hari ini & riwayat saat pasien aktif.
   // (Reset field tidak perlu manual: komponen di-remount tiap ganti pasien.)
   useEffect(() => {
@@ -81,28 +102,10 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
       .then((result) => {
         if (!active || !result.success || !result.data) return;
         const p = result.data;
-        const tm = p.todayMeasurement;
-        if (tm) {
-          if (tm.weight != null) setWeight(String(tm.weight));
-          if (tm.height != null) setHeight(String(tm.height));
-          if (tm.headCircumference != null) setHeadCircumference(String(tm.headCircumference));
-          if (tm.armCircumference != null) setArmCircumference(String(tm.armCircumference));
-          if (tm.systolic != null) setSystolic(String(tm.systolic));
-          if (tm.diastolic != null) setDiastolic(String(tm.diastolic));
-          if (tm.gestationalAge != null) setGestationalAge(String(tm.gestationalAge));
-          if (tm.bloodSugar != null) setBloodSugar(String(tm.bloodSugar));
-          if (tm.cholesterol != null) setCholesterol(String(tm.cholesterol));
-          if (tm.uricAcid != null) setUricAcid(String(tm.uricAcid));
-          if (tm.hemoglobin != null) setHemoglobin(String(tm.hemoglobin));
-          if (tm.waistCircumference != null) setWaistCircumference(String(tm.waistCircumference));
-          if (tm.visionStatus) setVisionStatus(tm.visionStatus);
-          if (tm.hearingStatus) setHearingStatus(tm.hearingStatus);
-          if (tm.noteSource) setNoteSource(tm.noteSource);
-          if (tm.notes) setNotes(tm.notes);
-        }
         if (p.measurements) {
           setHistoryList(p.measurements);
         }
+        applyMeasurement(p.todayMeasurement);
       })
       .catch((e) => console.error('Error loading patient details:', e));
     return () => {
@@ -187,6 +190,18 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
         break;
       case 'sessionDate':
         setSessionDate(value);
+        {
+          const target = new Date(value);
+          const start = new Date(target);
+          start.setHours(0, 0, 0, 0);
+          const end = new Date(target);
+          end.setHours(23, 59, 59, 999);
+          const match = historyList.find((m) => {
+            const d = new Date(m.sessionDate);
+            return d >= start && d <= end;
+          });
+          if (match) applyMeasurement(match);
+        }
         break;
       case 'notes':
         setNotes(value);
@@ -327,6 +342,17 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
       {/* 1. INPUT FORM */}
       {activeTab === 'form' && (
         <div className="space-y-3.5">
+          {/* Peringatan kelengkapan wajib (BB & TB) */}
+          {(weight === '' || height === '') && (
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-300 rounded-2xl px-3.5 py-2.5 text-xs text-[#b45309] font-bold">
+              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-px" />
+              <span>
+                Data belum lengkap — Berat Badan & Tinggi Badan wajib diisi agar status pasien terhitung
+                <strong> Selesai</strong>.
+              </span>
+            </div>
+          )}
+
           {/* A. Ukur Fisik Utama (BB & TB) — semua kategori */}
           <SectionCard>
             <SectionHeader

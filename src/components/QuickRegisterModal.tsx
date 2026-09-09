@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { PatientData } from '@/lib/types';
-import { X, UserPlus, Calendar, User, Home, Phone, Heart, Check, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react';
+import { addToSyncQueue, genClientId } from '@/lib/offline-sync';
+import { X, UserPlus, Calendar, User, Home, Phone, Heart, Check, AlertTriangle, Info, ChevronUp, ChevronDown } from 'lucide-react';
 import { calculateAge, getPatientCategory, getCategoryBadge } from '@/lib/utils';
 
 interface QuickRegisterModalProps {
@@ -28,6 +29,7 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
   const [showOptional, setShowOptional] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [infoMsg, setInfoMsg] = useState('');
   const [duplicate, setDuplicate] = useState<{ regNumber: string; name: string } | null>(null);
 
   if (!isOpen) return null;
@@ -66,6 +68,18 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
     await doSubmit(true);
   };
 
+  const resetForm = () => {
+    setName('');
+    setBirthDate('');
+    setGender('L');
+    setAddress('');
+    setGuardianName('');
+    setPhone('');
+    setIsPregnant(false);
+    setShowOptional(false);
+    setDuplicate(null);
+  };
+
   const doSubmit = async (force: boolean) => {
     if (!user || !user.posyanduId) {
       setErrorMsg('Pilih Posyandu aktif terlebih dahulu');
@@ -74,7 +88,37 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
 
     setIsSubmitting(true);
     setErrorMsg('');
+    setInfoMsg('');
     setDuplicate(null);
+
+    const clientId = genClientId();
+    const payload = {
+      name: name.trim(),
+      birthDate,
+      gender,
+      address: address.trim() || undefined,
+      guardianName: guardianName.trim() || undefined,
+      phone: phone.trim() || undefined,
+      isPregnant,
+      posyanduId: user.posyanduId,
+      force,
+    };
+
+    // Offline: simpan ke antrean lokal, kirim otomatis saat kembali online.
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      addToSyncQueue({
+        kind: 'patient',
+        id: genClientId(),
+        clientId,
+        payload: payload as unknown as Record<string, string | number | null | undefined>,
+        timestamp: Date.now(),
+      });
+      setInfoMsg('Tersimpan offline — data akan dikirim otomatis saat koneksi kembali.');
+      setErrorMsg('');
+      setIsSubmitting(false);
+      resetForm();
+      return;
+    }
 
     try {
       const res = await fetch('/api/patients', {
@@ -83,17 +127,7 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
           'Content-Type': 'application/json',
           'x-user-role': user.role,
         },
-        body: JSON.stringify({
-          name: name.trim(),
-          birthDate,
-          gender,
-          address: address.trim() || undefined,
-          guardianName: guardianName.trim() || undefined,
-          phone: phone.trim() || undefined,
-          isPregnant,
-          posyanduId: user.posyanduId,
-          force,
-        }),
+        body: JSON.stringify({ ...payload, clientId }),
       });
 
       const data = await res.json();
@@ -107,14 +141,7 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
         throw new Error(data.error || 'Gagal mendaftar pasien');
       }
 
-      // Reset form
-      setName('');
-      setBirthDate('');
-      setAddress('');
-      setGuardianName('');
-      setPhone('');
-      setIsPregnant(false);
-      setShowOptional(false);
+      resetForm();
 
       onSuccess(data.data);
       onClose();
@@ -153,6 +180,13 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
             <div className="p-3 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl text-xs text-[#ef4444] font-bold flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0 text-[#ef4444]" />
               <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {infoMsg && (
+            <div className="p-3 bg-sky-50 border border-sky-300 rounded-2xl text-xs text-sky-700 font-bold flex items-center gap-2">
+              <Info className="w-4 h-4 shrink-0 text-sky-600" />
+              <span>{infoMsg}</span>
             </div>
           )}
 

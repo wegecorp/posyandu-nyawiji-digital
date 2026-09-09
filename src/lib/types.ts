@@ -17,6 +17,7 @@ export interface PatientData {
   ageMonths?: number;
   ageDisplay?: string;
   todayMeasurement?: MeasurementData | null;
+  measurementComplete?: boolean;
   latestMeasurement?: MeasurementData | null;
   measurements?: MeasurementData[];
 }

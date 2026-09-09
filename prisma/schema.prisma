@@ -74,6 +74,7 @@ model User {
 model Patient {
   id            String        @id @default(cuid())
   regNumber     String        @unique // e.g. POS-WNS-01-2026-0001
+  clientId      String?       @unique // UUID sementara dari klien untuk idempotensi registrasi offline
   name          String
   birthDate     DateTime      // for auto age calculation
   gender        String?       // "L" (Laki-laki) / "P" (Perempuan)
@@ -84,6 +85,7 @@ model Patient {
   posyanduId    String
   posyandu      Posyandu      @relation(fields: [posyanduId], references: [id], onDelete: Cascade)
   measurements  Measurement[]
+  updatedBy     String?       // Username kader terakhir mengubah
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -118,6 +120,10 @@ model Measurement {
   notes             String?   // Catatan kader
   
   recordedBy        String?   // Nama / username posyandu/kader
+  updatedBy         String?   // Username kader terakhir mengubah
+  version           Int       @default(1) // last-write-wins counter
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+
+  @@unique([patientId, sessionDate])
 }

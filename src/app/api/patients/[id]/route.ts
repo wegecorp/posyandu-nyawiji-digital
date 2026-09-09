@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateAge, getPatientCategory } from '@/lib/utils';
 import { getAuthSession } from '@/lib/api-auth';
+import { validateBirthDate, validatePhone, validateTextLength } from '@/lib/validation';
 
 async function checkPatientAccess(patientId: string, session: { role: string; posyanduId?: string | null; healthCenterId?: string | null }) {
   const patient = await prisma.patient.findUnique({
@@ -55,9 +56,11 @@ export async function GET(
 
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
 
     const todayMeasurement = patient.measurements.find(
-      (m) => new Date(m.sessionDate) >= startOfToday
+      (m) => new Date(m.sessionDate) >= startOfToday && new Date(m.sessionDate) <= endOfToday
     ) || null;
 
     return NextResponse.json({
@@ -115,6 +118,17 @@ export async function PUT(
       return NextResponse.json({ error: 'Jenis kelamin wajib dipilih (Laki-laki / Perempuan)' }, { status: 400 });
     }
 
+    const bdCheck = validateBirthDate(birthDate);
+    if (!bdCheck.valid) return NextResponse.json({ error: bdCheck.message }, { status: 400 });
+    const nameCheck = validateTextLength(name, 'Nama', 120);
+    if (!nameCheck.valid) return NextResponse.json({ error: nameCheck.message }, { status: 400 });
+    const phoneCheck = validatePhone(phone);
+    if (!phoneCheck.valid) return NextResponse.json({ error: phoneCheck.message }, { status: 400 });
+    const addressCheck = validateTextLength(address, 'Alamat', 255);
+    if (!addressCheck.valid) return NextResponse.json({ error: addressCheck.message }, { status: 400 });
+    const guardianCheck = validateTextLength(guardianName, 'Nama wali', 120);
+    if (!guardianCheck.valid) return NextResponse.json({ error: guardianCheck.message }, { status: 400 });
+
     const updatedPatient = await prisma.patient.update({
       where: { id },
       data: {
@@ -125,6 +139,7 @@ export async function PUT(
         guardianName: guardianName?.trim() || null,
         phone: phone?.trim() || null,
         isPregnant: gender === 'L' ? false : Boolean(isPregnant),
+        updatedBy: session.username,
       },
       include: {
         posyandu: {
@@ -138,14 +153,21 @@ export async function PUT(
       },
     });
 
+    // Recompute snapshot usia & kategori pada semua pengukuran pasien ini.
     const age = calculateAge(updatedPatient.birthDate);
     const category = getPatientCategory(updatedPatient.birthDate, updatedPatient.isPregnant);
+    await prisma.measurement.updateMany({
+      where: { patientId: id },
+      data: { ageInMonths: age.totalMonths, category },
+    });
 
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
 
     const todayMeasurement = updatedPatient.measurements.find(
-      (m) => new Date(m.sessionDate) >= startOfToday
+      (m) => new Date(m.sessionDate) >= startOfToday && new Date(m.sessionDate) <= endOfToday
     ) || null;
 
     return NextResponse.json({

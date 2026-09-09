@@ -113,8 +113,8 @@ export default function PosyanduApp() {
         return false;
       }
       // Status filter
-      if (statusFilter === 'MEASURED' && !p.todayMeasurement) return false;
-      if (statusFilter === 'UNMEASURED' && p.todayMeasurement) return false;
+      if (statusFilter === 'MEASURED' && !p.measurementComplete) return false;
+      if (statusFilter === 'UNMEASURED' && p.measurementComplete) return false;
 
       return true;
     });
@@ -289,7 +289,7 @@ export default function PosyanduApp() {
                 }`}
               >
                 <CircleDashed className="w-3.5 h-3.5" />
-                <span>Belum ({patients.filter((p) => !p.todayMeasurement).length})</span>
+                <span>Belum ({patients.filter((p) => !p.measurementComplete).length})</span>
               </button>
               <button
                 onClick={() => setStatusFilter('MEASURED')}
@@ -300,7 +300,7 @@ export default function PosyanduApp() {
                 }`}
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Selesai ({patients.filter((p) => p.todayMeasurement).length})</span>
+                <span>Selesai ({patients.filter((p) => p.measurementComplete).length})</span>
               </button>
             </div>
 

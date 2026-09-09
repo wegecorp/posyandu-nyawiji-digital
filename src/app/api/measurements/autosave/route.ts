@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
 import { calculateAge, getPatientCategory } from '@/lib/utils';
 import { getAuthSession } from '@/lib/api-auth';
+import { isRateLimited } from '@/lib/rate-limit';
 import { computeImt, validateMeasurementValue, validateBloodPressure } from '@/lib/validation';
 
 export async function POST(req: Request) {
@@ -19,11 +20,16 @@ export async function POST(req: Request) {
       );
     }
 
+    if (isRateLimited({ key: `autosave:${session.userId}`, limit: 120, windowMs: 60_000 })) {
+      return NextResponse.json({ error: 'Terlalu banyak permintaan simpan. Coba lagi nanti.' }, { status: 429 });
+    }
+
     const body = await req.json();
     const {
       patientId,
       recordedBy,
       sessionDate,
+      version,
       weight,
       height,
       headCircumference,
@@ -160,6 +166,16 @@ export async function POST(req: Request) {
     if (notes !== undefined) fieldData.notes = notes;
     if (recordedBy) fieldData.recordedBy = recordedBy;
     if (weight !== undefined || height !== undefined) fieldData.imt = imt;
+    fieldData.updatedBy = session.username;
+
+    // Last-write-wins via client version (ms epoch). Tolak tulis yang lebih tua
+    // dari record tersimpan (mis. flush offline yang datang terlambat).
+    const incomingVersion = Number.isFinite(Number(version)) ? Math.floor(Number(version)) : 0;
+    if (existingMeasurement && incomingVersion > 0 && incomingVersion < existingMeasurement.version) {
+      return NextResponse.json({ error: 'Data usang — muat ulang sebelum menyimpan.', stale: true }, { status: 409 });
+    }
+    const newVersion = incomingVersion > 0 ? incomingVersion : (existingMeasurement?.version ?? 0) + 1;
+    fieldData.version = newVersion;
 
     let savedRecord;
 
@@ -173,16 +189,43 @@ export async function POST(req: Request) {
         },
       });
     } else {
-      savedRecord = await prisma.measurement.create({
-        data: {
-          ...(fieldData as unknown as Prisma.MeasurementUncheckedCreateInput),
-          patientId,
-          posyanduId: session.posyanduId!,
-          sessionDate: targetDate,
-          ageInMonths: age.totalMonths,
-          category: getPatientCategory(patient.birthDate, patient.isPregnant, patient.gender),
-        },
-      });
+      try {
+        savedRecord = await prisma.measurement.create({
+          data: {
+            ...(fieldData as unknown as Prisma.MeasurementUncheckedCreateInput),
+            patientId,
+            posyanduId: session.posyanduId!,
+            sessionDate: targetDate,
+            ageInMonths: age.totalMonths,
+            category: getPatientCategory(patient.birthDate, patient.isPregnant, patient.gender),
+          },
+        });
+      } catch (err) {
+        // Race: record untuk (patientId, sessionDate) baru saja dibuat proses lain.
+        if (
+          typeof err === 'object' &&
+          err !== null &&
+          (err as { code?: string }).code === 'P2002'
+        ) {
+          const raced = await prisma.measurement.findFirst({
+            where: {
+              patientId,
+              sessionDate: { gte: startOfDay, lte: endOfDay },
+            },
+          });
+          if (!raced) throw err;
+          savedRecord = await prisma.measurement.update({
+            where: { id: raced.id },
+            data: {
+              ...(fieldData as unknown as Prisma.MeasurementUncheckedUpdateInput),
+              ageInMonths: age.totalMonths,
+              category: getPatientCategory(patient.birthDate, patient.isPregnant, patient.gender),
+            },
+          });
+        } else {
+          throw err;
+        }
+      }
     }
 
     return NextResponse.json({

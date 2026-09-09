@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
 import { calculateAge, getPatientCategory } from '@/lib/utils';
 import { getAuthSession } from '@/lib/api-auth';
+import { validateBirthDate, validatePhone, validateTextLength, isMeasurementComplete } from '@/lib/validation';
 
 export async function GET(req: Request) {
   try {
@@ -50,6 +51,8 @@ export async function GET(req: Request) {
     // Get today's start and end for measurement check
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
 
     const patients = await prisma.patient.findMany({
       where: whereClause,
@@ -59,6 +62,7 @@ export async function GET(req: Request) {
           where: {
             sessionDate: {
               gte: startOfToday,
+              lte: endOfToday,
             },
           },
           orderBy: { sessionDate: 'desc' },
@@ -71,13 +75,15 @@ export async function GET(req: Request) {
     const enrichedPatients = patients.map((p) => {
       const age = calculateAge(p.birthDate);
       const category = getPatientCategory(p.birthDate, p.isPregnant);
+      const todayMeasurement = p.measurements[0] || null;
       return {
         ...p,
         category,
         ageYears: age.years,
         ageMonths: age.totalMonths,
         ageDisplay: age.display,
-        todayMeasurement: p.measurements[0] || null,
+        todayMeasurement,
+        measurementComplete: isMeasurementComplete(todayMeasurement),
       };
     });
 
@@ -107,9 +113,32 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, birthDate, posyanduId, gender, address, guardianName, phone, isPregnant, force } = body;
+    const { name, birthDate, posyanduId, gender, address, guardianName, phone, isPregnant, force, clientId } = body;
 
     const targetPosyanduId = posyanduId || session.posyanduId;
+
+    // Idempotensi registrasi offline: bila klien kirim ulang clientId yang sudah
+    // tersimpan (retry), kembalikan record yang sudah ada alih-alih membuat duplikat.
+    if (clientId && typeof clientId === 'string') {
+      const existing = await prisma.patient.findUnique({
+        where: { clientId },
+        include: { posyandu: true },
+      });
+      if (existing) {
+        const age = calculateAge(existing.birthDate);
+        const category = getPatientCategory(existing.birthDate, existing.isPregnant);
+        return NextResponse.json({
+          success: true,
+          data: {
+            ...existing,
+            category,
+            ageYears: age.years,
+            ageMonths: age.totalMonths,
+            ageDisplay: age.display,
+          },
+        });
+      }
+    }
 
     // Strict ownership check for POSYANDU role
     if (targetPosyanduId !== session.posyanduId) {
@@ -126,6 +155,19 @@ export async function POST(req: Request) {
     if (gender !== 'L' && gender !== 'P') {
       return NextResponse.json({ error: 'Jenis kelamin wajib dipilih (Laki-laki / Perempuan)' }, { status: 400 });
     }
+
+    const bdCheck = validateBirthDate(birthDate);
+    if (!bdCheck.valid) {
+      return NextResponse.json({ error: bdCheck.message }, { status: 400 });
+    }
+    const nameCheck = validateTextLength(name, 'Nama', 120);
+    if (!nameCheck.valid) return NextResponse.json({ error: nameCheck.message }, { status: 400 });
+    const phoneCheck = validatePhone(phone);
+    if (!phoneCheck.valid) return NextResponse.json({ error: phoneCheck.message }, { status: 400 });
+    const addressCheck = validateTextLength(address, 'Alamat', 255);
+    if (!addressCheck.valid) return NextResponse.json({ error: addressCheck.message }, { status: 400 });
+    const guardianCheck = validateTextLength(guardianName, 'Nama wali', 120);
+    if (!guardianCheck.valid) return NextResponse.json({ error: guardianCheck.message }, { status: 400 });
 
     const posyandu = await prisma.posyandu.findUnique({
       where: { id: targetPosyanduId },
@@ -161,41 +203,53 @@ export async function POST(req: Request) {
       }
     }
 
-    // Generate unique sequential registration number: e.g. POS-WNS-01-2026-0042
+    // Generate unique sequential registration number: e.g. POS-WNS-01-2026-0042.
+    // Anti-race: coba create; bila regNumber bentrok (P2002) ulangi dgn counter naik.
     const currentYear = new Date().getFullYear();
+    const cleanPosCode = posyandu.code.replace(/\s+/g, '-').toUpperCase();
+
+    const baseData = {
+      clientId: clientId && typeof clientId === 'string' ? clientId : null,
+      name: name.trim(),
+      birthDate: new Date(birthDate),
+      gender: gender || null,
+      address: address ? address.trim() : null,
+      guardianName: guardianName ? guardianName.trim() : null,
+      phone: phone ? phone.trim() : null,
+      isPregnant: gender === 'L' ? false : Boolean(isPregnant),
+      posyanduId: targetPosyanduId,
+      updatedBy: session.username,
+    };
+
     const totalPatientsInPosyandu = await prisma.patient.count({
       where: { posyanduId: targetPosyanduId },
     });
 
-    const nextSeq = String(totalPatientsInPosyandu + 1).padStart(4, '0');
-    const cleanPosCode = posyandu.code.replace(/\s+/g, '-').toUpperCase();
-    let regNumber = `${cleanPosCode}-${currentYear}-${nextSeq}`;
-
-    // Ensure uniqueness
-    let exists = await prisma.patient.findUnique({ where: { regNumber } });
-    let counter = 1;
-    while (exists) {
-      regNumber = `${cleanPosCode}-${currentYear}-${String(totalPatientsInPosyandu + 1 + counter).padStart(4, '0')}`;
-      exists = await prisma.patient.findUnique({ where: { regNumber } });
-      counter++;
+    let patient;
+    let attempt = 0;
+    const MAX_ATTEMPTS = 10;
+    while (true) {
+      const seq = String(totalPatientsInPosyandu + 1 + attempt).padStart(4, '0');
+      const regNumber = `${cleanPosCode}-${currentYear}-${seq}`;
+      try {
+        patient = await prisma.patient.create({
+          data: { ...baseData, regNumber },
+          include: { posyandu: true },
+        });
+        break;
+      } catch (err) {
+        if (
+          attempt < MAX_ATTEMPTS &&
+          typeof err === 'object' &&
+          err !== null &&
+          (err as { code?: string }).code === 'P2002'
+        ) {
+          attempt++;
+          continue;
+        }
+        throw err;
+      }
     }
-
-    const patient = await prisma.patient.create({
-      data: {
-        regNumber,
-        name: name.trim(),
-        birthDate: new Date(birthDate),
-        gender: gender || null,
-        address: address ? address.trim() : null,
-        guardianName: guardianName ? guardianName.trim() : null,
-        phone: phone ? phone.trim() : null,
-        isPregnant: gender === 'L' ? false : Boolean(isPregnant),
-        posyanduId: targetPosyanduId,
-      },
-      include: {
-        posyandu: true,
-      },
-    });
 
     const age = calculateAge(patient.birthDate);
     const category = getPatientCategory(patient.birthDate, patient.isPregnant);

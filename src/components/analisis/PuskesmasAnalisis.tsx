@@ -76,8 +76,22 @@ export function PuskesmasAnalisis() {
       }));
   }, [posyanduCoverage, latestMonth]);
 
-  // Outcome pie
-  const latestOutcome = posyanduOutcome.find(d => d.ym === latestMonth);
+  // Outcome pie — agregat SELURUH posyandu utk bulan tsb (jangan find yg ambil 1 baris)
+  const latestOutcome = useMemo(() => {
+    const rows = posyanduOutcome.filter(d => d.ym === latestMonth);
+    if (rows.length === 0) return null;
+    const merged: { total: number; normal: number; abnormal: number; abnormalByIndicator: Record<string, number> } = { total: 0, normal: 0, abnormal: 0, abnormalByIndicator: {} };
+    for (const r of rows) {
+      merged.total += r.total;
+      merged.normal += r.normal;
+      merged.abnormal += r.abnormal;
+      for (const [k, v] of Object.entries(r.abnormalByIndicator)) {
+        merged.abnormalByIndicator[k] = (merged.abnormalByIndicator[k] ?? 0) + v;
+      }
+    }
+    return merged;
+  }, [posyanduOutcome, latestMonth]);
+
   const pieData = useMemo(() => {
     if (!latestOutcome) return [];
     return [

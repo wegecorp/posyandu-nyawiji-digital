@@ -1,14 +1,23 @@
 /**
  * Server-side aggregation helpers untuk statistik pemaparan data.
- * Semua query memakai $queryRaw agar SQLite bisa GROUP BY bulan
- * tanpa mengambil semua baris mentah ke memori.
+ *
+ * CATATAN: Prisma menyimpan DateTime SQLite sebagai INTEGER epoch-milliseconds.
+ * Jadi semua perbandingan tanggal di $queryRaw WAJIB pakai rentang numeric ms,
+ * dan konversi ke bulan harus sessionDate/1000,'unixepoch','localtime'.
+ * Membandingkan kolom integer dengan string tanggal ("YYYY-MM-DD") SELALU 0 baris,
+ * dan date(sessionDate) rusak karena integer itu bukan Julian day.
  */
 
 import { prisma } from './prisma';
 import { checkIndicator, INDICATORS } from './clinical';
 import type { PatientCategory } from './types';
 
-const YM_EXPR = "strftime('%Y-%m', m.sessionDate)";
+/** Konversi rentang tanggal 'YYYY-MM-DD' (inklusif) → [fromMs, toExclusiveMs). */
+export function dateRangeMs(from: string, to: string): { fromMs: number; toMs: number } {
+  const fromMs = new Date(`${from}T00:00:00`).getTime();
+  const toMs = new Date(`${to}T00:00:00`).getTime() + 86_400_000;
+  return { fromMs, toMs };
+}
 
 export interface CoverageRow {
   ym: string;
@@ -34,22 +43,21 @@ interface UnitInfo {
 }
 
 /**
- * Fetch coverage per posyandu per bulan dalam rentang [from, to] (YYYY-MM-DD).
- * `to` adalah end-of-day (inclusive).
+ * Fetch coverage per posyandu per bulan dalam rentang [from, to] (YYYY-MM-DD, inklusif).
  */
 export async function fetchCoverageBase(from: string, to: string): Promise<CoverageRow[]> {
-  // End of day: append time so records on `to` date are included
-  const toFull = `${to}T23:59:59.999`;
+  const { fromMs, toMs } = dateRangeMs(from, to);
+  // NOTE: ekspresi strftime DITULIS LANGSUNG (bukan ${...}) — Prisma mengikat ${} sbg parameter, bukan inline SQL.
   const rows = await prisma.$queryRaw<
     Array<{ ym: string; unitId: string; numerator: bigint }>
   >`
     SELECT
-      ${YM_EXPR} AS ym,
+      strftime('%Y-%m', m.sessionDate/1000, 'unixepoch', 'localtime') AS ym,
       m.posyanduId AS unitId,
       COUNT(DISTINCT m.patientId) AS numerator
     FROM Measurement m
-    WHERE m.sessionDate >= ${from}
-      AND m.sessionDate <= ${toFull}
+    WHERE m.sessionDate >= ${fromMs}
+      AND m.sessionDate < ${toMs}
     GROUP BY ym, unitId
   `;
 
@@ -228,10 +236,10 @@ export interface UnitOutcomeAgg {
 
 /** Fetch raw measurements for outcome classification. */
 export async function fetchOutcomeBase(from: string, to: string): Promise<OutcomeBaseRow[]> {
-  const toFull = `${to}T23:59:59.999`;
+  const { fromMs, toMs } = dateRangeMs(from, to);
   return prisma.$queryRaw<OutcomeBaseRow[]>`
     SELECT
-      strftime('%Y-%m', m.sessionDate) AS ym,
+      strftime('%Y-%m', m.sessionDate/1000, 'unixepoch', 'localtime') AS ym,
       m.posyanduId,
       m.patientId,
       m.category,
@@ -241,13 +249,13 @@ export async function fetchOutcomeBase(from: string, to: string): Promise<Outcom
       m.hemoglobin,
       m.bloodSugar,
       m.cholesterol,
-    m.uricAcid,
+      m.uricAcid,
       m.visionStatus,
       m.hearingStatus
     FROM Measurement m
     JOIN Patient p ON p.id = m.patientId
-    WHERE m.sessionDate >= ${from}
-      AND m.sessionDate <= ${toFull}
+    WHERE m.sessionDate >= ${fromMs}
+      AND m.sessionDate < ${toMs}
   `;
 }
 

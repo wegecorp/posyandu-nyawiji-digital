@@ -3,9 +3,13 @@
   "short_name": "Nyawiji",
   "description": "Aplikasi Digitalisasi Pelayanan Kesehatan Posyandu Kabupaten Gunungkidul",
   "start_url": "/",
+  "scope": "/",
+  "id": "/",
   "display": "standalone",
   "background_color": "#075e54",
   "theme_color": "#075e54",
+  "lang": "id",
+  "categories": ["health", "medical", "productivity"],
   "icons": [
     {
       "src": "/brand/logo-192.png",
@@ -25,3 +29,4 @@
     }
   ]
 }
+

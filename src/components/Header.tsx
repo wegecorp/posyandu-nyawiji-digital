@@ -10,8 +10,11 @@ import {
   LayoutDashboard,
   BarChart3,
   RefreshCw,
+  Download,
 } from 'lucide-react';
 import { getSyncQueue, flushSyncQueue } from '@/lib/offline-sync';
+import { usePwaInstall, type InstallGuide } from '@/lib/pwa';
+import { InstallAppModal } from '@/components/InstallAppModal';
 
 interface HeaderProps {
   onOpenScanQR: () => void;
@@ -37,6 +40,15 @@ export const Header: React.FC<HeaderProps> = ({
     typeof navigator === 'undefined' ? true : navigator.onLine
   );
   const [unsyncedCount, setUnsyncedCount] = useState(0);
+
+  // Fitur "INSTALL APLIKASI" (PWA -> simpan ke layar utama)
+  const { showInstallButton, install } = usePwaInstall();
+  const [installGuide, setInstallGuide] = useState<InstallGuide | null>(null);
+
+  const handleInstallTap = async () => {
+    const result = await install();
+    if (result?.action === 'guide') setInstallGuide(result.guide);
+  };
 
   useEffect(() => {
     const updateStatus = () => {
@@ -121,6 +133,18 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
+          {/* Install Aplikasi (PWA) ke Layar Utama */}
+          {showInstallButton && (
+            <button
+              onClick={handleInstallTap}
+              aria-label="Install Aplikasi"
+              className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
+              title="Install / Simpan Aplikasi di Layar Utama"
+            >
+              <Download className="w-5 h-5 text-[#25d366]" />
+            </button>
+          )}
+
           {/* Scan QR Button */}
           {showTools && (
             <button
@@ -197,6 +221,9 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
       )}
+
+      {/* Panduan Install / Simpan ke Layar Utama */}
+      <InstallAppModal guide={installGuide} onClose={() => setInstallGuide(null)} />
     </header>
   );
 };

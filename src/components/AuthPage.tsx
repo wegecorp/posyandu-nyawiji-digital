@@ -18,7 +18,10 @@ import {
   RefreshCw,
   ShieldCheck,
   Info,
+  Download,
 } from 'lucide-react';
+import { usePwaInstall, type InstallGuide } from '@/lib/pwa';
+import { InstallAppModal } from '@/components/InstallAppModal';
 
 type LoginTab = 'posyandu' | 'staf';
 type CascadeStep = 0 | 1 | 2 | 3; // 0:puskesmas 1:kalurahan 2:posyandu 3:password
@@ -40,6 +43,15 @@ function getErrMsg(err: unknown): string {
 
 export function AuthPage() {
   const { login } = useAuth();
+
+  // Fitur "INSTALL APLIKASI" (PWA -> simpan ke layar utama)
+  const { showInstallButton, install } = usePwaInstall();
+  const [installGuide, setInstallGuide] = useState<InstallGuide | null>(null);
+
+  const handleInstallTap = async () => {
+    const result = await install();
+    if (result?.action === 'guide') setInstallGuide(result.guide);
+  };
 
   const [tab, setTab] = useState<LoginTab>('posyandu');
   const [errorMsg, setErrorMsg] = useState('');
@@ -614,6 +626,18 @@ export function AuthPage() {
           )}
         </div>
 
+        {/* Tombol INSTALL APLIKASI (PWA) */}
+        {showInstallButton && (
+          <button
+            type="button"
+            onClick={handleInstallTap}
+            className="w-full mt-4 py-3.5 bg-[#075e54] hover:bg-[#054c44] text-white font-black rounded-2xl text-sm shadow-lg transition-all touch-press flex items-center justify-center gap-2.5 border border-[#128c7e]"
+          >
+            <Download className="w-5 h-5 text-[#25d366]" />
+            <span>INSTALL APLIKASI — Simpan di Layar Utama</span>
+          </button>
+        )}
+
         {/* Catatan kebijakan akun */}
         <div className="mt-4 p-3.5 bg-white/70 border border-[#e9edef] rounded-2xl text-[11px] text-[#54656f] leading-relaxed font-medium flex gap-2.5">
           <Info className="w-4 h-4 shrink-0 text-[#128c7e] mt-0.5" />
@@ -627,6 +651,9 @@ export function AuthPage() {
           <p>© 2026 POSYANDU NYAWIJI — Dinas Kesehatan Kab. Gunungkidul</p>
         </div>
       </div>
+
+      {/* Panduan Install / Simpan ke Layar Utama */}
+      <InstallAppModal guide={installGuide} onClose={() => setInstallGuide(null)} />
     </div>
   );
 }

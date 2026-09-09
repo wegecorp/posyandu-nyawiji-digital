@@ -8,6 +8,7 @@ import {
   FileSpreadsheet,
   ChevronDown,
   LayoutDashboard,
+  BarChart3,
   RefreshCw,
 } from 'lucide-react';
 import { getSyncQueue, flushSyncQueue } from '@/lib/offline-sync';
@@ -18,6 +19,8 @@ interface HeaderProps {
   onOpenLogin: () => void;
   onBackToDashboard?: () => void;
   showTools?: boolean;
+  mainView?: 'beranda' | 'analisis';
+  onNavigateMainView?: (view: 'beranda' | 'analisis') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -26,6 +29,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenLogin,
   onBackToDashboard,
   showTools = true,
+  mainView = 'beranda',
+  onNavigateMainView,
 }) => {
   const { user } = useAuth();
   const [isOnline, setIsOnline] = useState<boolean>(() =>
@@ -141,6 +146,34 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
       </div>
+
+      {/* Tab Navigation — Beranda | Analisis */}
+      {onNavigateMainView && (
+        <div className="px-4 pb-1.5 max-w-2xl mx-auto flex gap-1">
+          <button
+            onClick={() => onNavigateMainView('beranda')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-t-lg text-xs font-bold transition-all ${
+              mainView === 'beranda'
+                ? 'bg-white/20 text-white'
+                : 'text-white/60 hover:text-white/80'
+            }`}
+          >
+            <LayoutDashboard className="w-3.5 h-3.5" />
+            Beranda
+          </button>
+          <button
+            onClick={() => onNavigateMainView('analisis')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-t-lg text-xs font-bold transition-all ${
+              mainView === 'analisis'
+                ? 'bg-white/20 text-white'
+                : 'text-white/60 hover:text-white/80'
+            }`}
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            Analisis
+          </button>
+        </div>
+      )}
 
       {/* Status Alert — muncul hanya saat luring / ada data belum sinkron */}
       {(!isOnline || unsyncedCount > 0) && (

@@ -12,6 +12,7 @@ import { RekapExportModal } from '@/components/RekapExportModal';
 import { LoginModal } from '@/components/LoginModal';
 import { PuskesmasDashboard } from '@/components/PuskesmasDashboard';
 import { DinkesDashboard } from '@/components/DinkesDashboard';
+import { AnalisisPage } from '@/components/analisis/AnalisisPage';
 import { AuthPage } from '@/components/AuthPage';
 import { EditPatientModal } from '@/components/EditPatientModal';
 import { ChangePasswordModal } from '@/components/ChangePasswordModal';
@@ -46,6 +47,8 @@ export default function PosyanduApp() {
 
   // Active view override for Puskesmas/Dinkes (null = default dashboard, 'posyandu_table' = viewing operational table)
   const [activeViewMode, setActiveViewMode] = useState<'default' | 'posyandu_table'>('default');
+  // Main view: 'beranda' = dashboard/operational, 'analisis' = rekap visual
+  const [mainView, setMainView] = useState<'beranda' | 'analisis'>('beranda');
 
   // Modal States
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -202,12 +205,21 @@ export default function PosyanduApp() {
               }
             : undefined
         }
+        mainView={mainView}
+        onNavigateMainView={(view) => {
+          setMainView(view);
+          setActiveViewMode('default');
+          setSelectedPatient(null);
+        }}
       />
 
       {/* 2. MAIN CONTAINER */}
-      <main className="flex-1 max-w-2xl w-full mx-auto p-3 sm:p-4">
-        {/* VIEW 1: DINKES DASHBOARD */}
-        {user.role === 'DINKES' && activeViewMode === 'default' ? (
+      <main className={`flex-1 mx-auto p-3 sm:p-4 ${mainView === 'analisis' ? 'max-w-5xl' : 'max-w-2xl w-full'}`}>
+        {/* ANALISIS PAGE (all roles) */}
+        {mainView === 'analisis' ? (
+          <AnalisisPage />
+        ) : /* VIEW 1: DINKES DASHBOARD */
+        user.role === 'DINKES' && activeViewMode === 'default' ? (
           <DinkesDashboard
             onExportAll={() => setIsExportOpen(true)}
             onEnterPosyandu={handleEnterPosyanduTable}

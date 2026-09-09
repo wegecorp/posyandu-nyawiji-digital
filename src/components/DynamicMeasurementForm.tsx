@@ -62,12 +62,14 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
 
   const [activeTab, setActiveTab] = useState<'form' | 'history'>('form');
   const [historyList, setHistoryList] = useState<MeasurementData[]>([]);
+  const [measurementVersion, setMeasurementVersion] = useState<number>(0);
 
   // Autosave Hook
   const { saveStatus, triggerAutoSave } = useAutoSave(
     patient.id,
     user?.posyanduId || patient.posyanduId,
-    user?.name
+    user?.name,
+    measurementVersion
   );
 
   // Isi field sesuai measurement pada tanggal sesi terpilih (termasuk backdate).
@@ -88,6 +90,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
     setHearingStatus(tm?.hearingStatus || '');
     setNoteSource(tm?.noteSource || 'Kader');
     setNotes(tm?.notes || '');
+    setMeasurementVersion(tm?.version ?? 0);
     setErrors({});
   };
 
@@ -110,6 +113,31 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
       active = false;
     };
   }, [patient.id]);
+
+  // Re-fetch measurement when sessionDate changes (backdate support).
+  useEffect(() => {
+    if (isReadOnly) return;
+    let active = true;
+    fetch(`/api/patients/${patient.id}`)
+      .then((res) => res.json())
+      .then((result) => {
+        if (!active || !result.success || !result.data) return;
+        const p = result.data;
+        if (p.measurements) setHistoryList(p.measurements);
+        const target = new Date(sessionDate);
+        const start = new Date(target);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(target);
+        end.setHours(23, 59, 59, 999);
+        const match = (p.measurements || []).find((m: MeasurementData) => {
+          const d = new Date(m.sessionDate);
+          return d >= start && d <= end;
+        });
+        applyMeasurement(match || null);
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [sessionDate]);
 
   const isReadOnly = user?.role === 'PUSKESMAS' || user?.role === 'DINKES';
 

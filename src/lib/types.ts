@@ -47,6 +47,7 @@ export interface MeasurementData {
   category?: string | null;
   notes?: string | null;
   recordedBy?: string | null;
+  version?: number;
   createdAt?: string;
 }
 

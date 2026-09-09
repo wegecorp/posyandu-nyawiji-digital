@@ -123,7 +123,7 @@ export async function flushSyncQueue(): Promise<number> {
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'offline_queued' | 'error';
 
-export function useAutoSave(patientId: string, posyanduId: string, recordedBy?: string) {
+export function useAutoSave(patientId: string, posyanduId: string, recordedBy?: string, version?: number) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [isOnline, setIsOnline] = useState<boolean>(() =>
@@ -187,10 +187,11 @@ export function useAutoSave(patientId: string, posyanduId: string, recordedBy?: 
           abortRef.current = controller;
           const timeoutId = setTimeout(() => controller.abort(), 10_000);
 
+          const versionToSend = version ?? Math.floor(Date.now() / 1000);
           const res = await fetch('/api/measurements/autosave', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...payload, version: Math.floor(Date.now() / 1000) }),
+            body: JSON.stringify({ ...payload, version: versionToSend }),
             signal: controller.signal,
           });
 
@@ -205,6 +206,7 @@ export function useAutoSave(patientId: string, posyanduId: string, recordedBy?: 
             throw new Error('Server returned error');
           }
 
+          await res.json();
           setSaveStatus('saved');
           setLastSavedAt(new Date());
         } catch (err) {
@@ -226,7 +228,7 @@ export function useAutoSave(patientId: string, posyanduId: string, recordedBy?: 
         }
       }, delayMs);
     },
-    [patientId, posyanduId, recordedBy]
+    [patientId, posyanduId, recordedBy, version]
   );
 
   return {

@@ -46,9 +46,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               return;
             }
           }
-          // 401 / invalid session -> hapus cache
+          // 401 / invalid session -> hapus cache. Antrean offline milik akun lama juga
+          // dibuang agar tidak ter-flush ke akun berikutnya (mirip logout).
           setUser(null);
           localStorage.removeItem(STORAGE_KEY);
+          if (res.status === 401) clearSyncQueue();
         }
       } catch {
         // Gagal jaringan: pakai cache bila ada, tanpa validasi server.

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { PatientData } from '@/lib/types';
 import { Header } from '@/components/Header';
@@ -62,13 +62,20 @@ export default function PosyanduApp() {
 
   const isReadOnly = user?.role === 'PUSKESMAS' || user?.role === 'DINKES';
 
+  // Monotonic sequence — respons fetch pasien yang sudah basi (konteks/query berubah)
+  // dibuang, tidak boleh menimpa daftar terbaru posyandu lain.
+  const fetchSeqRef = useRef(0);
+  const prevCtxRef = useRef<string | null>(null);
+
   // Fetch patients for active Posyandu (dipanggil dari event handler/refresh)
   const fetchPatients = async () => {
     if (!user?.posyanduId && user?.role === 'POSYANDU') return;
+    const seq = ++fetchSeqRef.current;
     setIsLoading(true);
     try {
       const posId = user?.posyanduId || '';
       const res = await fetch(`/api/patients?posyanduId=${posId}&q=${encodeURIComponent(searchQuery)}`);
+      if (seq !== fetchSeqRef.current) return; // ada fetch lebih baru
       const result = await res.json();
       if (result.success && Array.isArray(result.data)) {
         setPatients(result.data);
@@ -79,9 +86,10 @@ export default function PosyanduApp() {
         });
       }
     } catch (e) {
+      if (seq !== fetchSeqRef.current) return;
       console.error('Error fetching patients:', e);
     } finally {
-      setIsLoading(false);
+      if (seq === fetchSeqRef.current) setIsLoading(false);
     }
   };
 
@@ -96,19 +104,32 @@ export default function PosyanduApp() {
     if (!user?.posyanduId && user?.role === 'POSYANDU') return;
     let active = true;
     const posId = user?.posyanduId || '';
+    const ctx = `${user?.role}:${posId}`;
+    // Ganti akun/posyandu: kosongkan daftar lama segera (cegah kartu posyandu lain
+    // tampil sementara / bertahan saat jaringan gagal).
+    if (ctx !== prevCtxRef.current) {
+      prevCtxRef.current = ctx;
+      setPatients([]);
+      setIsLoading(true);
+    }
+    const seq = ++fetchSeqRef.current;
     fetch(`/api/patients?posyanduId=${posId}&q=${encodeURIComponent(debouncedSearchQuery)}`)
       .then((r) => r.json())
       .then((result) => {
-        if (!active || !result.success || !Array.isArray(result.data)) return;
+        if (!active || seq !== fetchSeqRef.current || !result.success || !Array.isArray(result.data))
+          return;
         setPatients(result.data);
         setSelectedPatient((prev) => {
           if (!prev) return null;
           return result.data.find((p: PatientData) => p.id === prev.id) || prev;
         });
       })
-      .catch((e) => console.error('Error fetching patients:', e))
+      .catch((e) => {
+        if (seq !== fetchSeqRef.current) return;
+        console.error('Error fetching patients:', e);
+      })
       .finally(() => {
-        if (active) setIsLoading(false);
+        if (active && seq === fetchSeqRef.current) setIsLoading(false);
       });
     return () => {
       active = false;

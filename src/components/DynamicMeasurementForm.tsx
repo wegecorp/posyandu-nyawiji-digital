@@ -62,14 +62,12 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
 
   const [activeTab, setActiveTab] = useState<'form' | 'history'>('form');
   const [historyList, setHistoryList] = useState<MeasurementData[]>([]);
-  const [measurementVersion, setMeasurementVersion] = useState<number>(0);
 
   // Autosave Hook
-  const { saveStatus, triggerAutoSave } = useAutoSave(
+  const { saveStatus, triggerAutoSave, flushNow } = useAutoSave(
     patient.id,
     user?.posyanduId || patient.posyanduId,
-    user?.name,
-    measurementVersion
+    user?.name
   );
 
   // Isi field sesuai measurement pada tanggal sesi terpilih (termasuk backdate).
@@ -90,7 +88,6 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
     setHearingStatus(tm?.hearingStatus || '');
     setNoteSource(tm?.noteSource || 'Kader');
     setNotes(tm?.notes || '');
-    setMeasurementVersion(tm?.version ?? 0);
     setErrors({});
   };
 
@@ -215,6 +212,9 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
         setNoteSource(value);
         break;
       case 'sessionDate':
+        // Nilai tertunda pada tanggal lama harus terkirim lebih dulu, sebelum field
+        // di-reset oleh data tanggal baru — kalau tidak, patch lama ikut ke tanggal baru.
+        flushNow();
         setSessionDate(value);
         {
           const target = new Date(value);
@@ -228,7 +228,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
           });
           if (match) applyMeasurement(match);
         }
-        break;
+        return;
       case 'notes':
         setNotes(value);
         break;
@@ -355,6 +355,11 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
             {saveStatus === 'offline_queued' && (
               <span className="flex items-center gap-1.5 text-[11px] font-bold text-white bg-[#0ea5e9] px-2.5 py-0.5 rounded-full">
                 <AlertCircle className="w-3 h-3" /> Tersimpan Offline
+              </span>
+            )}
+            {saveStatus === 'conflict' && (
+              <span className="flex items-center gap-1.5 text-[11px] font-bold text-white bg-[#ea580c] px-2.5 py-0.5 rounded-full">
+                <AlertCircle className="w-3 h-3" /> Data Bentrok — Muat Ulang
               </span>
             )}
             {saveStatus === 'error' && (

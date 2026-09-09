@@ -1,7 +1,7 @@
 /**
- * GET /api/stats/abnormal-patients?hcId=...&posId=...&indicator=...&ym=YYYY-MM&from=...&to=...
+ * GET /api/stats/abnormal-patients?indicator=...&ym=YYYY-MM&from=...&to=...
  *
- * Daftar pasien dengan pengukuran abnormal untuk drill-down.
+ * Daftar pasien dengan pengukuran abnormal. Role-scoped.
  */
 
 import { NextResponse } from 'next/server';
@@ -16,12 +16,9 @@ export async function GET(req: Request) {
     if (session instanceof NextResponse) return session;
 
     const { searchParams } = new URL(req.url);
-    const hcId = searchParams.get('hcId');
-    const posId = searchParams.get('posId');
     const indicatorKey = searchParams.get('indicator');
     const ym = searchParams.get('ym');
 
-    // Default range: last 12 months
     const now = new Date();
     const defaultTo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const d = new Date(now);
@@ -30,18 +27,27 @@ export async function GET(req: Request) {
     const fromDate = searchParams.get('from') ?? defaultFrom;
     const toDate = searchParams.get('to') ?? defaultTo;
 
-    // Build where clause dynamically
+    // Build where clause with proper date handling
+    const toDateObj = new Date(`${toDate}T23:59:59.999`);
+    const fromDateObj = new Date(`${fromDate}T00:00:00.000`);
+
     const where: Record<string, unknown> = {
-      sessionDate: { gte: fromDate, lte: toDate },
+      sessionDate: { gte: fromDateObj, lte: toDateObj },
     };
-    if (posId) {
-      where.posyanduId = posId;
-    } else if (hcId) {
-      where.posyandu = { healthCenterId: hcId };
+
+    // Scope filter by role
+    if (session.role === 'PUSKESMAS' && session.healthCenterId) {
+      where.posyandu = { healthCenterId: session.healthCenterId };
+    } else if (session.role === 'POSYANDU' && session.posyanduId) {
+      where.posyanduId = session.posyanduId;
     }
+
+    // Override with month filter if specified
     if (ym) {
-      // Filter by month — use startsWith on sessionDate string
-      where.sessionDate = { gte: `${ym}-01`, lte: `${ym}-31` };
+      const [year, month] = ym.split('-').map(Number);
+      const monthStart = new Date(year, month - 1, 1);
+      const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+      where.sessionDate = { gte: monthStart, lte: monthEnd };
     }
 
     const rawRows = await prisma.measurement.findMany({
@@ -60,7 +66,6 @@ export async function GET(req: Request) {
       take: 500,
     });
 
-    // Filter by indicator(s)
     const filteredIndicators = indicatorKey
       ? INDICATORS.filter((i) => i.key === indicatorKey)
       : INDICATORS;

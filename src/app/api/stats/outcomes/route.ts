@@ -1,11 +1,11 @@
 /**
- * GET /api/stats/outcomes?scope=kabupaten|puskesmas|posyandu&hcId=...&from=...&to=...
+ * GET /api/stats/outcomes?scope=kabupaten|puskesmas|posyandu&from=...&to=...
  *
- * Agregasi hasil pengukuran (normal vs abnormal) per bulan.
- * Response: { data: [{ ym, unitId, unitName, total, normal, abnormal, abnormalByIndicator }] }
+ * Agregasi hasil pengukuran (normal vs abnormal) per bulan. Role-scoped.
  */
 
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { requireRole } from '@/lib/api-auth';
 import {
   fetchOutcomeBase,
@@ -33,9 +33,22 @@ export async function GET(req: Request) {
     const toDate = to ?? defaultTo;
 
     const raw = await fetchOutcomeBase(fromDate, toDate);
-    const { byUnit, totals } = classifyOutcomes(raw);
 
-    const posyanduIds = [...new Set(raw.map((r) => r.posyanduId))];
+    // Scope filter by role
+    let filteredRaw = raw;
+    if (session.role === 'PUSKESMAS' && session.healthCenterId) {
+      const hcPosyanduIds = await prisma.posyandu.findMany({
+        where: { healthCenterId: session.healthCenterId },
+        select: { id: true },
+      }).then((ps) => new Set(ps.map((p) => p.id)));
+      filteredRaw = raw.filter((r) => hcPosyanduIds.has(r.posyanduId));
+    } else if (session.role === 'POSYANDU' && session.posyanduId) {
+      filteredRaw = raw.filter((r) => r.posyanduId === session.posyanduId);
+    }
+
+    const { byUnit, totals } = classifyOutcomes(filteredRaw);
+
+    const posyanduIds = [...new Set(filteredRaw.map((r) => r.posyanduId))];
     const posyanduInfo = await getPosyanduInfo(posyanduIds);
 
     let data: { ym: string; unitId: string; unitName: string; total: number; normal: number; abnormal: number; abnormalByIndicator: Record<string, number> }[];
@@ -49,7 +62,6 @@ export async function GET(req: Request) {
     } else if (scope === 'puskesmas') {
       data = outcomesToHealthCenter(byUnit, posyanduInfo);
     } else {
-      // posyandu level
       data = [];
       for (const [posId, rows] of byUnit) {
         const info = posyanduInfo.get(posId);

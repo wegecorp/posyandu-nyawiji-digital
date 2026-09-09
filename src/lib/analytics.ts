@@ -35,8 +35,11 @@ interface UnitInfo {
 
 /**
  * Fetch coverage per posyandu per bulan dalam rentang [from, to] (YYYY-MM-DD).
+ * `to` adalah end-of-day (inclusive).
  */
 export async function fetchCoverageBase(from: string, to: string): Promise<CoverageRow[]> {
+  // End of day: append time so records on `to` date are included
+  const toFull = `${to}T23:59:59.999`;
   const rows = await prisma.$queryRaw<
     Array<{ ym: string; unitId: string; numerator: bigint }>
   >`
@@ -46,7 +49,7 @@ export async function fetchCoverageBase(from: string, to: string): Promise<Cover
       COUNT(DISTINCT m.patientId) AS numerator
     FROM Measurement m
     WHERE m.sessionDate >= ${from}
-      AND m.sessionDate <= ${to}
+      AND m.sessionDate <= ${toFull}
     GROUP BY ym, unitId
   `;
 
@@ -225,6 +228,7 @@ export interface UnitOutcomeAgg {
 
 /** Fetch raw measurements for outcome classification. */
 export async function fetchOutcomeBase(from: string, to: string): Promise<OutcomeBaseRow[]> {
+  const toFull = `${to}T23:59:59.999`;
   return prisma.$queryRaw<OutcomeBaseRow[]>`
     SELECT
       strftime('%Y-%m', m.sessionDate) AS ym,
@@ -243,7 +247,7 @@ export async function fetchOutcomeBase(from: string, to: string): Promise<Outcom
     FROM Measurement m
     JOIN Patient p ON p.id = m.patientId
     WHERE m.sessionDate >= ${from}
-      AND m.sessionDate <= ${to}
+      AND m.sessionDate <= ${toFull}
   `;
 }
 

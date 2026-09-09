@@ -86,7 +86,7 @@ async function postItem(item: UnsyncedItem): Promise<boolean> {
         patientId: item.patientId,
         posyanduId: item.posyanduId,
         ...item.payload,
-        version: item.timestamp,
+        version: Math.floor(item.timestamp / 1000),
       }),
     });
   }
@@ -130,6 +130,7 @@ export function useAutoSave(patientId: string, posyanduId: string, recordedBy?: 
     typeof navigator === 'undefined' ? true : navigator.onLine
   );
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const handleOnline = () => {
@@ -181,11 +182,19 @@ export function useAutoSave(patientId: string, posyanduId: string, recordedBy?: 
         }
 
         try {
+          if (abortRef.current) abortRef.current.abort();
+          const controller = new AbortController();
+          abortRef.current = controller;
+          const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
           const res = await fetch('/api/measurements/autosave', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...payload, version: Date.now() }),
+            body: JSON.stringify({ ...payload, version: Math.floor(Date.now() / 1000) }),
+            signal: controller.signal,
           });
+
+          clearTimeout(timeoutId);
 
           if (res.status === 409) {
             setSaveStatus('error');
@@ -199,6 +208,10 @@ export function useAutoSave(patientId: string, posyanduId: string, recordedBy?: 
           setSaveStatus('saved');
           setLastSavedAt(new Date());
         } catch (err) {
+          if (err instanceof DOMException && err.name === 'AbortError') {
+            setSaveStatus('error');
+            return;
+          }
           console.warn('Network issue during autosave, queuing locally:', err);
           addToSyncQueue({
             kind: 'measurement',

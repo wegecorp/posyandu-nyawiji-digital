@@ -329,6 +329,11 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 <AlertCircle className="w-3 h-3" /> Tersimpan Offline
               </span>
             )}
+            {saveStatus === 'error' && (
+              <span className="flex items-center gap-1.5 text-[11px] font-bold text-white bg-[#dc2626] px-2.5 py-0.5 rounded-full">
+                <AlertCircle className="w-3 h-3" /> Gagal Menyimpan
+              </span>
+            )}
             {saveStatus === 'idle' && (
               <span className="text-[11px] text-[#8696a0] font-medium">Auto-save aktif</span>
             )}

@@ -58,24 +58,31 @@ export async function GET(req: Request) {
       where: whereClause,
       include: {
         posyandu: true,
-        measurements: {
-          where: {
-            sessionDate: {
-              gte: startOfToday,
-              lte: endOfToday,
-            },
-          },
-          orderBy: { sessionDate: 'desc' },
-          take: 1,
-        },
       },
       orderBy: { name: 'asc' },
     });
 
+    // Ambil pengukuran hari ini sekali (tanpa N+1), lalu tempel per pasien.
+    type MeasurementRow = Awaited<ReturnType<typeof prisma.measurement.findFirst>>;
+    const todayByPatient = new Map<string, NonNullable<MeasurementRow>>();
+    if (patients.length > 0) {
+      const ids = patients.map((p) => p.id);
+      const measurements = await prisma.measurement.findMany({
+        where: {
+          patientId: { in: ids },
+          sessionDate: { gte: startOfToday, lte: endOfToday },
+        },
+        orderBy: { sessionDate: 'desc' },
+      });
+      for (const m of measurements) {
+        if (!todayByPatient.has(m.patientId)) todayByPatient.set(m.patientId, m);
+      }
+    }
+
     const enrichedPatients = patients.map((p) => {
       const age = calculateAge(p.birthDate);
       const category = getPatientCategory(p.birthDate, p.isPregnant);
-      const todayMeasurement = p.measurements[0] || null;
+      const todayMeasurement = todayByPatient.get(p.id) || null;
       return {
         ...p,
         category,

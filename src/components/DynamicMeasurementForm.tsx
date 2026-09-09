@@ -29,14 +29,12 @@ interface DynamicMeasurementFormProps {
   patient: PatientData;
   onBackToList: () => void;
   onShowQR: (patient: PatientData) => void;
-  onMeasurementUpdated?: () => void;
 }
 
 export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   patient,
   onBackToList,
   onShowQR,
-  onMeasurementUpdated,
 }) => {
   const { user } = useAuth();
   const category = patient.category || 'BALITA';
@@ -216,7 +214,6 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
 
     // Trigger debounced autosave
     triggerAutoSave(payload);
-    if (onMeasurementUpdated) onMeasurementUpdated();
   };
 
   return (

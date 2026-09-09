@@ -42,6 +42,7 @@ export default function PosyanduApp() {
 
   // Currently open / active patient for measurement
   const [selectedPatient, setSelectedPatient] = useState<PatientData | null>(null);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
 
   // Active view override for Puskesmas/Dinkes (null = default dashboard, 'posyandu_table' = viewing operational table)
   const [activeViewMode, setActiveViewMode] = useState<'default' | 'posyandu_table'>('default');
@@ -81,12 +82,18 @@ export default function PosyanduApp() {
     }
   };
 
+  // Debounce input pencarian 300ms — hindari refetch tiap ketik.
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // Auto-fetch saat role/lokasi/query pencarian berubah
   useEffect(() => {
     if (!user?.posyanduId && user?.role === 'POSYANDU') return;
     let active = true;
     const posId = user?.posyanduId || '';
-    fetch(`/api/patients?posyanduId=${posId}&q=${encodeURIComponent(searchQuery)}`)
+    fetch(`/api/patients?posyanduId=${posId}&q=${encodeURIComponent(debouncedSearchQuery)}`)
       .then((r) => r.json())
       .then((result) => {
         if (!active || !result.success || !Array.isArray(result.data)) return;
@@ -103,7 +110,7 @@ export default function PosyanduApp() {
     return () => {
       active = false;
     };
-  }, [user?.posyanduId, user?.role, searchQuery]);
+  }, [user?.posyanduId, user?.role, debouncedSearchQuery]);
 
   // Filtered patients list
   const filteredPatients = useMemo(() => {
@@ -154,6 +161,12 @@ export default function PosyanduApp() {
     switchActivePosyandu(posId, posName, posCode);
     setActiveViewMode('posyandu_table');
     setSelectedPatient(null);
+  };
+
+  // Balik ke daftar + segarkan list (data pengukuran terbaru).
+  const goBackToList = () => {
+    setSelectedPatient(null);
+    fetchPatients();
   };
 
   // 0. Still validating session against server — show splash to avoid flash of login page
@@ -211,7 +224,7 @@ export default function PosyanduApp() {
             {/* Back button to patient list */}
             <div className="flex items-center justify-between">
               <button
-                onClick={() => setSelectedPatient(null)}
+                onClick={goBackToList}
                 className="flex items-center gap-1.5 text-xs font-bold text-[#075e54] bg-white hover:bg-[#e7fceb] px-4 py-2 rounded-full border border-[#e9edef] shadow-xs transition-all touch-press"
               >
                 <ArrowLeft className="w-3.5 h-3.5 text-[#128c7e]" />
@@ -226,9 +239,8 @@ export default function PosyanduApp() {
             {/* Dynamic Age-Adaptive Measurement Form */}
             <DynamicMeasurementForm
               patient={selectedPatient}
-              onBackToList={() => setSelectedPatient(null)}
+              onBackToList={goBackToList}
               onShowQR={(p) => showPatientQR(p)}
-              onMeasurementUpdated={fetchPatients}
             />
           </div>
         ) : (

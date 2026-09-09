@@ -126,4 +126,5 @@ model Measurement {
   updatedAt         DateTime  @updatedAt
 
   @@unique([patientId, sessionDate])
+  @@index([sessionDate])
 }

@@ -13,7 +13,6 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
-  Stethoscope,
   MapPin,
   Home,
   RefreshCw,
@@ -273,10 +272,15 @@ export function AuthPage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#f0f2f5] text-[#111b21]">
       {/* Branding */}
       <div className="text-center mb-5 animate-in fade-in slide-in-from-top-4 duration-300">
-        <div className="w-16 h-16 bg-[#075e54] text-[#25d366] rounded-full flex items-center justify-center mx-auto mb-3 shadow-md border-2 border-white">
-          <Stethoscope className="w-8 h-8" />
+        <div className="flex justify-center mb-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/logo-192.png"
+            alt="Logo POSYANDU NYAWIJI"
+            className="w-16 h-16 rounded-2xl shadow-md border-2 border-white object-cover"
+          />
         </div>
-        <h1 className="text-2xl font-black text-[#075e54] tracking-tight">Posyandu Digital</h1>
+        <h1 className="text-2xl font-black text-[#075e54] tracking-tight">POSYANDU NYAWIJI</h1>
         <p className="text-sm text-[#54656f] font-bold">Kabupaten Gunungkidul — D.I. Yogyakarta</p>
       </div>
 
@@ -620,7 +624,7 @@ export function AuthPage() {
         </div>
 
         <div className="text-center mt-4 text-xs text-[#54656f]">
-          <p>© 2026 Posyandu Digital — Dinas Kesehatan Kab. Gunungkidul</p>
+          <p>© 2026 POSYANDU NYAWIJI — Dinas Kesehatan Kab. Gunungkidul</p>
         </div>
       </div>
     </div>

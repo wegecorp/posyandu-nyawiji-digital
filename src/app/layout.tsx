@@ -11,13 +11,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Posyandu Digital Gunungkidul",
+  title: "POSYANDU NYAWIJI",
   description: "Aplikasi Mobile Pelayanan & Pengukuran Posyandu Se-Kabupaten Gunungkidul",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Posyandu GK",
+    title: "POSYANDU NYAWIJI",
   },
 };
 

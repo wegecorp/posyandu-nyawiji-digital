@@ -81,7 +81,7 @@ export const LoginModal: React.FC<AccountModalProps> = ({ isOpen, onClose, onCha
             </div>
             <div>
               <h2 className="font-extrabold text-sm leading-tight">Detail Akun Sesi</h2>
-              <p className="text-[11px] text-[#e9edef]">Posyandu Digital Gunungkidul</p>
+              <p className="text-[11px] text-[#e9edef]">POSYANDU NYAWIJI</p>
             </div>
           </div>
           <button

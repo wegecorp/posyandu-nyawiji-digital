@@ -79,7 +79,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div className="truncate max-w-[140px] sm:max-w-[220px]">
             <div className="font-extrabold text-white truncate text-sm leading-tight">
-              {user?.name || user?.posyanduName || 'Posyandu Digital'}
+              {user?.name || user?.posyanduName || 'POSYANDU NYAWIJI'}
             </div>
             <div className="mt-1 flex items-center gap-1.5">
               <span className={`px-2 py-0.5 rounded-md text-[10px] font-black tracking-wider ${roleBadge.color}`}>

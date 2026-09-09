@@ -40,7 +40,7 @@ Buat `.env` di folder project:
 
 ```env
 DATABASE_URL="file:./dev.db"
-NEXT_PUBLIC_APP_NAME="Posyandu Digital Gunungkidul"
+NEXT_PUBLIC_APP_NAME="POSYANDU NYAWIJI"
 SESSION_SECRET="<string acak sangat panjang — WAJIB beda dari dev>"
 DINKES_ADMIN_USERNAME="dinkes_gk"
 DINKES_ADMIN_PASSWORD="<password admin yang kuat>"

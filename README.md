@@ -1,4 +1,4 @@
-# 🏥 Posyandu Digital
+# 🏥 POSYANDU NYAWIJI
 
 Aplikasi web modern untuk digitalisasi pencatatan, pemantauan kesehatan balita & ibu hamil, serta manajemen pelayanan Posyandu, Puskesmas, hingga Dinas Kesehatan.
 
@@ -47,7 +47,7 @@ npm install
 Buat file `.env` di root folder (atau sesuaikan jika sudah ada):
 ```env
 DATABASE_URL="file:./dev.db"
-NEXT_PUBLIC_APP_NAME="Posyandu Digital Gunungkidul"
+NEXT_PUBLIC_APP_NAME="POSYANDU NYAWIJI"
 SESSION_SECRET="ganti_dengan_string_acak_panjang"
 DINKES_ADMIN_USERNAME="dinkes_gk"
 DINKES_ADMIN_PASSWORD="ganti_password_admin"

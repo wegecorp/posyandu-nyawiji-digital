@@ -68,6 +68,15 @@ export function clearItemFromQueue(id: string) {
   }
 }
 
+export function clearSyncQueue() {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(QUEUE_KEY);
+  } catch (e) {
+    console.error('Error clearing sync queue:', e);
+  }
+}
+
 async function postItem(item: UnsyncedItem): Promise<boolean> {
   const headers = { 'Content-Type': 'application/json' };
   let res: Response;
@@ -144,6 +153,11 @@ export function useAutoSave(patientId: string, posyanduId: string, recordedBy?: 
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
+    // Flush immediately on mount if already online (handles page reload).
+    if (navigator.onLine) {
+      void flushSyncQueue();
+    }
 
     return () => {
       window.removeEventListener('online', handleOnline);

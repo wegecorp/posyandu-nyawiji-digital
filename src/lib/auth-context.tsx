@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserSession } from './types';
+import { clearSyncQueue } from './offline-sync';
 
 interface AuthContextType {
   user: UserSession | null;
@@ -78,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setUser(null);
     localStorage.removeItem(STORAGE_KEY);
+    clearSyncQueue();
   };
 
   const switchActivePosyandu = (posyanduId: string, posyanduName: string, posyanduCode: string) => {

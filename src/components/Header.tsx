@@ -10,7 +10,7 @@ import {
   LayoutDashboard,
   RefreshCw,
 } from 'lucide-react';
-import { getSyncQueue } from '@/lib/offline-sync';
+import { getSyncQueue, flushSyncQueue } from '@/lib/offline-sync';
 
 interface HeaderProps {
   onOpenScanQR: () => void;
@@ -36,12 +36,25 @@ export const Header: React.FC<HeaderProps> = ({
   useEffect(() => {
     const updateStatus = () => {
       setIsOnline(navigator.onLine);
-      setUnsyncedCount(getSyncQueue().length);
+      const queue = getSyncQueue();
+      setUnsyncedCount(queue.length);
+      // Auto-flush stale items when online (handles page reload / session change).
+      if (navigator.onLine && queue.length > 0) {
+        void flushSyncQueue();
+      }
     };
 
     window.addEventListener('online', updateStatus);
     window.addEventListener('offline', updateStatus);
     const interval = setInterval(updateStatus, 3000);
+
+    // Flush on mount if online and items exist.
+    if (navigator.onLine) {
+      const queue = getSyncQueue();
+      if (queue.length > 0) {
+        void flushSyncQueue();
+      }
+    }
 
     return () => {
       window.removeEventListener('online', updateStatus);

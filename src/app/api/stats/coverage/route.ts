@@ -27,6 +27,17 @@ export async function GET(req: Request) {
     const from = searchParams.get('from');
     const to = searchParams.get('to');
 
+    // IDOR: non-DINKES hanya boleh mem-filter HC milik sendiri.
+    if (
+      hcIdFilter &&
+      session.role !== 'DINKES' &&
+      (session.role === 'POSYANDU' ||
+        !session.healthCenterId ||
+        session.healthCenterId !== hcIdFilter)
+    ) {
+      return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 });
+    }
+
     const now = new Date();
     const defaultTo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const d = new Date(now);

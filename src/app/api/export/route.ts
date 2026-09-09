@@ -57,7 +57,9 @@ export async function GET(req: Request) {
     // Transform to raw Excel rows
     const rows = measurements.map((m, index) => {
       const age = calculateAge(m.patient.birthDate, new Date(m.sessionDate));
-      const category = getPatientCategory(m.patient.birthDate, m.patient.isPregnant);
+      // Kategori harus dari USIA SAAT SESI (atau snapshot tersimpan), bukan usia hari ini —
+      // kalau tidak, baris historis (mis. balita yang sudah berulang tahun) salah label.
+      const category = m.category ?? getPatientCategory(m.patient.birthDate, m.patient.isPregnant);
 
       return {
         No: index + 1,

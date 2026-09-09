@@ -39,6 +39,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Password saat ini salah' }, { status: 401 });
     }
 
+    // Tolak password baru yang sama dengan yang lama (termasuk password default bawaan).
+    const sameAsCurrent = await verifyPassword(newPassword.trim(), user.password);
+    if (sameAsCurrent) {
+      return NextResponse.json(
+        { error: 'Password baru tidak boleh sama dengan password saat ini' },
+        { status: 400 }
+      );
+    }
+
     // Hash new password
     const hashedNew = await hashPassword(newPassword.trim());
 

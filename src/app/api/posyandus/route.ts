@@ -11,6 +11,43 @@ export async function GET(req: Request) {
     const session = await requireRole(undefined, ['DINKES', 'PUSKESMAS', 'POSYANDU']);
     if (session instanceof NextResponse) return session;
 
+    // POSYANDU cukup melihat posyandu dirinya sendiri — TANPA data user akun lain.
+    if (session.role === 'POSYANDU') {
+      if (!session.posyanduId) {
+        return NextResponse.json({ success: true, data: [] });
+      }
+      const own = await prisma.posyandu.findUnique({
+        where: { id: session.posyanduId },
+        include: {
+          kalurahan: { select: { name: true, code: true } },
+          healthCenter: { select: { id: true, name: true } },
+        },
+      });
+      if (!own) return NextResponse.json({ success: true, data: [] });
+      return NextResponse.json({
+        success: true,
+        data: [
+          {
+            id: own.healthCenter.id,
+            name: own.healthCenter.name,
+            code: '',
+            kapanewon: '',
+            posyandus: [
+              {
+                id: own.id,
+                code: own.code,
+                name: own.name,
+                padukuhan: own.padukuhan,
+                kalurahan: own.kalurahan.name,
+                kalurahanCode: own.kalurahan.code,
+                healthCenterId: own.healthCenter.id,
+              },
+            ],
+          },
+        ],
+      });
+    }
+
     const { searchParams } = new URL(req.url);
     const healthCenterId = searchParams.get('healthCenterId');
 
@@ -18,10 +55,6 @@ export async function GET(req: Request) {
 
     if (session.role === 'PUSKESMAS') {
       whereClause.id = session.healthCenterId ?? '';
-    } else if (session.role === 'POSYANDU') {
-      if (session.posyanduId) {
-        whereClause.posyandus = { some: { id: session.posyanduId } };
-      }
     } else if (healthCenterId) {
       whereClause.id = healthCenterId;
     }

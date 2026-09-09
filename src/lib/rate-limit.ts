@@ -25,9 +25,14 @@ export function isRateLimited({ key, limit, windowMs }: RateLimitOptions): boole
   return false;
 }
 
-/** Ekstrak identitas klien (IP) dari request utk dipakai sbg rate-limit key. */
+/**
+ * Ekstrak identitas klien (IP) utk dipakai sbg rate-limit key.
+ * Pakai entri PALING KANAN dari X-Forwarded-For: Nginx menimpa/menambahkannya dengan IP
+ * asli klien, jadi bagian kiri yang dikirim pemohon bisa di-spoof — bagian kanan tidak.
+ */
 export function getClientKey(req: Request, salt = ''): string {
   const forwarded = req.headers.get('x-forwarded-for') || '';
-  const ip = forwarded.split(',')[0].trim() || req.headers.get('x-real-ip') || 'unknown';
+  const parts = forwarded.split(',').map((p) => p.trim()).filter(Boolean);
+  const ip = parts.length > 0 ? parts[parts.length - 1] : req.headers.get('x-real-ip') || 'unknown';
   return `${salt}:${ip}`;
 }

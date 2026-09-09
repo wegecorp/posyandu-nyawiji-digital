@@ -40,11 +40,13 @@ export function PeriodControl({ selected, onChange }: PeriodControlProps) {
       {PRESETS.map((p) => (
         <button
           key={p.value}
+          type="button"
           onClick={() => onChange(p.value)}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+          aria-pressed={selected === p.value}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border cursor-pointer ${
             selected === p.value
-              ? 'bg-[#075e54] text-white border-[#075e54]'
-              : 'bg-white text-[#111b21] border-[#e9edef] hover:bg-[#f0f2f5]'
+              ? 'bg-[#075e54] text-white border-[#075e54] shadow-xs'
+              : 'bg-white text-[#111b21] border-[#e9edef] hover:bg-[#f0f2f5] active:bg-[#e7fceb]'
           }`}
         >
           {p.label}

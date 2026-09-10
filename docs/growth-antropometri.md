@@ -169,7 +169,8 @@ tetap menampilkan semua kategori.
 | Hitung saat simpan | `src/app/api/measurements/autosave/route.ts` |
 | UI dashboard | `src/components/analisis/GrowthStatusDistribution.tsx` |
 | UI form + badge live | `src/components/DynamicMeasurementForm.tsx` |
-| Export Excel | `src/app/api/export/route.ts` |
+| Drill detail status gizi | `src/app/api/stats/growth-patients/route.ts` |
+| Rekap ringkas (Excel) | `src/app/api/stats/report/route.ts` |
 | Backfill | `src/app/api/dinkes/backfill-growth/route.ts` |
 
 ### Kolom tersimpan di `Measurement`

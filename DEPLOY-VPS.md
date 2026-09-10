@@ -120,12 +120,16 @@ sudo certbot --nginx -d posyandu.domain.id
 cd /opt/posyandu_digital
 git pull
 npm ci
+rm -rf .next                # WAJIB bila ada route yang dihapus/diganti (cegah tipe basi)
 npx prisma db push          # schema baru
 npm run db:backfill         # isi kolom turunan (N/T & 2T) utk data lama — idempoten
 npm run data:gunungkidul -- /tmp/daftarposyandu.csv   # data terbaru (opsional)
 npm run build
 pm2 restart posyandu-digital
 ```
+
+> Rilis tanpa perubahan skema (mis. hanya UI/endpoint): `prisma db push` dan `db:backfill`
+> boleh dilewati. `rm -rf .next` tetap disarankan bila ada route lama yang dihapus.
 
 Checklist verifikasi lengkap (UAT per peran + rollback): `docs/uat-deploy-checklist.md`.
 

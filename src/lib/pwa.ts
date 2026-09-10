@@ -11,8 +11,6 @@ export type InstallGuide = 'ios' | 'android' | 'desktop' | 'unsupported';
 
 export type InstallTapResult = { action: 'prompted' } | { action: 'guide'; guide: InstallGuide };
 
-const INSTALLED_FLAG_KEY = 'nyawiji_pwa_installed';
-
 // ---------------------------------------------------------------------------
 // State tingkat-modul (singleton).
 //
@@ -33,22 +31,6 @@ function emit() {
   for (const listener of listeners) listener();
 }
 
-function safeLocalStorageGet(key: string): string | null {
-  try {
-    return window.localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function safeLocalStorageSet(key: string, value: string) {
-  try {
-    window.localStorage.setItem(key, value);
-  } catch {
-    /* abaikan bila storage tidak tersedia */
-  }
-}
-
 function isStandaloneMode(): boolean {
   if (typeof window === 'undefined') return false;
   return (
@@ -58,7 +40,7 @@ function isStandaloneMode(): boolean {
 }
 
 function readInstalled(): boolean {
-  return isStandaloneMode() || safeLocalStorageGet(INSTALLED_FLAG_KEY) === '1';
+  return isStandaloneMode();
 }
 
 function init() {
@@ -76,16 +58,12 @@ function init() {
   const onAppInstalled = () => {
     installed = true;
     deferredPrompt = null;
-    safeLocalStorageSet(INSTALLED_FLAG_KEY, '1');
     emit();
   };
 
   const onDisplayModeChange = (event: MediaQueryListEvent) => {
-    if (event.matches) {
-      installed = true;
-      safeLocalStorageSet(INSTALLED_FLAG_KEY, '1');
-      emit();
-    }
+    installed = event.matches;
+    emit();
   };
 
   window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
@@ -198,7 +176,6 @@ export function usePwaInstall() {
         const choice = await prompt.userChoice;
         if (choice?.outcome === 'accepted') {
           installed = true;
-          safeLocalStorageSet(INSTALLED_FLAG_KEY, '1');
           emit();
         }
         return { action: 'prompted' };

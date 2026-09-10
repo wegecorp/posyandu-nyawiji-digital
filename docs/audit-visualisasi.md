@@ -315,5 +315,20 @@ Tes baru: `src/lib/analytics.test.ts` (belum dinilai, abnormal, appliesTo, dedup
 Verifikasi: `npm test` 102 lulus (+7 `weight-progression.test.ts`), `npm run lint` 0 error,
 `npm run build` sukses.
 
-### Wave 3 — BELUM
-F8–F15, F18–F21, chip 2T di daftar pasien kader, + penanda absen/belum ditimbang.
+### Wave 3 — SEBAGIAN SELESAI
+| ID | Status | Perubahan |
+|---|---|---|
+| F8 | ✅ | `todayLocalISODate()` (utils) menggantikan `toISOString()` UTC di tanggal sesi + `max` (DynamicMeasurementForm, EditPatientModal, QuickRegisterModal) |
+| F9 | ✅ | `flushNow()` kini async & menunggu flush berjalan; ganti tanggal sesi menunggu patch lama terkirim |
+| F11 | ✅ | Daftar temuan Posyandu: "N pasien · M temuan · bulan", hanya bulan terpilih |
+| F12 | ✅ | Ranking: bar 0% tidak lagi terisi; urut tertinggi dulu + nomor urut |
+| F13/F14 | ✅ | `periodToRange` = tepat N bucket, mulai tanggal 1 (tanpa overflow) + test regresi |
+| F15 | ✅ | Drill-down Dinkes di-refetch saat periode/HC berubah |
+| F18 | ✅ | `ym` daftar abnormal pakai waktu lokal (`ymOf`) |
+| Chip 2T kader | ✅ | `PatientData.faltering2T` dari pengukuran terbaru; chip merah "2T — perlu rujuk" di `PatientCard` |
+
+**Sisa (belum):** F10 (chip riwayat menyembunyikan nilai 0 — minor), F19 (batas bulan bergantung TZ server),
+F20 (aksesibilitas chart: label/legend/aria), F21 (tren menyambung lintasi bulan tanpa data),
+penanda absen/belum ditimbang.
+
+Verifikasi: `npm test` 106 lulus (+4 `PeriodControl.test.ts`), `npm run lint` 0 error, `npm run build` sukses.

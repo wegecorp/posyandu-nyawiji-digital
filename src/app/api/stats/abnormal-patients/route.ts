@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
 import { INDICATORS, checkIndicator } from '@/lib/clinical';
+import { ymOf } from '@/lib/growth-analytics';
 import type { PatientCategory } from '@/lib/types';
 
 export async function GET(req: Request) {
@@ -87,7 +88,7 @@ export async function GET(req: Request) {
     }[] = [];
 
     for (const row of rawRows) {
-      const ymVal = row.sessionDate.toISOString().slice(0, 7);
+      const ymVal = ymOf(row.sessionDate);
       const gender = row.patient.gender;
       const category = (row.category as PatientCategory) ?? null;
 

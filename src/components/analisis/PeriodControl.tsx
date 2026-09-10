@@ -19,9 +19,10 @@ const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'S
 function getDefaultDateRange(months: number): { from: string; to: string } {
   const now = new Date();
   const to = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  const d = new Date(now);
-  d.setMonth(d.getMonth() - months);
-  const from = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  // Awal bulan ke-(months-1) yang lalu → tepat `months` bucket bulan (termasuk bulan ini),
+  // dan memakai tanggal 1 agar tak overflow di bulan yang lebih pendek.
+  const d = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+  const from = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
   return { from, to };
 }
 

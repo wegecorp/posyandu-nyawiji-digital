@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { PatientData } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
 import { X, Edit3, Calendar, User, Home, Phone, Heart, Check, AlertTriangle, Lock } from 'lucide-react';
-import { calculateAge, getPatientCategory, getCategoryBadge } from '@/lib/utils';
+import { calculateAge, getPatientCategory, getCategoryBadge, todayLocalISODate } from '@/lib/utils';
 
 interface EditPatientModalProps {
   isOpen: boolean;
@@ -167,7 +167,7 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
                 required
-                max={new Date().toISOString().slice(0, 10)}
+                max={todayLocalISODate()}
                 className={fieldClsWithIcon}
               />
             </div>

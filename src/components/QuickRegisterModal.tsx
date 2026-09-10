@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { PatientData } from '@/lib/types';
 import { addToSyncQueue, genClientId } from '@/lib/offline-sync';
 import { X, UserPlus, Calendar, User, Home, Phone, Heart, Check, AlertTriangle, Info, ChevronUp, ChevronDown } from 'lucide-react';
-import { calculateAge, getPatientCategory, getCategoryBadge } from '@/lib/utils';
+import { calculateAge, getPatientCategory, getCategoryBadge, todayLocalISODate } from '@/lib/utils';
 
 interface QuickRegisterModalProps {
   isOpen: boolean;
@@ -255,7 +255,7 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
                 required
-                max={new Date().toISOString().slice(0, 10)}
+                max={todayLocalISODate()}
                 className={fieldClsWithIcon}
               />
             </div>

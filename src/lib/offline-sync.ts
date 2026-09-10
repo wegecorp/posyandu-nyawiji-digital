@@ -325,12 +325,21 @@ export function useAutoSave(patientId: string, posyanduId: string, recordedBy?: 
   );
 
   // Kirim segera antrean tertunda (dipakai saat ganti tanggal sesi / sebelum keluar form).
-  const flushNow = useCallback(() => {
+  // Mengembalikan Promise yang selesai setelah antrean benar-benar terkirim, supaya
+  // pemanggil (mis. ganti tanggal sesi) bisa menunggu sebelum mengubah konteks tanggal.
+  const flushNow = useCallback(async (): Promise<void> => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
       debounceTimerRef.current = null;
     }
-    void runFlush();
+    // Tunggu bila ada pengiriman yang sedang berjalan agar pending lama tidak tertimpa
+    // patch bergaya tanggal baru (race F9).
+    let guard = 0;
+    while (busyRef.current && guard < 400) {
+      await new Promise((r) => setTimeout(r, 25));
+      guard++;
+    }
+    await runFlush();
   }, [runFlush]);
 
   // Flush saat tanggal sesi diubah: pastikan field lama terkirim ke tanggal yg benar.

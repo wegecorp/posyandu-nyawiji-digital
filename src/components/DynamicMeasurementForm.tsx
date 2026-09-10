@@ -22,7 +22,7 @@ import {
   Eye,
   Ear,
 } from 'lucide-react';
-import { getCategoryBadge, formatIndoDate } from '@/lib/utils';
+import { getCategoryBadge, formatIndoDate, todayLocalISODate } from '@/lib/utils';
 import { validateMeasurementValue, validateBloodPressure, computeImt } from '@/lib/validation';
 import {
   computeGrowth,
@@ -67,7 +67,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   const [hearingStatus, setHearingStatus] = useState<string>('');
   const [noteSource, setNoteSource] = useState<string>('Kader');
   const [notes, setNotes] = useState<string>('');
-  const [sessionDate, setSessionDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [sessionDate, setSessionDate] = useState<string>(() => todayLocalISODate());
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [activeTab, setActiveTab] = useState<'form' | 'history'>('form');
@@ -247,21 +247,12 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
         setNoteSource(value);
         break;
       case 'sessionDate':
-        // Nilai tertunda pada tanggal lama harus terkirim lebih dulu, sebelum field
-        // di-reset oleh data tanggal baru — kalau tidak, patch lama ikut ke tanggal baru.
-        flushNow();
-        setSessionDate(value);
+        // F9: tunggu patch tanggal lama benar-benar terkirim sebelum berpindah tanggal,
+        // agar nilai lama tidak ikut tersimpan di tanggal baru. Pengisian field untuk
+        // tanggal baru ditangani efek [sessionDate] yang memuat ulang detail pasien.
         {
-          const target = new Date(value);
-          const start = new Date(target);
-          start.setHours(0, 0, 0, 0);
-          const end = new Date(target);
-          end.setHours(23, 59, 59, 999);
-          const match = historyList.find((m) => {
-            const d = new Date(m.sessionDate);
-            return d >= start && d <= end;
-          });
-          if (match) applyMeasurement(match);
+          const nextDate = value;
+          void flushNow().then(() => setSessionDate(nextDate));
         }
         return;
       case 'notes':
@@ -369,7 +360,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
               <input
                 type="date"
                 value={sessionDate}
-                max={new Date().toISOString().slice(0, 10)}
+                max={todayLocalISODate()}
                 onChange={(e) => handleFieldChange('sessionDate', e.target.value)}
                 className="text-[11px] font-bold text-[#075e54] bg-[#f0f2f5] border border-[#e9edef] rounded-lg px-2 py-1 outline-none focus:border-[#128c7e]"
               />

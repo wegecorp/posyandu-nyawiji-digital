@@ -68,6 +68,18 @@ export function getCategoryBadge(category: PatientCategory) {
   }
 }
 
+/**
+ * Tanggal hari ini dalam format 'YYYY-MM-DD' menurut waktu LOKAL perangkat.
+ * Jangan pakai `new Date().toISOString()` — itu UTC, sehingga di WIB (+7)
+ * setelah pukul 17:00 menghasilkan tanggal "besok".
+ */
+export function todayLocalISODate(now: Date = new Date()): string {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 export function formatIndoDate(dateString: string | Date) {
   if (!dateString) return '-';
   const d = new Date(dateString);

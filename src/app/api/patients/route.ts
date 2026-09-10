@@ -65,17 +65,37 @@ export async function GET(req: Request) {
     // Ambil pengukuran hari ini sekali (tanpa N+1), lalu tempel per pasien.
     type MeasurementRow = Awaited<ReturnType<typeof prisma.measurement.findFirst>>;
     const todayByPatient = new Map<string, NonNullable<MeasurementRow>>();
+    const faltering2TPatients = new Set<string>();
     if (patients.length > 0) {
       const ids = patients.map((p) => p.id);
-      const measurements = await prisma.measurement.findMany({
-        where: {
-          patientId: { in: ids },
-          sessionDate: { gte: startOfToday, lte: endOfToday },
-        },
-        orderBy: { sessionDate: 'desc' },
-      });
+      const [measurements, latestDates] = await Promise.all([
+        prisma.measurement.findMany({
+          where: {
+            patientId: { in: ids },
+            sessionDate: { gte: startOfToday, lte: endOfToday },
+          },
+          orderBy: { sessionDate: 'desc' },
+        }),
+        prisma.measurement.groupBy({
+          by: ['patientId'],
+          where: { patientId: { in: ids } },
+          _max: { sessionDate: true },
+        }),
+      ]);
       for (const m of measurements) {
         if (!todayByPatient.has(m.patientId)) todayByPatient.set(m.patientId, m);
+      }
+
+      // Penanda 2T = pengukuran TERBARU pasien masih berstatus 2T.
+      const latestPairs = latestDates
+        .filter((l) => l._max.sessionDate)
+        .map((l) => ({ patientId: l.patientId, sessionDate: l._max.sessionDate as Date }));
+      if (latestPairs.length > 0) {
+        const flagged = await prisma.measurement.findMany({
+          where: { OR: latestPairs, weightFaltering2T: true },
+          select: { patientId: true },
+        });
+        for (const f of flagged) faltering2TPatients.add(f.patientId);
       }
     }
 
@@ -91,6 +111,7 @@ export async function GET(req: Request) {
         ageDisplay: age.display,
         todayMeasurement,
         measurementComplete: isMeasurementComplete(todayMeasurement),
+        faltering2T: faltering2TPatients.has(p.id),
       };
     });
 

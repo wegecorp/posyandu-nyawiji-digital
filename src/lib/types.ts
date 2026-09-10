@@ -18,6 +18,8 @@ export interface PatientData {
   ageDisplay?: string;
   todayMeasurement?: MeasurementData | null;
   measurementComplete?: boolean;
+  /** Pengukuran terbaru pasien menandai 2T (2x tidak naik) → perlu rujuk. */
+  faltering2T?: boolean;
   latestMeasurement?: MeasurementData | null;
   measurements?: MeasurementData[];
 }

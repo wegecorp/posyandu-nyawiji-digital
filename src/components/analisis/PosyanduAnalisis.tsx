@@ -99,15 +99,25 @@ export function PosyanduAnalisis() {
     return assessed > 0 ? Math.round((latestOutcome.normal / assessed) * 100) : 0;
   }, [latestOutcome]);
 
+  // Temuan abnormal pada bulan terpilih (samakan dengan donut/kartu lain).
+  const latestAbnormal = useMemo(
+    () => myAbnormal.filter((p) => p.ym === latestMonth),
+    [myAbnormal, latestMonth],
+  );
+  const abnormalPatientCount = useMemo(
+    () => new Set(latestAbnormal.map((p) => p.regNumber)).size,
+    [latestAbnormal],
+  );
+
   // Group abnormal patients by indicator
   const abnormalByIndicator = useMemo(() => {
     const map = new Map<string, AbnormalPatient[]>();
-    for (const p of myAbnormal) {
+    for (const p of latestAbnormal) {
       if (!map.has(p.indicatorKey)) map.set(p.indicatorKey, []);
       map.get(p.indicatorKey)!.push(p);
     }
     return map;
-  }, [myAbnormal]);
+  }, [latestAbnormal]);
 
   if (loading && myCoverage.length === 0) {
     return <div className="p-8 text-center text-sm font-bold text-[#54656f]">Memuat data statistik...</div>;
@@ -169,8 +179,11 @@ export function PosyanduAnalisis() {
       )}
 
       {/* 3. Abnormal patients list */}
-      {myAbnormal.length > 0 && (
-        <ChartCard title="Pasien dengan Temuan Tidak Normal" subtitle={`${myAbnormal.length} pasien`}>
+      {latestAbnormal.length > 0 && (
+        <ChartCard
+          title="Pasien dengan Temuan Tidak Normal"
+          subtitle={`${abnormalPatientCount} pasien · ${latestAbnormal.length} temuan · ${formatYM(latestMonth)}`}
+        >
           <div className="space-y-3 max-h-[400px] overflow-y-auto">
             {Array.from(abnormalByIndicator.entries()).map(([indKey, patients]) => {
               const ind = INDICATORS.find(i => i.key === indKey);

@@ -42,17 +42,17 @@ export function UnitScoreboard({
     if (sortBy === 'abnormal') {
       return (b.abnormal ?? 0) - (a.abnormal ?? 0);
     }
-    return a.participation - b.participation; // worst first
+    return b.participation - a.participation; // tertinggi dulu (ranking wajar)
   });
 
   return (
     <div>
       {title && <h4 className="text-xs font-extrabold text-[#54656f] mb-2 uppercase tracking-wide">{title}</h4>}
       <div className="space-y-1.5">
-        {sorted.map((row) => {
+        {sorted.map((row, idx) => {
           const pct = Math.round(row.participation * 100);
           const buruk = isBuruk(row.participation);
-          const barWidth = Math.max(4, pct); // min 4% so bar visible
+          const barWidth = pct; // 0% tampil kosong, jangan dibuat seolah terisi
           return (
             <button
               key={row.unitId}
@@ -70,6 +70,7 @@ export function UnitScoreboard({
             >
               <div className="flex items-center justify-between gap-2 mb-1">
                 <span className="text-xs font-bold text-[#111b21] truncate max-w-[60%]">
+                  <span className="text-[#8696a0] font-extrabold mr-1">{idx + 1}.</span>
                   {row.unitName}
                 </span>
                 <div className="flex items-center gap-2 shrink-0">

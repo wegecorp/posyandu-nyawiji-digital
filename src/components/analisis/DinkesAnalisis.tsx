@@ -66,12 +66,25 @@ export function DinkesAnalisis() {
   }, [from, to]);
 
   // Drill into puskesmas → posyandu
-  const handleDrill = useCallback(async (hcId: string, hcName: string) => {
+  const handleDrill = useCallback((hcId: string, hcName: string) => {
     setDrillHcId(hcId);
     setDrillHcName(hcName);
-    const covRes = await fetch(`/api/stats/coverage?scope=posyandu&hcId=${hcId}&from=${from}&to=${to}`).then(r => r.json());
-    if (covRes.success) setDrillCoverage(covRes.data);
-  }, [from, to]);
+  }, []);
+
+  // Refetch data drill saat HC atau periode berubah (agar tidak basi setelah ganti periode).
+  useEffect(() => {
+    if (!drillHcId) return;
+    let active = true;
+    fetch(`/api/stats/coverage?scope=posyandu&hcId=${drillHcId}&from=${from}&to=${to}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (active && d.success) setDrillCoverage(d.data);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [drillHcId, from, to]);
 
   // Trend line (kabupaten aggregate)
   const trendData = useMemo(() =>

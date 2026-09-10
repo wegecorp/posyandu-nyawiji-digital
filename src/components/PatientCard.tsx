@@ -10,6 +10,7 @@ import {
   QrCode,
   User,
   Edit3,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface PatientCardProps {
@@ -113,6 +114,12 @@ export const PatientCard: React.FC<PatientCardProps> = ({
               <span className="inline-flex items-center gap-1 text-xs font-medium text-[#c2410c] bg-[#fff7ed] px-2.5 py-0.5 rounded-full border border-[#ffedd5]">
                 <CircleDashed className="w-3.5 h-3.5 text-[#ea580c]" />
                 <span>Belum diukur hari ini</span>
+              </span>
+            )}
+            {patient.faltering2T && (
+              <span className="inline-flex items-center gap-1 text-xs font-bold text-red-700 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
+                <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+                <span>2T — perlu rujuk</span>
               </span>
             )}
           </div>

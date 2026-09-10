@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { usePwaInstall, isStandaloneMode, type InstallGuide } from '@/lib/pwa';
 import { InstallAppModal } from '@/components/InstallAppModal';
-import { ExitConfirmModal } from '@/components/ExitConfirmModal';
+import { ExitHint } from '@/components/ExitHint';
 import { useBackLayer, useExitGuard } from '@/lib/back-navigation';
 
 type LoginTab = 'posyandu' | 'staf';
@@ -80,7 +80,7 @@ export function AuthPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [activationMsg, setActivationMsg] = useState('');
-  const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false);
+  const [showExitHint, setShowExitHint] = useState(false);
 
   // Ambil daftar puskesmas saat tab posyandu aktif di step awal
   useEffect(() => {
@@ -178,7 +178,7 @@ export function AuthPage() {
 
   // Navigasi tombol back OS/hardware.
   // Pop-up keluar hanya di mode standalone (PWA terpasang); di browser biarkan back native.
-  useExitGuard(isStandaloneMode(), () => setIsExitConfirmOpen(true));
+  useExitGuard(isStandaloneMode(), () => setShowExitHint(true));
   useBackLayer(Boolean(activation), () => setActivation(null));
   useBackLayer(tab === 'posyandu' && step > 0 && !activation, goBack);
 
@@ -664,11 +664,8 @@ export function AuthPage() {
       {/* Panduan Install / Simpan ke Layar Utama */}
       <InstallAppModal guide={installGuide} onClose={() => setInstallGuide(null)} />
 
-      {/* Konfirmasi keluar aplikasi (tombol back di layar root) */}
-      <ExitConfirmModal
-        isOpen={isExitConfirmOpen}
-        onClose={() => setIsExitConfirmOpen(false)}
-      />
+      {/* Hint keluar aplikasi (back dua kali di layar root, mode standalone) */}
+      <ExitHint show={showExitHint} onHide={() => setShowExitHint(false)} />
     </div>
   );
 }

@@ -16,7 +16,7 @@ import { AnalisisPage } from '@/components/analisis/AnalisisPage';
 import { AuthPage } from '@/components/AuthPage';
 import { EditPatientModal } from '@/components/EditPatientModal';
 import { ChangePasswordModal } from '@/components/ChangePasswordModal';
-import { ExitConfirmModal } from '@/components/ExitConfirmModal';
+import { ExitHint } from '@/components/ExitHint';
 import { useBackLayer, useExitGuard } from '@/lib/back-navigation';
 import { isStandaloneMode } from '@/lib/pwa';
 import {
@@ -62,7 +62,7 @@ export default function PosyanduApp() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isChangePassOpen, setIsChangePassOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<PatientData | null>(null);
-  const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false);
+  const [showExitHint, setShowExitHint] = useState(false);
 
   const isReadOnly = user?.role === 'PUSKESMAS' || user?.role === 'DINKES';
 
@@ -199,7 +199,7 @@ export default function PosyanduApp() {
 
   // Navigasi tombol back OS/hardware — tiap layer menggeser satu history entry.
   // Pop-up keluar hanya di mode standalone (PWA terpasang); di browser biarkan back native.
-  useExitGuard(Boolean(user) && isStandaloneMode(), () => setIsExitConfirmOpen(true));
+  useExitGuard(Boolean(user) && isStandaloneMode(), () => setShowExitHint(true));
   useBackLayer(mainView === 'analisis', () => setMainView('beranda'));
   useBackLayer(activeViewMode === 'posyandu_table', () => setActiveViewMode('default'));
   useBackLayer(Boolean(selectedPatient), goBackToList);
@@ -510,11 +510,8 @@ export default function PosyanduApp() {
         onSuccess={handleEditSuccess}
       />
 
-      {/* 8. Konfirmasi keluar aplikasi (tombol back di layar root) */}
-      <ExitConfirmModal
-        isOpen={isExitConfirmOpen}
-        onClose={() => setIsExitConfirmOpen(false)}
-      />
+      {/* 8. Hint keluar aplikasi (back dua kali di layar root, mode standalone) */}
+      <ExitHint show={showExitHint} onHide={() => setShowExitHint(false)} />
     </div>
   );
 }

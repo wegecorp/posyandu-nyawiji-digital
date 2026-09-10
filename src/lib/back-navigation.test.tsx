@@ -57,35 +57,40 @@ describe('useBackLayer', () => {
 });
 
 describe('useExitGuard', () => {
-  it('memanggil onExit dan tetap hidup saat back di layar root', async () => {
+  it('back pertama memanggil onExit (hint), back kedua tidak menahan lagi', async () => {
     const { useExitGuard } = await loadModule();
     const onExit = vi.fn();
 
     renderHook(() => useExitGuard(true, onExit));
-    pressBack();
 
+    pressBack();
+    expect(onExit).toHaveBeenCalledTimes(1);
+
+    // Back kedua dalam jendela waktu: dibiarkan lewat (OS menutup app), onExit
+    // tidak dipanggil lagi.
+    pressBack();
     expect(onExit).toHaveBeenCalledTimes(1);
   });
-});
 
-describe('exitApp', () => {
-  it('tidak membiarkan layer menelan back saat keluar aplikasi', async () => {
-    const { useBackLayer, useExitGuard, exitApp } = await loadModule();
-    const onBack = vi.fn();
-    const onExit = vi.fn();
+  it('re-arm setelah jendela waktu lewat, back memanggil onExit lagi', async () => {
+    vi.useFakeTimers();
+    try {
+      const { useExitGuard } = await loadModule();
+      const onExit = vi.fn();
 
-    renderHook(() => useExitGuard(true, onExit));
-    renderHook(() => useBackLayer(true, onBack));
+      renderHook(() => useExitGuard(true, onExit));
 
-    const closeSpy = vi.spyOn(window, 'close').mockImplementation(() => {});
-    const goSpy = vi.spyOn(window.history, 'go').mockImplementation(() => {});
-    exitApp();
-    closeSpy.mockRestore();
-    goSpy.mockRestore();
+      pressBack();
+      expect(onExit).toHaveBeenCalledTimes(1);
 
-    pressBack();
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
 
-    expect(onBack).not.toHaveBeenCalled();
-    expect(onExit).not.toHaveBeenCalled();
+      pressBack();
+      expect(onExit).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

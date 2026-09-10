@@ -6,8 +6,10 @@
  * Aplikasi ini tidak memakai router: setiap "layar"/modal adalah state React,
  * sehingga tanpa history entry tombol back menutup PWA. Modul ini menjaga satu
  * stack handler; tiap layer (layar/modal) menggeser satu history entry. Back
- * memanggil handler teratas (LIFO). Saat stack kosong, exit-guard menahan
- * keluar aplikasi dan memunculkan konfirmasi.
+ * memanggil handler teratas (LIFO). Saat stack kosong, exit-guard memakai pola
+ * "back dua kali": back pertama menahan keluar + memanggil `onExit` (tampilkan
+ * hint), back kedua dalam jendela waktu dibiarkan lewat sehingga OS/browser
+ * menutup aplikasi secara native.
  */
 
 import { useEffect, useRef } from 'react';
@@ -17,22 +19,31 @@ type BackHandler = () => void;
 /** `null` = tombstone (entry history milik layer yang ditutup programatik). */
 type Layer = { id: number; onBack: BackHandler } | null;
 
+/** Jendela waktu (ms) antara back pertama dan back kedua untuk keluar. */
+const EXIT_ARM_WINDOW_MS = 2000;
+
 const layers: Layer[] = [];
 let exitGuardActive = false;
 let exitGuardOnExit: BackHandler | null = null;
 let nextId = 1;
 let suppressPop = 0;
 let listenerAttached = false;
-let exiting = false;
+let exitArmed = false;
+let exitArmTimer: ReturnType<typeof setTimeout> | null = null;
 
 function pushGuardEntry() {
   if (typeof window !== 'undefined') window.history.pushState({ bn: 'root' }, '');
 }
 
-function handlePopState() {
-  // Sedang keluar: jangan konsumsi layer/guard — biarkan browser menutup app.
-  if (exiting) return;
+function disarmExit() {
+  exitArmed = false;
+  if (exitArmTimer !== null) {
+    clearTimeout(exitArmTimer);
+    exitArmTimer = null;
+  }
+}
 
+function handlePopState() {
   if (suppressPop > 0) {
     suppressPop -= 1;
     return;
@@ -49,11 +60,23 @@ function handlePopState() {
     layers.pop();
     return;
   }
-  // Root: tahan keluar, tancapkan lagi entry guard, minta konfirmasi.
-  if (exitGuardActive) {
-    pushGuardEntry();
-    exitGuardOnExit?.();
+  if (!exitGuardActive) return;
+
+  // Back kedua dalam jendela waktu: jangan tahan lagi — biarkan browser/OS
+  // menutup aplikasi secara native.
+  if (exitArmed) {
+    disarmExit();
+    return;
   }
+
+  // Back pertama: tahan keluar, minta hint, lalu re-arm bila waktu habis.
+  exitArmed = true;
+  exitArmTimer = setTimeout(() => {
+    exitArmed = false;
+    exitArmTimer = null;
+    if (exitGuardActive) pushGuardEntry();
+  }, EXIT_ARM_WINDOW_MS);
+  exitGuardOnExit?.();
 }
 
 function attachListener() {
@@ -97,8 +120,10 @@ export function useBackLayer(active: boolean, onBack: BackHandler) {
 }
 
 /**
- * Guard layar root. Saat back ditekan tanpa layer aktif, `onExit` dipanggil
- * (biasanya untuk membuka dialog konfirmasi keluar) dan aplikasi tetap hidup.
+ * Guard layar root (khusus mode standalone/PWA). Saat back ditekan tanpa layer
+ * aktif: back pertama memanggil `onExit` (tampilkan hint "tekan kembali sekali
+ * lagi") dan menahan keluar; back kedua dalam `EXIT_ARM_WINDOW_MS` dibiarkan
+ * lewat sehingga OS menutup aplikasi.
  */
 export function useExitGuard(enabled: boolean, onExit: BackHandler) {
   const onExitRef = useRef(onExit);
@@ -115,6 +140,7 @@ export function useExitGuard(enabled: boolean, onExit: BackHandler) {
     pushGuardEntry();
 
     return () => {
+      disarmExit();
       exitGuardActive = false;
       exitGuardOnExit = null;
       if (layers.length === 0) {
@@ -123,21 +149,4 @@ export function useExitGuard(enabled: boolean, onExit: BackHandler) {
       }
     };
   }, [enabled]);
-}
-
-/** Keluar dari aplikasi: coba tutup window, fallback mundur keluar dari PWA. */
-export function exitApp() {
-  // Matikan konsumsi popstate & guard agar layer (mis. layer modal konfirmasi
-  // itu sendiri) tidak "menelan" back dan menggagalkan keluar.
-  exiting = true;
-  exitGuardActive = false;
-  exitGuardOnExit = null;
-  layers.length = 0;
-
-  window.close();
-  window.setTimeout(() => {
-    // window.close() diblokir (bukan script-opened): mundur melewati seluruh
-    // history milik app agar browser/WebAPK menutup aplikasi.
-    window.history.go(-window.history.length);
-  }, 60);
 }

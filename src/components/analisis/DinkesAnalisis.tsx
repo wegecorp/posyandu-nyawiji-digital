@@ -8,6 +8,7 @@ import {
 import { TrendingUp, Users, AlertTriangle } from 'lucide-react';
 import { ChartCard } from './ChartCard';
 import { GrowthStatusDistribution } from './GrowthStatusDistribution';
+import { WeightProgressionCard } from './WeightProgressionCard';
 import { PeriodControl, periodToRange } from './PeriodControl';
 import { UnitScoreboard } from './UnitScoreboard';
 import { EmptyState } from './EmptyState';
@@ -15,9 +16,9 @@ import { INDICATORS } from '@/lib/clinical';
 import { PARTISIPASI_BURUK_THRESHOLD } from '@/lib/clinical';
 
 type CoverageData = { ym: string; unitId: string; unitName: string; numerator: number; denominator: number; participation: number };
-type OutcomeData = { ym: string; unitId: string; unitName: string; total: number; normal: number; abnormal: number; abnormalByIndicator: Record<string, number> };
+type OutcomeData = { ym: string; unitId: string; unitName: string; total: number; normal: number; abnormal: number; notAssessed: number; abnormalByIndicator: Record<string, number> };
 
-const PIE_COLORS = ['#22c55e', '#ef4444'];
+const PIE_COLORS = ['#22c55e', '#ef4444', '#cbd5e1'];
 const INDICATOR_COLORS: Record<string, string> = {
   hypertension: '#ef4444',
   anemia: '#f97316',
@@ -78,8 +79,13 @@ export function DinkesAnalisis() {
     [coverageData],
   );
 
+  // Bulan terakhir yang benar-benar punya data ukur (bukan bulan berjalan kosong).
+  const latestMonth = useMemo(() => {
+    const withData = coverageData.filter((d) => d.numerator > 0).map((d) => d.ym);
+    return withData.sort().at(-1) ?? '';
+  }, [coverageData]);
+
   // Puskesmas scoreboard (latest month with data)
-  const latestMonth = coverageData.length > 0 ? coverageData[coverageData.length - 1].ym : '';
   const puskesmasScoreboard = useMemo(() => {
     const latest = puskesmasCoverage.filter(d => d.ym === latestMonth);
     return latest.map(d => ({
@@ -90,11 +96,18 @@ export function DinkesAnalisis() {
 
   // Outcomes pie (latest month global)
   const latestOutcome = outcomeData.find(d => d.ym === latestMonth);
+  // Persentase "Normal" dihitung dari yang benar-benar dinilai (belum dinilai dipisah).
+  const normalPct = useMemo(() => {
+    if (!latestOutcome) return 0;
+    const assessed = latestOutcome.normal + latestOutcome.abnormal;
+    return assessed > 0 ? Math.round((latestOutcome.normal / assessed) * 100) : 0;
+  }, [latestOutcome]);
   const pieData = useMemo(() => {
     if (!latestOutcome) return [];
     return [
       { name: 'Normal', value: latestOutcome.normal },
       { name: 'Tidak Normal', value: latestOutcome.abnormal },
+      { name: 'Belum Dinilai', value: latestOutcome.notAssessed },
     ];
   }, [latestOutcome]);
 
@@ -128,7 +141,8 @@ export function DinkesAnalisis() {
     );
   }
 
-  if (coverageData.length === 0 && puskesmasCoverage.length === 0) {
+  const hasAnyData = coverageData.some((d) => d.numerator > 0);
+  if (!hasAnyData) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -161,6 +175,9 @@ export function DinkesAnalisis() {
 
       {/* 0. Status gizi balita (Permenkes 2/2020) */}
       <GrowthStatusDistribution from={from} to={to} />
+
+      {/* 0b. Progres berat badan (N/T & 2T) */}
+      <WeightProgressionCard from={from} to={to} />
 
       {/* 1. Trend Line — Partisipasi Kabupaten */}
       {trendData.length > 0 && (
@@ -238,7 +255,7 @@ export function DinkesAnalisis() {
         <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
           <TrendingUp className="w-5 h-5 text-[#075e54] mx-auto mb-1" />
           <p className="text-lg font-extrabold text-[#111b21]">
-            {latestOutcome ? Math.round((latestOutcome.normal / (latestOutcome.total || 1)) * 100) : 0}%
+            {normalPct}%
           </p>
           <p className="text-[10px] text-[#54656f] font-bold">Normal</p>
         </div>
@@ -252,7 +269,7 @@ export function DinkesAnalisis() {
         <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
           <Users className="w-5 h-5 text-[#075e54] mx-auto mb-1" />
           <p className="text-lg font-extrabold text-[#111b21]">
-            {coverageData.length > 0 ? coverageData[coverageData.length - 1].denominator : 0}
+            {coverageData.find((d) => d.ym === latestMonth)?.denominator ?? 0}
           </p>
           <p className="text-[10px] text-[#54656f] font-bold">Terdaftar</p>
         </div>

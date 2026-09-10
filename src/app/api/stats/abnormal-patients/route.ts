@@ -89,8 +89,14 @@ export async function GET(req: Request) {
     for (const row of rawRows) {
       const ymVal = row.sessionDate.toISOString().slice(0, 7);
       const gender = row.patient.gender;
+      const category = (row.category as PatientCategory) ?? null;
 
-      for (const ind of filteredIndicators) {
+      // Hanya indikator yang berlaku untuk kategori pasien ini (F3: appliesTo).
+      const applicable = category
+        ? filteredIndicators.filter((ind) => ind.appliesTo.includes(category))
+        : filteredIndicators;
+
+      for (const ind of applicable) {
         const measurementData = {
           systolic: row.systolic,
           diastolic: row.diastolic,
@@ -102,7 +108,7 @@ export async function GET(req: Request) {
           hearingStatus: row.hearingStatus,
         };
 
-        if (checkIndicator(measurementData, ind, gender, (row.category as PatientCategory) ?? null)) {
+        if (checkIndicator(measurementData, ind, gender, category)) {
           let value: number | string = '-';
           if (ind.key === 'abnormalVision') value = String(row.visionStatus ?? '-');
           else if (ind.key === 'abnormalHearing') value = String(row.hearingStatus ?? '-');

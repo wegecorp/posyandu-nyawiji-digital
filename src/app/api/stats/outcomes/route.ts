@@ -51,7 +51,7 @@ export async function GET(req: Request) {
     const posyanduIds = [...new Set(filteredRaw.map((r) => r.posyanduId))];
     const posyanduInfo = await getPosyanduInfo(posyanduIds);
 
-    let data: { ym: string; unitId: string; unitName: string; total: number; normal: number; abnormal: number; abnormalByIndicator: Record<string, number> }[];
+    let data: { ym: string; unitId: string; unitName: string; total: number; normal: number; abnormal: number; notAssessed: number; abnormalByIndicator: Record<string, number> }[];
 
     if (scope === 'kabupaten') {
       data = totals.map((t) => ({

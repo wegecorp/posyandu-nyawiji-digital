@@ -126,6 +126,11 @@ model Measurement {
   wastingStatus     String?   // Kategori BB/TB (severely_wasted/.../obese)
   growthRefVersion  String?   // Versi tabel referensi saat dihitung
 
+  // Progres berat badan antar-kunjungan (KMS): N/T & 2T
+  weightGain        Float?    // Delta BB (kg) vs pengukuran terukur sebelumnya
+  weightStatus      String?   // 'NAIK' | 'TIDAK_NAIK' (null = tidak dapat dinilai)
+  weightFaltering2T Boolean   @default(false) // 2x TIDAK_NAIK berturut-turut
+
   visionStatus      String?   // Skrining mata: Normal / Tidak Normal
   hearingStatus     String?   // Skrining telinga: Normal / Tidak Normal
   noteSource        String?   // Sumber catatan: Kader / Nakes

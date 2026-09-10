@@ -121,7 +121,9 @@ export async function GET(req: Request) {
     const measuredIds = new Set(rows.map((r) => r.patientId));
     const measuredBalita = [...measuredIds].filter((id) => registered.has(id));
 
-    const latest = latestPerPatient(rows);
+    // Batasi ke balita yang terdaftar pada akhir periode agar `total` konsisten
+    // dengan `measured`/`registered` (F7: denominator tidak tercampur).
+    const latest = latestPerPatient(rows).filter((r) => registered.has(r.patientId));
     const { total, categories } = statusCounts(latest, indicator);
     const trend = statusTrend(rows, indicator).map((t) => ({ ...t, problemRate: problemRate(t.categories) }));
 

@@ -9,7 +9,7 @@
  */
 
 import { prisma } from './prisma';
-import { checkIndicator, INDICATORS } from './clinical';
+import { checkIndicator, INDICATORS, type IndicatorDef } from './clinical';
 import type { PatientCategory } from './types';
 
 /** Konversi rentang tanggal 'YYYY-MM-DD' (inklusif) → [fromMs, toExclusiveMs). */
@@ -44,9 +44,15 @@ interface UnitInfo {
 
 /**
  * Fetch coverage per posyandu per bulan dalam rentang [from, to] (YYYY-MM-DD, inklusif).
+ *
+ * Denominator dihitung HISTORIS: pasien dianggap terdaftar pada bulan M bila
+ * `createdAt` pasien sebelum akhir bulan M. Ini mencegah tren bulan lampau
+ * memakai roster pasien hari ini (yang membuat partisipasi masa lalu bias).
  */
 export async function fetchCoverageBase(from: string, to: string): Promise<CoverageRow[]> {
   const { fromMs, toMs } = dateRangeMs(from, to);
+  const months = monthRange(from, to);
+
   // NOTE: ekspresi strftime DITULIS LANGSUNG (bukan ${...}) — Prisma mengikat ${} sbg parameter, bukan inline SQL.
   const rows = await prisma.$queryRaw<
     Array<{ ym: string; unitId: string; numerator: bigint }>
@@ -61,21 +67,42 @@ export async function fetchCoverageBase(from: string, to: string): Promise<Cover
     GROUP BY ym, unitId
   `;
 
-  const denomRows = await prisma.$queryRaw<
-    Array<{ posyanduId: string; cnt: bigint }>
+  const patRows = await prisma.$queryRaw<
+    Array<{ posyanduId: string; createdAt: number | bigint }>
   >`
-    SELECT posyanduId, COUNT(id) AS cnt
-    FROM Patient
-    GROUP BY posyanduId
+    SELECT posyanduId, createdAt FROM Patient
   `;
-  const denomMap = new Map(denomRows.map((r) => [r.posyanduId, Number(r.cnt)]));
 
-  return rows.map((r) => ({
-    ym: r.ym,
-    unitId: r.unitId,
-    numerator: Number(r.numerator),
-    denominator: denomMap.get(r.unitId) ?? 0,
-  }));
+  // unitId → daftar epoch-ms waktu registrasi pasien.
+  const createdAtByUnit = new Map<string, number[]>();
+  for (const p of patRows) {
+    const list = createdAtByUnit.get(p.posyanduId) ?? [];
+    list.push(Number(p.createdAt));
+    createdAtByUnit.set(p.posyanduId, list);
+  }
+
+  // ym → batas akhir (eksklusif) dalam epoch-ms lokal.
+  const monthEndMs = new Map<string, number>();
+  for (const ym of months) {
+    const [y, m] = ym.split('-').map(Number);
+    monthEndMs.set(ym, new Date(y, m, 1).getTime());
+  }
+
+  const numeratorMap = new Map<string, number>();
+  for (const r of rows) numeratorMap.set(`${r.unitId}|${r.ym}`, Number(r.numerator));
+
+  const result: CoverageRow[] = [];
+  for (const [unitId, createdAts] of createdAtByUnit) {
+    for (const ym of months) {
+      const endMs = monthEndMs.get(ym)!;
+      const denominator = createdAts.filter((t) => t < endMs).length;
+      const numerator = numeratorMap.get(`${unitId}|${ym}`) ?? 0;
+      if (denominator === 0 && numerator === 0) continue;
+      result.push({ ym, unitId, numerator, denominator });
+    }
+  }
+
+  return result;
 }
 
 /** Look up posyandu names + parent HC info. */
@@ -212,6 +239,7 @@ interface OutcomeBaseRow {
   ym: string;
   posyanduId: string;
   patientId: string;
+  sessionDate: Date;
   category: string | null;
   gender: string | null;
   systolic: number | null;
@@ -231,6 +259,8 @@ export interface UnitOutcomeAgg {
   total: number;
   normal: number;
   abnormal: number;
+  /** Pengukuran tanpa satu pun indikator klinis yang bisa dinilai (mis. balita BB/TB saja). */
+  notAssessed: number;
   abnormalByIndicator: Record<string, number>;
 }
 
@@ -242,6 +272,7 @@ export async function fetchOutcomeBase(from: string, to: string): Promise<Outcom
       strftime('%Y-%m', m.sessionDate/1000, 'unixepoch', 'localtime') AS ym,
       m.posyanduId,
       m.patientId,
+      m.sessionDate,
       m.category,
       p.gender,
       m.systolic,
@@ -259,48 +290,88 @@ export async function fetchOutcomeBase(from: string, to: string): Promise<Outcom
   `;
 }
 
+/** Apakah baris ini punya nilai untuk indikator tersebut (bisa dinilai)? */
+function indicatorHasData(r: OutcomeBaseRow, ind: IndicatorDef): boolean {
+  if (ind.key === 'hypertension') return r.systolic != null || r.diastolic != null;
+  if (ind.key === 'abnormalVision') return r.visionStatus != null;
+  if (ind.key === 'abnormalHearing') return r.hearingStatus != null;
+  if (!ind.field) return false;
+  const v = (r as unknown as Record<string, unknown>)[ind.field];
+  return v != null && Number.isFinite(Number(v));
+}
+
+type OutcomeTotals = {
+  ym: string;
+  total: number;
+  normal: number;
+  abnormal: number;
+  notAssessed: number;
+  abnormalByIndicator: Record<string, number>;
+};
+
 /** Classify raw outcome rows → per-unit + global aggregates. */
 export function classifyOutcomes(rows: OutcomeBaseRow[]): {
   byUnit: Map<string, UnitOutcomeAgg[]>;
-  totals: { ym: string; total: number; normal: number; abnormal: number; abnormalByIndicator: Record<string, number> }[];
+  totals: OutcomeTotals[];
 } {
   const unitMap = new Map<string, UnitOutcomeAgg[]>();
-  const globalMap = new Map<string, { ym: string; total: number; normal: number; abnormal: number; abnormalByIndicator: Record<string, number> }>();
+  const globalMap = new Map<string, OutcomeTotals>();
 
   function getOrCreateUnit(posId: string, ym: string): UnitOutcomeAgg {
     if (!unitMap.has(posId)) unitMap.set(posId, []);
     let agg = unitMap.get(posId)!.find((a) => a.ym === ym);
     if (!agg) {
-      agg = { ym, unitId: posId, unitName: '', total: 0, normal: 0, abnormal: 0, abnormalByIndicator: {} };
+      agg = { ym, unitId: posId, unitName: '', total: 0, normal: 0, abnormal: 0, notAssessed: 0, abnormalByIndicator: {} };
       unitMap.get(posId)!.push(agg);
     }
     return agg;
   }
 
-  function getOrCreateGlobal(ym: string) {
+  function getOrCreateGlobal(ym: string): OutcomeTotals {
     let agg = globalMap.get(ym);
     if (!agg) {
-      agg = { ym, total: 0, normal: 0, abnormal: 0, abnormalByIndicator: {} };
+      agg = { ym, total: 0, normal: 0, abnormal: 0, notAssessed: 0, abnormalByIndicator: {} };
       globalMap.set(ym, agg);
     }
     return agg;
   }
 
+  // Dedupe: satu pasien = satu baris per bulan (pengukuran terakhir).
+  const deduped = new Map<string, OutcomeBaseRow>();
   for (const r of rows) {
+    const key = `${r.posyanduId}|${r.ym}|${r.patientId}`;
+    const cur = deduped.get(key);
+    if (!cur || r.sessionDate.getTime() > cur.sessionDate.getTime()) deduped.set(key, r);
+  }
+
+  for (const r of deduped.values()) {
     const aggU = getOrCreateUnit(r.posyanduId, r.ym);
     const aggG = getOrCreateGlobal(r.ym);
     aggU.total++;
     aggG.total++;
 
+    const category = (r.category as PatientCategory) ?? null;
+    // Hanya indikator yang berlaku untuk kategori pasien ini (F3: appliesTo).
+    const applicable = category
+      ? INDICATORS.filter((ind) => ind.appliesTo.includes(category))
+      : INDICATORS;
+
+    let assessable = false;
     let hasAbnormal = false;
-    for (const ind of INDICATORS) {
-      if (checkIndicator(r, ind, r.gender, (r.category as PatientCategory) ?? null)) {
+    for (const ind of applicable) {
+      if (!indicatorHasData(r, ind)) continue;
+      assessable = true;
+      if (checkIndicator(r, ind, r.gender, category)) {
         hasAbnormal = true;
         aggU.abnormalByIndicator[ind.key] = (aggU.abnormalByIndicator[ind.key] ?? 0) + 1;
         aggG.abnormalByIndicator[ind.key] = (aggG.abnormalByIndicator[ind.key] ?? 0) + 1;
       }
     }
-    if (hasAbnormal) {
+
+    if (!assessable) {
+      aggU.notAssessed++;
+      aggG.notAssessed++;
+    } else if (hasAbnormal) {
       aggU.abnormal++;
       aggG.abnormal++;
     } else {
@@ -329,12 +400,13 @@ export function outcomesToHealthCenter(
       const key = `${hcId}|${r.ym}`;
       let agg = hcYmMap.get(key);
       if (!agg) {
-        agg = { ym: r.ym, unitId: hcId, unitName: hcName, total: 0, normal: 0, abnormal: 0, abnormalByIndicator: {} };
+        agg = { ym: r.ym, unitId: hcId, unitName: hcName, total: 0, normal: 0, abnormal: 0, notAssessed: 0, abnormalByIndicator: {} };
         hcYmMap.set(key, agg);
       }
       agg.total += r.total;
       agg.normal += r.normal;
       agg.abnormal += r.abnormal;
+      agg.notAssessed += r.notAssessed;
       for (const [k, v] of Object.entries(r.abnormalByIndicator)) {
         agg.abnormalByIndicator[k] = (agg.abnormalByIndicator[k] ?? 0) + v;
       }

@@ -29,8 +29,10 @@ import {
   ageInCompletedMonths,
   defaultPosition,
   findCategory,
+  weightStatusShort,
   type StaturePosition,
 } from '@/lib/growth';
+import { KmsChart } from '@/components/KmsChart';
 
 interface DynamicMeasurementFormProps {
   patient: PatientData;
@@ -733,6 +735,9 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
       {/* 2. RIWAYAT */}
       {activeTab === 'history' && (
         <div className="space-y-3">
+          {category === 'BALITA' && historyList.length > 0 && (
+            <KmsChart measurements={historyList} gender={patient.gender} />
+          )}
           {historyList.length === 0 ? (
             <div className="p-8 text-center bg-white rounded-2xl border border-[#e9edef] text-[#54656f] text-xs font-medium">
               Belum ada riwayat pengukuran sebelumnya untuk pasien ini.
@@ -753,6 +758,30 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                   </span>
                 </div>
 
+                {(hist.weightStatus || hist.weightFaltering2T) && (
+                  <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                    {hist.weightStatus && (
+                      <span
+                        className={`px-2.5 py-1 rounded-full font-extrabold border ${
+                          hist.weightStatus === 'NAIK'
+                            ? 'bg-green-50 text-green-700 border-green-200'
+                            : 'bg-amber-50 text-amber-700 border-amber-200'
+                        }`}
+                      >
+                        BB {weightStatusShort(hist.weightStatus)}
+                        {hist.weightGain != null && hist.weightGain !== 0
+                          ? ` (${hist.weightGain > 0 ? '+' : ''}${hist.weightGain} kg)`
+                          : ''}
+                      </span>
+                    )}
+                    {hist.weightFaltering2T && (
+                      <span className="px-2.5 py-1 rounded-full font-extrabold bg-red-100 text-red-700 border border-red-200">
+                        2T — perlu rujuk
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex flex-wrap gap-1.5 text-[11px]">
                   {hist.weight && (
                     <MetricChip label="BB" value={`${hist.weight} kg`} />
@@ -772,10 +801,22 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                   {hist.imt && (
                     <MetricChip label="IMT" value={`${hist.imt} kg/m²`} />
                   )}
+                  {hist.underweightStatus && (
+                    <MetricChip
+                      label="BB/U"
+                      value={findCategory('BB_U', hist.underweightStatus)?.label ?? hist.underweightStatus}
+                    />
+                  )}
                   {hist.stuntingStatus && (
                     <MetricChip
                       label="TB/U"
                       value={findCategory('TB_U', hist.stuntingStatus)?.label ?? hist.stuntingStatus}
+                    />
+                  )}
+                  {hist.wastingStatus && (
+                    <MetricChip
+                      label="BB/TB"
+                      value={findCategory('BB_TB', hist.wastingStatus)?.label ?? hist.wastingStatus}
                     />
                   )}
                   {hist.systolic && (

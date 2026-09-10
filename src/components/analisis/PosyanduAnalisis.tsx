@@ -9,19 +9,20 @@ import { TrendingUp, AlertTriangle, User } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
 import { GrowthStatusDistribution } from './GrowthStatusDistribution';
+import { WeightProgressionCard } from './WeightProgressionCard';
 import { PeriodControl, periodToRange } from './PeriodControl';
 import { EmptyState } from './EmptyState';
 import { INDICATORS } from '@/lib/clinical';
 
 type CoverageData = { ym: string; unitId: string; unitName: string; numerator: number; denominator: number; participation: number };
-type OutcomeData = { ym: string; unitId: string; unitName: string; total: number; normal: number; abnormal: number; abnormalByIndicator: Record<string, number> };
+type OutcomeData = { ym: string; unitId: string; unitName: string; total: number; normal: number; abnormal: number; notAssessed: number; abnormalByIndicator: Record<string, number> };
 type AbnormalPatient = {
   measurementId: string; patientName: string; regNumber: string; category: string | null;
   indicatorKey: string; indicatorLabel: string; unit: string; value: number | string;
   posyanduId: string; posyanduName: string; kalurahan: string; ym: string;
 };
 
-const PIE_COLORS = ['#22c55e', '#ef4444'];
+const PIE_COLORS = ['#22c55e', '#ef4444', '#cbd5e1'];
 
 function formatYM(ym: string): string {
   const [y, m] = ym.split('-');
@@ -76,13 +77,26 @@ export function PosyanduAnalisis() {
     [myCoverage],
   );
 
-  const latestOutcome = myOutcome.length > 0 ? myOutcome[myOutcome.length - 1] : null;
+  // Bulan terakhir yang punya data (outcomes tidak zero-fill, jadi harus dipilih eksplisit).
+  const latestOutcome = useMemo(() => {
+    const withData = myOutcome.filter((d) => d.total > 0).sort((a, b) => a.ym.localeCompare(b.ym));
+    return withData.at(-1) ?? null;
+  }, [myOutcome]);
+  const latestMonth = latestOutcome?.ym ?? '';
+
   const pieData = useMemo(() => {
     if (!latestOutcome) return [];
     return [
       { name: 'Normal', value: latestOutcome.normal },
       { name: 'Tidak Normal', value: latestOutcome.abnormal },
+      { name: 'Belum Dinilai', value: latestOutcome.notAssessed },
     ];
+  }, [latestOutcome]);
+
+  const normalPct = useMemo(() => {
+    if (!latestOutcome) return 0;
+    const assessed = latestOutcome.normal + latestOutcome.abnormal;
+    return assessed > 0 ? Math.round((latestOutcome.normal / assessed) * 100) : 0;
   }, [latestOutcome]);
 
   // Group abnormal patients by indicator
@@ -99,7 +113,8 @@ export function PosyanduAnalisis() {
     return <div className="p-8 text-center text-sm font-bold text-[#54656f]">Memuat data statistik...</div>;
   }
 
-  if (myCoverage.length === 0) {
+  const hasAnyData = myCoverage.some((d) => d.numerator > 0);
+  if (!hasAnyData) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -121,6 +136,9 @@ export function PosyanduAnalisis() {
       {/* 0. Status gizi balita (Permenkes 2/2020) */}
       <GrowthStatusDistribution from={from} to={to} />
 
+      {/* 0b. Progres berat badan (N/T & 2T) */}
+      <WeightProgressionCard from={from} to={to} />
+
       {/* 1. Trend Line */}
       {trendData.length > 0 && (
         <ChartCard title="Tren Partisipasi Posyandu" subtitle="Persentase pasien terukur per bulan">
@@ -138,7 +156,7 @@ export function PosyanduAnalisis() {
 
       {/* 2. Donut */}
       {pieData.length > 0 && pieData.some(d => d.value > 0) && (
-        <ChartCard title="Distribusi Hasil Pengukuran">
+        <ChartCard title="Distribusi Hasil Pengukuran" subtitle={`Bulan ${formatYM(latestMonth)}`}>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value"                 label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
@@ -195,7 +213,7 @@ export function PosyanduAnalisis() {
         <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
           <TrendingUp className="w-5 h-5 text-[#075e54] mx-auto mb-1" />
           <p className="text-lg font-extrabold text-[#111b21]">
-            {latestOutcome ? Math.round((latestOutcome.normal / (latestOutcome.total || 1)) * 100) : 0}%
+            {normalPct}%
           </p>
           <p className="text-[10px] text-[#54656f] font-bold">Normal</p>
         </div>

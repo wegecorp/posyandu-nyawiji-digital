@@ -9,15 +9,16 @@ import { TrendingUp, Users, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
 import { GrowthStatusDistribution } from './GrowthStatusDistribution';
+import { WeightProgressionCard } from './WeightProgressionCard';
 import { PeriodControl, periodToRange } from './PeriodControl';
 import { UnitScoreboard } from './UnitScoreboard';
 import { EmptyState } from './EmptyState';
 import { PARTISIPASI_BURUK_THRESHOLD } from '@/lib/clinical';
 
 type CoverageData = { ym: string; unitId: string; unitName: string; numerator: number; denominator: number; participation: number };
-type OutcomeData = { ym: string; unitId: string; unitName: string; total: number; normal: number; abnormal: number; abnormalByIndicator: Record<string, number> };
+type OutcomeData = { ym: string; unitId: string; unitName: string; total: number; normal: number; abnormal: number; notAssessed: number; abnormalByIndicator: Record<string, number> };
 
-const PIE_COLORS = ['#22c55e', '#ef4444'];
+const PIE_COLORS = ['#22c55e', '#ef4444', '#cbd5e1'];
 
 function formatYM(ym: string): string {
   const [y, m] = ym.split('-');
@@ -45,7 +46,11 @@ export function PuskesmasAnalisis() {
     }).finally(() => setLoading(false));
   }, [from, to, user?.healthCenterId]);
 
-  const latestMonth = posyanduCoverage.length > 0 ? posyanduCoverage[posyanduCoverage.length - 1].ym : '';
+  // Bulan terakhir yang benar-benar punya data ukur (bukan bulan berjalan kosong).
+  const latestMonth = useMemo(() => {
+    const withData = posyanduCoverage.filter((d) => d.numerator > 0).map((d) => d.ym);
+    return withData.sort().at(-1) ?? '';
+  }, [posyanduCoverage]);
 
   // Trend (aggregate all posyandu this puskesmas)
   const trendData = useMemo(() => {
@@ -81,11 +86,12 @@ export function PuskesmasAnalisis() {
   const latestOutcome = useMemo(() => {
     const rows = posyanduOutcome.filter(d => d.ym === latestMonth);
     if (rows.length === 0) return null;
-    const merged: { total: number; normal: number; abnormal: number; abnormalByIndicator: Record<string, number> } = { total: 0, normal: 0, abnormal: 0, abnormalByIndicator: {} };
+    const merged: { total: number; normal: number; abnormal: number; notAssessed: number; abnormalByIndicator: Record<string, number> } = { total: 0, normal: 0, abnormal: 0, notAssessed: 0, abnormalByIndicator: {} };
     for (const r of rows) {
       merged.total += r.total;
       merged.normal += r.normal;
       merged.abnormal += r.abnormal;
+      merged.notAssessed += r.notAssessed;
       for (const [k, v] of Object.entries(r.abnormalByIndicator)) {
         merged.abnormalByIndicator[k] = (merged.abnormalByIndicator[k] ?? 0) + v;
       }
@@ -98,14 +104,22 @@ export function PuskesmasAnalisis() {
     return [
       { name: 'Normal', value: latestOutcome.normal },
       { name: 'Tidak Normal', value: latestOutcome.abnormal },
+      { name: 'Belum Dinilai', value: latestOutcome.notAssessed },
     ];
+  }, [latestOutcome]);
+
+  const normalPct = useMemo(() => {
+    if (!latestOutcome) return 0;
+    const assessed = latestOutcome.normal + latestOutcome.abnormal;
+    return assessed > 0 ? Math.round((latestOutcome.normal / assessed) * 100) : 0;
   }, [latestOutcome]);
 
   if (loading && posyanduCoverage.length === 0) {
     return <div className="p-8 text-center text-sm font-bold text-[#54656f]">Memuat data statistik...</div>;
   }
 
-  if (posyanduCoverage.length === 0) {
+  const hasAnyData = posyanduCoverage.some((d) => d.numerator > 0);
+  if (!hasAnyData) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -126,6 +140,9 @@ export function PuskesmasAnalisis() {
 
       {/* 0. Status gizi balita (Permenkes 2/2020) */}
       <GrowthStatusDistribution from={from} to={to} />
+
+      {/* 0b. Progres berat badan (N/T & 2T) */}
+      <WeightProgressionCard from={from} to={to} />
 
       {/* 1. Trend Line */}
       {trendData.length > 0 && (
@@ -171,7 +188,7 @@ export function PuskesmasAnalisis() {
         <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
           <TrendingUp className="w-5 h-5 text-[#075e54] mx-auto mb-1" />
           <p className="text-lg font-extrabold text-[#111b21]">
-            {latestOutcome ? Math.round((latestOutcome.normal / (latestOutcome.total || 1)) * 100) : 0}%
+            {normalPct}%
           </p>
           <p className="text-[10px] text-[#54656f] font-bold">Normal</p>
         </div>

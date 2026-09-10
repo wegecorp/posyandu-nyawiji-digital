@@ -6,6 +6,7 @@ import { getAuthSession } from '@/lib/api-auth';
 import { isRateLimited } from '@/lib/rate-limit';
 import { computeImt, validateMeasurementValue, validateBloodPressure } from '@/lib/validation';
 import { computeGrowth, type StaturePosition } from '@/lib/growth';
+import { recomputePatientWeightProgression } from '@/lib/weight-progression-db';
 
 export async function POST(req: Request) {
   try {
@@ -278,6 +279,14 @@ export async function POST(req: Request) {
           throw err;
         }
       }
+    }
+
+    // Progres berat (N/T & 2T) hanya berubah bila berat diubah. Hitung ulang
+    // seluruh rantai pasien agar pengukuran setelah tanggal ini ikut terkoreksi.
+    if (weight !== undefined && savedRecord) {
+      await recomputePatientWeightProgression(patientId);
+      const refreshed = await prisma.measurement.findUnique({ where: { id: savedRecord.id } });
+      if (refreshed) savedRecord = refreshed;
     }
 
     return NextResponse.json({

@@ -9,6 +9,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireRole } from '@/lib/api-auth';
 import { computeGrowth, type StaturePosition } from '@/lib/growth';
+import { recomputePatientWeightProgression } from '@/lib/weight-progression-db';
 
 const BATCH = 500;
 
@@ -71,7 +72,14 @@ export async function POST(req: Request) {
       if (rows.length < BATCH) break;
     }
 
-    return NextResponse.json({ success: true, updated, skipped });
+    // Backfill progres berat (N/T & 2T) — harus per pasien, urut tanggal.
+    let weightUpdated = 0;
+    const patients = await prisma.patient.findMany({ select: { id: true } });
+    for (const p of patients) {
+      weightUpdated += await recomputePatientWeightProgression(p.id);
+    }
+
+    return NextResponse.json({ success: true, updated, skipped, weightUpdated });
   } catch (error) {
     console.error('Backfill growth error:', error);
     return NextResponse.json({ error: 'Gagal menghitung ulang status gizi' }, { status: 500 });

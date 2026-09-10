@@ -23,6 +23,7 @@ import { classifyZ, type GrowthCategory } from './categories';
 
 export * from './tables';
 export * from './categories';
+export * from './weight-progression';
 
 /** Cara balita diukur. TELENTANG = panjang badan (PB), BERDIRI = tinggi (TB). */
 export type StaturePosition = 'TELENTANG' | 'BERDIRI';

@@ -51,6 +51,9 @@ export interface MeasurementData {
   stuntingStatus?: string | null;
   wastingStatus?: string | null;
   growthRefVersion?: string | null;
+  weightGain?: number | null;
+  weightStatus?: string | null;
+  weightFaltering2T?: boolean;
   visionStatus?: string | null;
   hearingStatus?: string | null;
   noteSource?: string | null;

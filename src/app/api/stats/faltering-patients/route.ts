@@ -7,6 +7,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireRole } from '@/lib/api-auth';
+import { canViewPatientDetail } from '@/lib/stats-access';
 import { ymOf } from '@/lib/growth-analytics';
 
 function formatYM(ym: string): string {
@@ -19,6 +20,9 @@ export async function GET(req: Request) {
   try {
     const session = await requireRole(req, ['DINKES', 'PUSKESMAS', 'POSYANDU']);
     if (session instanceof NextResponse) return session;
+    if (!canViewPatientDetail(session.role)) {
+      return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 });
+    }
 
     const { searchParams } = new URL(req.url);
     const now = new Date();
@@ -44,11 +48,18 @@ export async function GET(req: Request) {
       where.posyanduId = session.posyanduId;
     } else if (session.role === 'PUSKESMAS' && session.healthCenterId) {
       where.posyandu = { healthCenterId: session.healthCenterId };
+      const requestedPosyanduId = searchParams.get('posyanduId');
+      if (requestedPosyanduId) where.posyanduId = requestedPosyanduId;
     } else {
       const posyanduId = searchParams.get('posyanduId');
       const hcId = searchParams.get('hcId');
       if (posyanduId) where.posyanduId = posyanduId;
       else if (hcId) where.posyandu = { healthCenterId: hcId };
+    }
+
+    const q = (searchParams.get('q') ?? '').trim();
+    if (q) {
+      where.patient = { OR: [{ name: { contains: q } }, { regNumber: { contains: q } }] };
     }
 
     const [total, rows] = await Promise.all([

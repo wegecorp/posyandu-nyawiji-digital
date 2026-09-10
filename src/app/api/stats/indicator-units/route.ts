@@ -28,6 +28,7 @@ export async function GET(req: Request) {
     if (!indicator || !INDICATORS.some((i) => i.key === indicator)) {
       return NextResponse.json({ error: 'Indikator tidak valid' }, { status: 400 });
     }
+    const q = (searchParams.get('q') ?? '').trim().toLowerCase();
 
     const now = new Date();
     const defaultTo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -47,6 +48,14 @@ export async function GET(req: Request) {
       filteredRaw = raw.filter((r) => ids.has(r.posyanduId));
     } else if (session.role === 'POSYANDU' && session.posyanduId) {
       filteredRaw = raw.filter((r) => r.posyanduId === session.posyanduId);
+    } else {
+      const hcId = searchParams.get('hcId');
+      if (hcId) {
+        const ids = await prisma.posyandu
+          .findMany({ where: { healthCenterId: hcId }, select: { id: true } })
+          .then((ps) => new Set(ps.map((p) => p.id)));
+        filteredRaw = raw.filter((r) => ids.has(r.posyanduId));
+      }
     }
 
     const { byUnit } = classifyOutcomes(filteredRaw);
@@ -102,6 +111,7 @@ export async function GET(req: Request) {
         smallSample: v.assessed < SMALL_SAMPLE,
       }))
       .filter((u) => u.assessed > 0)
+      .filter((u) => !q || u.unitName.toLowerCase().includes(q))
       .sort((a, b) => b.prevalence - a.prevalence || b.abnormal - a.abnormal);
 
     const label = INDICATORS.find((i) => i.key === indicator)?.label ?? indicator;

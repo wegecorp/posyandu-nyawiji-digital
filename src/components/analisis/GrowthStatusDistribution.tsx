@@ -7,8 +7,7 @@ import {
 } from 'recharts';
 import { AlertTriangle, Users, Baby } from 'lucide-react';
 import { ChartCard } from './ChartCard';
-import { DrillSheet } from './DrillSheet';
-import { PatientDrillList } from './PatientDrillList';
+import { GrowthDrillSheet } from './GrowthDrillSheet';
 
 type CategoryCount = { key: string; label: string; color: string; count: number; percent: number };
 type GrowthResp = {
@@ -182,17 +181,16 @@ export function GrowthStatusDistribution({ from, to }: { from: string; to: strin
       )}
 
       {drill && (
-        <DrillSheet
-          title={`Status Gizi: ${drill.label}`}
-          subtitle={subtitle}
+        <GrowthDrillSheet
+          key={`${indicator}-${drill.key}`}
+          indicator={indicator}
+          categoryKey={drill.key}
+          categoryLabel={drill.label}
+          indicatorLabel={subtitle}
+          from={from}
+          to={to}
           onClose={() => setDrill(null)}
-        >
-          <PatientDrillList
-            key={`${indicator}-${drill.key}`}
-            baseUrl={`/api/stats/growth-patients?indicator=${indicator}&category=${drill.key}&from=${from}&to=${to}`}
-            emptyText="Tidak ada balita pada kategori ini."
-          />
-        </DrillSheet>
+        />
       )}
     </>
   );

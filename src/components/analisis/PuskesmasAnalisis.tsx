@@ -236,7 +236,6 @@ export function PuskesmasAnalisis() {
           label={indicatorDrill.label}
           from={from}
           to={to}
-          scope="posyandu"
           onClose={() => setIndicatorDrill(null)}
         />
       )}

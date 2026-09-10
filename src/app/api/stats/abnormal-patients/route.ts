@@ -6,6 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/api-auth';
+import { canViewPatientDetail } from '@/lib/stats-access';
 import { prisma } from '@/lib/prisma';
 import { INDICATORS, checkIndicator } from '@/lib/clinical';
 import { ymOf } from '@/lib/growth-analytics';
@@ -15,6 +16,9 @@ export async function GET(req: Request) {
   try {
     const session = await requireRole(req, ['DINKES', 'PUSKESMAS', 'POSYANDU']);
     if (session instanceof NextResponse) return session;
+    if (!canViewPatientDetail(session.role)) {
+      return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 });
+    }
 
     const { searchParams } = new URL(req.url);
     const indicatorKey = searchParams.get('indicator');
@@ -155,15 +159,23 @@ export async function GET(req: Request) {
       }
     }
 
+    // Pencarian nama/no. registrasi (opsional).
+    const q = (searchParams.get('q') ?? '').trim().toLowerCase();
+    const filtered = q
+      ? results.filter(
+          (r) => r.patientName.toLowerCase().includes(q) || r.regNumber.toLowerCase().includes(q),
+        )
+      : results;
+
     // Pagination opsional: tanpa `page`, kembalikan semua (kompatibel pemakaian lama).
     const pageParam = searchParams.get('page');
-    let data = results;
-    const total = results.length;
+    let data = filtered;
+    const total = filtered.length;
     if (pageParam) {
       const page = Math.max(1, Number(pageParam) || 1);
       const pageSize = Math.min(100, Math.max(1, Number(searchParams.get('pageSize') ?? 20) || 20));
       const start = (page - 1) * pageSize;
-      data = results.slice(start, start + pageSize);
+      data = filtered.slice(start, start + pageSize);
     }
 
     return NextResponse.json({ success: true, total, data });

@@ -301,7 +301,6 @@ export function DinkesAnalisis() {
           label={indicatorDrill.label}
           from={from}
           to={to}
-          scope="puskesmas"
           onClose={() => setIndicatorDrill(null)}
         />
       )}

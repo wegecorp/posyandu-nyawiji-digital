@@ -7,20 +7,24 @@ import { UnitDrillList, type DrillUnit } from './UnitDrillList';
 import { PatientDrillList } from './PatientDrillList';
 
 /**
- * Detail per-indikator, sadar peran:
- * - DINKES   : peringkat Puskesmas → peringkat Posyandu (agregat, tanpa nama).
- * - PUSKESMAS: peringkat Posyandu → daftar pasien (nama).
+ * Drill status gizi per peran:
  * - POSYANDU : daftar pasien (nama) langsung.
+ * - PUSKESMAS: peringkat Posyandu → daftar pasien (nama).
+ * - DINKES   : peringkat Puskesmas → peringkat Posyandu (agregat, tanpa nama).
  */
-export function IndicatorDrillSheet({
+export function GrowthDrillSheet({
   indicator,
-  label,
+  categoryKey,
+  categoryLabel,
+  indicatorLabel,
   from,
   to,
   onClose,
 }: {
   indicator: string;
-  label: string;
+  categoryKey: string;
+  categoryLabel: string;
+  indicatorLabel: string;
   from: string;
   to: string;
   onClose: () => void;
@@ -30,46 +34,50 @@ export function IndicatorDrillSheet({
   const [hc, setHc] = useState<DrillUnit | null>(null);
   const [posyandu, setPosyandu] = useState<DrillUnit | null>(null);
 
-  const unitsBase = `/api/stats/indicator-units?indicator=${indicator}&from=${from}&to=${to}`;
-  const patientBase = `/api/stats/abnormal-patients?indicator=${indicator}&from=${from}&to=${to}`;
+  const base = `/api/stats/growth-units?indicator=${indicator}&category=${categoryKey}&from=${from}&to=${to}`;
+  const patientBase = `/api/stats/growth-patients?indicator=${indicator}&category=${categoryKey}&from=${from}&to=${to}`;
 
-  const title = posyandu?.unitName ?? hc?.unitName ?? `Temuan: ${label}`;
-  const subtitle = posyandu || hc ? label : role === 'DINKES' ? 'Peringkat per Puskesmas' : 'Peringkat per Posyandu';
+  const title = posyandu?.unitName ?? hc?.unitName ?? categoryLabel;
+  const subtitle = indicatorLabel;
   const onBack =
     role === 'DINKES'
-      ? hc
-        ? () => setHc(null)
-        : undefined
-      : posyandu
+      ? posyandu
         ? () => setPosyandu(null)
+        : hc
+          ? () => setHc(null)
+          : undefined
+      : role === 'PUSKESMAS'
+        ? posyandu
+          ? () => setPosyandu(null)
+          : undefined
         : undefined;
 
   return (
     <DrillSheet title={title} subtitle={subtitle} onClose={onClose} onBack={onBack}>
       {role === 'POSYANDU' ? (
-        <PatientDrillList baseUrl={patientBase} emptyText="Tidak ada temuan pada filter ini." />
+        <PatientDrillList baseUrl={patientBase} emptyText="Tidak ada balita pada kategori ini." />
       ) : posyandu ? (
         <PatientDrillList
           key={posyandu.unitId}
-          baseUrl={`${patientBase}&unitId=${posyandu.unitId}&unitLevel=posyandu`}
-          emptyText="Tidak ada temuan pada unit ini."
+          baseUrl={`${patientBase}&posyanduId=${posyandu.unitId}`}
+          emptyText="Tidak ada balita pada kategori ini."
         />
       ) : role === 'PUSKESMAS' ? (
         <UnitDrillList
-          baseUrl={`${unitsBase}&scope=posyandu`}
+          baseUrl={`${base}&scope=posyandu`}
           onPick={(u) => setPosyandu(u)}
           searchPlaceholder="Cari posyandu..."
         />
       ) : hc ? (
         <UnitDrillList
           key={hc.unitId}
-          baseUrl={`${unitsBase}&scope=posyandu&hcId=${hc.unitId}`}
+          baseUrl={`${base}&scope=posyandu&hcId=${hc.unitId}`}
           onPick={setPosyandu}
           searchPlaceholder="Cari posyandu..."
         />
       ) : (
         <UnitDrillList
-          baseUrl={`${unitsBase}&scope=puskesmas`}
+          baseUrl={`${base}&scope=puskesmas`}
           onPick={setHc}
           searchPlaceholder="Cari puskesmas..."
         />

@@ -50,7 +50,8 @@ Visualisasi disebut bermanfaat bila mengubah **keputusan** pembacanya.
 
 Konsekuensi desain (hasil grilling):
 
-- KMS individual = **fitur kader** (dan muncul saat Puskesmas/Dinkes drill-down ke pasien).
+- KMS individual = **fitur kader**; identitas pasien (nama/no. registrasi) hanya untuk
+  **POSYANDU & PUSKESMAS**. DINKES hanya menerima agregat per unit (lihat §9b).
 - Dashboard atas Puskesmas/Dinkes = **agregat**, bukan KMS mentah satu-satu.
 - Flag N/T/2T disimpan per-pengukuran sehingga bisa diagregasi & dibatasi sesuai wewenang.
 
@@ -342,3 +343,26 @@ label/legend/aria), F21 (tren menyambung lintasi bulan tanpa data).
 - Ops: `npm run db:backfill` ditambahkan ke `package.json` + `DEPLOY-VPS.md` §7.
 
 `npm test` 110 lulus (12 file), `npm run lint` 0 error, `npm run build` sukses.
+
+### 9b. Drill-down & privasi data pasien (SELESAI)
+
+Kebijakan: identitas pasien (nama/no. registrasi) hanya untuk **POSYANDU & PUSKESMAS**;
+DINKES hanya agregat per unit. Ditegakkan di API lewat `canViewPatientDetail()`
+(`src/lib/stats-access.ts`), bukan sekadar menyembunyikan tombol.
+
+Hierarki drill:
+- DINKES: indikator/gizi/2T → peringkat Puskesmas → peringkat Posyandu (agregat, tanpa nama).
+- PUSKESMAS: peringkat Posyandu → daftar pasien (nama).
+- POSYANDU: daftar pasien (nama) langsung.
+
+Endpoint:
+- `GET /api/stats/growth-units` — agregat status gizi per unit (tanpa nama; `scope`, `hcId`, `q`).
+- `GET /api/stats/indicator-units` — peringkat unit per indikator klinis (+`hcId`, `q`).
+- `GET /api/stats/growth-patients`, `/faltering-patients`, `/abnormal-patients` — daftar pasien;
+  **403 untuk DINKES**; `q` (cari nama/no. registrasi); `weight-progression` menyembunyikan
+  `faltering[]` dari DINKES.
+- Daftar pasien: pagination "Muat lebih banyak" (20) + pencarian server-side.
+- Export mentah dihapus; `/api/stats/report` hanya agregat (tanpa nama per pasien).
+
+Catatan: keputusan ini mengubah prinsip lama (§1 poin KMS) yang sempat mengizinkan DINKES
+melihat KMS individual saat drill ke pasien. Kini DINKES berhenti di agregat unit.

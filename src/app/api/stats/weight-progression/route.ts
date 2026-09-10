@@ -9,6 +9,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireRole } from '@/lib/api-auth';
+import { canViewPatientDetail } from '@/lib/stats-access';
 import { getPosyanduInfo } from '@/lib/analytics';
 import { registeredBalitaIds, ymOf } from '@/lib/growth-analytics';
 
@@ -148,19 +149,21 @@ export async function GET(req: Request) {
       })
       .sort((a, b) => a.ym.localeCompare(b.ym) || a.posyanduName.localeCompare(b.posyanduName));
 
-    const faltering = falteringRows.map((r) => ({
-      measurementId: r.id,
-      patientName: r.patient.name,
-      regNumber: r.patient.regNumber,
-      sessionDate: r.sessionDate,
-      weight: r.weight,
-      weightGain: r.weightGain,
-      ageInMonths: r.ageInMonths,
-      posyanduId: r.posyandu.id,
-      posyanduName: r.posyandu.name,
-      kalurahan: r.posyandu.kalurahan?.name ?? '',
-      ym: ymOf(r.sessionDate),
-    }));
+    const faltering = canViewPatientDetail(session.role)
+      ? falteringRows.map((r) => ({
+          measurementId: r.id,
+          patientName: r.patient.name,
+          regNumber: r.patient.regNumber,
+          sessionDate: r.sessionDate,
+          weight: r.weight,
+          weightGain: r.weightGain,
+          ageInMonths: r.ageInMonths,
+          posyanduId: r.posyandu.id,
+          posyanduName: r.posyandu.name,
+          kalurahan: r.posyandu.kalurahan?.name ?? '',
+          ym: ymOf(r.sessionDate),
+        }))
+      : [];
 
     return NextResponse.json({ success: true, data, faltering, coverage, from: fromDate, to: toDate });
   } catch (error) {

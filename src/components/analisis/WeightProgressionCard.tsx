@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, TrendingDown, TrendingUp, Users } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
 import { DrillSheet } from './DrillSheet';
 import { PatientDrillList } from './PatientDrillList';
@@ -42,6 +43,8 @@ function formatYM(ym: string): string {
 }
 
 export function WeightProgressionCard({ from, to }: { from: string; to: string }) {
+  const { user } = useAuth();
+  const canDrill = user?.role === 'PUSKESMAS' || user?.role === 'POSYANDU';
   const [rows, setRows] = useState<ProgressionRow[]>([]);
   const [faltering, setFaltering] = useState<FalteringPatient[]>([]);
   const [coverage, setCoverage] = useState<Coverage | null>(null);
@@ -152,28 +155,40 @@ export function WeightProgressionCard({ from, to }: { from: string; to: string }
 
         {unitRows.length > 0 && (
           <div className="space-y-1.5">
-            {unitRows.map((r) => (
-              <button
-                key={r.posyanduId}
-                type="button"
-                onClick={() => setDrill({ posyanduId: r.posyanduId, title: r.posyanduName })}
-                className={`w-full flex items-center justify-between p-2 rounded-xl border text-left transition-colors ${
-                  r.duaT > 0 ? 'border-red-200 bg-red-50/50 hover:bg-red-50' : 'border-[#e9edef] bg-white hover:bg-[#f0f2f5]'
-                }`}
-              >
-                <span className="min-w-0">
-                  <span className="block text-xs font-bold text-[#111b21] truncate">{r.posyanduName}</span>
-                  {r.healthCenterName && (
-                    <span className="block text-[10px] text-[#8696a0] truncate">{r.healthCenterName}</span>
-                  )}
-                </span>
-                <span className="text-[11px] font-bold text-[#54656f] shrink-0">
-                  {r.tidakNaik} tidak naik
-                  {r.duaT > 0 && <span className="text-red-600"> · {r.duaT} 2T</span>}
-                  <span className="text-[#128c7e]"> ›</span>
-                </span>
-              </button>
-            ))}
+            {unitRows.map((r) => {
+              const rowCls = `w-full flex items-center justify-between p-2 rounded-xl border text-left transition-colors ${
+                r.duaT > 0 ? 'border-red-200 bg-red-50/50' : 'border-[#e9edef] bg-white'
+              }`;
+              const body = (
+                <>
+                  <span className="min-w-0">
+                    <span className="block text-xs font-bold text-[#111b21] truncate">{r.posyanduName}</span>
+                    {r.healthCenterName && (
+                      <span className="block text-[10px] text-[#8696a0] truncate">{r.healthCenterName}</span>
+                    )}
+                  </span>
+                  <span className="text-[11px] font-bold text-[#54656f] shrink-0">
+                    {r.tidakNaik} tidak naik
+                    {r.duaT > 0 && <span className="text-red-600"> · {r.duaT} 2T</span>}
+                    {canDrill && <span className="text-[#128c7e]"> ›</span>}
+                  </span>
+                </>
+              );
+              return canDrill ? (
+                <button
+                  key={r.posyanduId}
+                  type="button"
+                  onClick={() => setDrill({ posyanduId: r.posyanduId, title: r.posyanduName })}
+                  className={`${rowCls} hover:bg-[#f0f2f5]`}
+                >
+                  {body}
+                </button>
+              ) : (
+                <div key={r.posyanduId} className={rowCls}>
+                  {body}
+                </div>
+              );
+            })}
           </div>
         )}
       </ChartCard>
@@ -216,7 +231,7 @@ export function WeightProgressionCard({ from, to }: { from: string; to: string }
         </ChartCard>
       )}
 
-      {drill && (
+      {drill && canDrill && (
         <DrillSheet
           title={drill.title}
           subtitle="Pasien 2T (2x tidak naik) — perlu rujuk"

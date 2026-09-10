@@ -8,6 +8,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireRole } from '@/lib/api-auth';
+import { canViewPatientDetail } from '@/lib/stats-access';
 import {
   latestPerPatient,
   registeredBalitaIds,
@@ -33,6 +34,9 @@ export async function GET(req: Request) {
   try {
     const session = await requireRole(req, ['DINKES', 'PUSKESMAS', 'POSYANDU']);
     if (session instanceof NextResponse) return session;
+    if (!canViewPatientDetail(session.role)) {
+      return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 });
+    }
 
     const { searchParams } = new URL(req.url);
     const rawIndicator = (searchParams.get('indicator') ?? 'BB_U').toUpperCase().replace('-', '_');
@@ -55,22 +59,26 @@ export async function GET(req: Request) {
 
     const page = Math.max(1, Number(searchParams.get('page') ?? 1) || 1);
     const pageSize = Math.min(100, Math.max(1, Number(searchParams.get('pageSize') ?? 20) || 20));
+    const q = (searchParams.get('q') ?? '').trim().toLowerCase();
 
     // Resolve posyandu scope.
     let posyanduIds: string[] = [];
+    const requestedPosyanduId = searchParams.get('posyanduId');
     if (session.role === 'POSYANDU' && session.posyanduId) {
       posyanduIds = [session.posyanduId];
     } else if (session.role === 'PUSKESMAS' && session.healthCenterId) {
       const ps = await prisma.posyandu.findMany({
-        where: { healthCenterId: session.healthCenterId },
+        where: {
+          healthCenterId: session.healthCenterId,
+          ...(requestedPosyanduId ? { id: requestedPosyanduId } : {}),
+        },
         select: { id: true },
       });
       posyanduIds = ps.map((p) => p.id);
     } else {
-      const posyanduId = searchParams.get('posyanduId');
       const hcId = searchParams.get('hcId');
       const ps = await prisma.posyandu.findMany({
-        where: posyanduId ? { id: posyanduId } : hcId ? { healthCenterId: hcId } : {},
+        where: requestedPosyanduId ? { id: requestedPosyanduId } : hcId ? { healthCenterId: hcId } : {},
         select: { id: true },
       });
       posyanduIds = ps.map((p) => p.id);
@@ -167,6 +175,7 @@ export async function GET(req: Request) {
         };
       })
       .filter((x): x is NonNullable<typeof x> => x != null)
+      .filter((x) => !q || x.patientName.toLowerCase().includes(q) || x.regNumber.toLowerCase().includes(q))
       .sort((a, b) => a.patientName.localeCompare(b.patientName));
 
     const total = matched.length;

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { FileSpreadsheet, Download, X, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { PeriodControl, periodToRange } from './analisis/PeriodControl';
+import { useBackLayer } from '@/lib/back-navigation';
 
 type Bucket = { abnormal: number; assessed: number };
 type ReportRow = {
@@ -45,6 +46,8 @@ export function ReportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
       active = false;
     };
   }, [isOpen, from, to]);
+
+  useBackLayer(isOpen, onClose);
 
   if (!isOpen) return null;
 

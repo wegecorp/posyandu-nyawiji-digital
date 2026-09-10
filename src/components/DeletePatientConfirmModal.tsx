@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { PatientData } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
 import { X, Trash2, AlertTriangle } from 'lucide-react';
+import { useBackLayer } from '@/lib/back-navigation';
 
 interface DeletePatientConfirmModalProps {
   isOpen: boolean;
@@ -21,6 +22,8 @@ export const DeletePatientConfirmModal: React.FC<DeletePatientConfirmModalProps>
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  useBackLayer(isOpen, onClose);
 
   if (!isOpen || !patient) return null;
 

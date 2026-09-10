@@ -20,6 +20,7 @@ import {
   Info,
   Search,
 } from 'lucide-react';
+import { useBackLayer } from '@/lib/back-navigation';
 
 const inputCls =
   'w-full px-3.5 py-2.5 text-xs bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all';
@@ -72,6 +73,11 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
   const [resetTarget, setResetTarget] = useState<{ id: string; name: string } | null>(null);
   const [resetMsg, setResetMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [resetSubmitting, setResetSubmitting] = useState(false);
+
+  // Navigasi tombol back OS/hardware untuk modal dashboard.
+  useBackLayer(isCreateOpen, () => setIsCreateOpen(false));
+  useBackLayer(Boolean(editTarget), () => setEditTarget(null));
+  useBackLayer(Boolean(resetTarget), () => setResetTarget(null));
 
   // Kalurahan pilihan puskesmas ini (dalam kapanewon-nya)
   const myKalurahan: KalurahanRef[] =

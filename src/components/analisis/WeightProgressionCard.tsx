@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
 import { DrillSheet } from './DrillSheet';
 import { PatientDrillList } from './PatientDrillList';
+import { useBackLayer } from '@/lib/back-navigation';
 
 type ProgressionRow = {
   ym: string;
@@ -50,6 +51,8 @@ export function WeightProgressionCard({ from, to }: { from: string; to: string }
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [loading, setLoading] = useState(true);
   const [drill, setDrill] = useState<{ posyanduId?: string; title: string } | null>(null);
+
+  useBackLayer(Boolean(drill), () => setDrill(null));
 
   useEffect(() => {
     let active = true;

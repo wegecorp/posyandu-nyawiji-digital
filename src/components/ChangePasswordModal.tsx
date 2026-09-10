@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { KeyRound, X, CheckCircle2, AlertTriangle, Lock, Eye, EyeOff } from 'lucide-react';
+import { useBackLayer } from '@/lib/back-navigation';
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -21,6 +22,8 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  useBackLayer(isOpen, onClose);
 
   if (!isOpen || !user) return null;
 

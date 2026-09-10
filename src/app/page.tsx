@@ -16,6 +16,8 @@ import { AnalisisPage } from '@/components/analisis/AnalisisPage';
 import { AuthPage } from '@/components/AuthPage';
 import { EditPatientModal } from '@/components/EditPatientModal';
 import { ChangePasswordModal } from '@/components/ChangePasswordModal';
+import { ExitConfirmModal } from '@/components/ExitConfirmModal';
+import { useBackLayer, useExitGuard } from '@/lib/back-navigation';
 import {
   Search,
   UserPlus,
@@ -59,6 +61,7 @@ export default function PosyanduApp() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isChangePassOpen, setIsChangePassOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<PatientData | null>(null);
+  const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false);
 
   const isReadOnly = user?.role === 'PUSKESMAS' || user?.role === 'DINKES';
 
@@ -193,6 +196,12 @@ export default function PosyanduApp() {
     fetchPatients();
   };
 
+  // Navigasi tombol back OS/hardware — tiap layer menggeser satu history entry.
+  useExitGuard(Boolean(user), () => setIsExitConfirmOpen(true));
+  useBackLayer(mainView === 'analisis', () => setMainView('beranda'));
+  useBackLayer(activeViewMode === 'posyandu_table', () => setActiveViewMode('default'));
+  useBackLayer(Boolean(selectedPatient), goBackToList);
+
   // 0. Still validating session against server — show splash to avoid flash of login page
   if (authLoading) {
     return (
@@ -271,6 +280,16 @@ export default function PosyanduApp() {
         ) : (
           /* VIEW 4: PATIENT LIST & QUEUE FOR POSYANDU */
           <div className="space-y-3.5 animate-in fade-in duration-150 pb-20">
+            {activeViewMode === 'posyandu_table' && (
+              <button
+                onClick={() => setActiveViewMode('default')}
+                className="flex items-center gap-1.5 text-xs font-bold text-[#075e54] bg-white hover:bg-[#e7fceb] px-4 py-2 rounded-full border border-[#e9edef] shadow-xs transition-all touch-press"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-[#128c7e]" />
+                <span>Kembali ke Dashboard</span>
+              </button>
+            )}
+
             {isReadOnly && (
               <div className="bg-[#075e54] text-white p-3.5 rounded-2xl border border-[#e9edef] flex items-center gap-3 shadow-xs">
                 <ShieldAlert className="w-5 h-5 text-[#fbbf24] shrink-0" />
@@ -487,6 +506,12 @@ export default function PosyanduApp() {
         patient={editingPatient}
         onClose={() => setEditingPatient(null)}
         onSuccess={handleEditSuccess}
+      />
+
+      {/* 8. Konfirmasi keluar aplikasi (tombol back di layar root) */}
+      <ExitConfirmModal
+        isOpen={isExitConfirmOpen}
+        onClose={() => setIsExitConfirmOpen(false)}
       />
     </div>
   );

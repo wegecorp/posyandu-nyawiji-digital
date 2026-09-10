@@ -10,6 +10,7 @@ import {
   Building,
   KeyRound,
 } from 'lucide-react';
+import { useBackLayer } from '@/lib/back-navigation';
 
 interface AccountModalProps {
   isOpen: boolean;
@@ -40,6 +41,8 @@ export const LoginModal: React.FC<AccountModalProps> = ({ isOpen, onClose, onCha
       document.body.style.overflow = '';
     };
   }, [isOpen, handleKeyDown]);
+
+  useBackLayer(isOpen, onClose);
 
   if (!isOpen || !user) return null;
 

@@ -8,6 +8,7 @@ import {
 import { AlertTriangle, Users, Baby } from 'lucide-react';
 import { ChartCard } from './ChartCard';
 import { GrowthDrillSheet } from './GrowthDrillSheet';
+import { useBackLayer } from '@/lib/back-navigation';
 
 type CategoryCount = { key: string; label: string; color: string; count: number; percent: number };
 type GrowthResp = {
@@ -36,6 +37,8 @@ export function GrowthStatusDistribution({ from, to }: { from: string; to: strin
   const [data, setData] = useState<GrowthResp | null>(null);
   const [loading, setLoading] = useState(true);
   const [drill, setDrill] = useState<{ key: string; label: string } | null>(null);
+
+  useBackLayer(Boolean(drill), () => setDrill(null));
 
   useEffect(() => {
     let active = true;

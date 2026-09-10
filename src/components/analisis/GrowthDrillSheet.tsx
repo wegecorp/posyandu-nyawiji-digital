@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { DrillSheet } from './DrillSheet';
 import { UnitDrillList, type DrillUnit } from './UnitDrillList';
 import { PatientDrillList } from './PatientDrillList';
+import { useBackLayer } from '@/lib/back-navigation';
 
 /**
  * Drill status gizi per peran:
@@ -51,6 +52,9 @@ export function GrowthDrillSheet({
           ? () => setPosyandu(null)
           : undefined
         : undefined;
+
+  // Back OS saat sudah masuk level unit (hc/posyandu) — naik satu tingkat.
+  useBackLayer(Boolean(onBack), onBack ?? onClose);
 
   return (
     <DrillSheet title={title} subtitle={subtitle} onClose={onClose} onBack={onBack}>

@@ -16,6 +16,7 @@ import { UnitScoreboard } from './UnitScoreboard';
 import { EmptyState } from './EmptyState';
 import { INDICATORS } from '@/lib/clinical';
 import { PARTISIPASI_BURUK_THRESHOLD } from '@/lib/clinical';
+import { useBackLayer } from '@/lib/back-navigation';
 
 type CoverageData = { ym: string; unitId: string; unitName: string; numerator: number; denominator: number; participation: number };
 type OutcomeData = { ym: string; unitId: string; unitName: string; total: number; normal: number; abnormal: number; notAssessed: number; abnormalByIndicator: Record<string, number> };
@@ -45,6 +46,9 @@ export function DinkesAnalisis() {
   const [drillCoverage, setDrillCoverage] = useState<CoverageData[]>([]);
   const [loading, setLoading] = useState(true);
   const [indicatorDrill, setIndicatorDrill] = useState<{ key: string; label: string } | null>(null);
+
+  useBackLayer(Boolean(drillHcId), () => setDrillHcId(null));
+  useBackLayer(Boolean(indicatorDrill), () => setIndicatorDrill(null));
 
   const { from, to } = useMemo(() => periodToRange(period), [period]);
 

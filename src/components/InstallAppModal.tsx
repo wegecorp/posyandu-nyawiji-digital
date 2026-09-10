@@ -3,6 +3,7 @@
 import React from 'react';
 import { Download, X, Smartphone, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { detectPlatform, type InstallGuide } from '@/lib/pwa';
+import { useBackLayer } from '@/lib/back-navigation';
 
 interface InstallAppModalProps {
   guide: InstallGuide | null;
@@ -31,6 +32,8 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({ guide, onClose
     unknown: 'browser ini',
   };
   const browserLabel = browserName[platform.browser] || 'browser ini';
+
+  useBackLayer(Boolean(guide), onClose);
 
   if (!guide) return null;
 

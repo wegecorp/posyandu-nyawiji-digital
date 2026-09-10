@@ -5,6 +5,7 @@ import { PatientData } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
 import { X, Edit3, Calendar, User, Home, Phone, Heart, Check, AlertTriangle, Lock } from 'lucide-react';
 import { calculateAge, getPatientCategory, getCategoryBadge, todayLocalISODate } from '@/lib/utils';
+import { useBackLayer } from '@/lib/back-navigation';
 
 interface EditPatientModalProps {
   isOpen: boolean;
@@ -31,6 +32,8 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
   const [isPregnant, setIsPregnant] = useState(Boolean(patient?.isPregnant));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  useBackLayer(isOpen, onClose);
 
   if (!isOpen || !patient) return null;
 

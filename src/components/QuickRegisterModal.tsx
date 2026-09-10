@@ -6,6 +6,7 @@ import { PatientData } from '@/lib/types';
 import { addToSyncQueue, genClientId } from '@/lib/offline-sync';
 import { X, UserPlus, Calendar, User, Home, Phone, Heart, Check, AlertTriangle, Info, ChevronUp, ChevronDown } from 'lucide-react';
 import { calculateAge, getPatientCategory, getCategoryBadge, todayLocalISODate } from '@/lib/utils';
+import { useBackLayer } from '@/lib/back-navigation';
 
 interface QuickRegisterModalProps {
   isOpen: boolean;
@@ -31,6 +32,8 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
   const [duplicate, setDuplicate] = useState<{ regNumber: string; name: string } | null>(null);
+
+  useBackLayer(isOpen, onClose);
 
   if (!isOpen) return null;
 

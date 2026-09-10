@@ -16,6 +16,7 @@ import { PeriodControl, periodToRange } from './PeriodControl';
 import { UnitScoreboard } from './UnitScoreboard';
 import { EmptyState } from './EmptyState';
 import { PARTISIPASI_BURUK_THRESHOLD, INDICATORS } from '@/lib/clinical';
+import { useBackLayer } from '@/lib/back-navigation';
 
 
 type CoverageData = { ym: string; unitId: string; unitName: string; numerator: number; denominator: number; participation: number };
@@ -34,6 +35,8 @@ export function PuskesmasAnalisis() {
   const [posyanduOutcome, setPosyanduOutcome] = useState<OutcomeData[]>([]);
   const [loading, setLoading] = useState(true);
   const [indicatorDrill, setIndicatorDrill] = useState<{ key: string; label: string } | null>(null);
+
+  useBackLayer(Boolean(indicatorDrill), () => setIndicatorDrill(null));
 
   const { from, to } = useMemo(() => periodToRange(period), [period]);
 

@@ -5,6 +5,7 @@ import { PatientData } from '@/lib/types';
 import QRCode from 'qrcode';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { X, QrCode, Camera } from 'lucide-react';
+import { useBackLayer } from '@/lib/back-navigation';
 
 interface QRModalProps {
   mode: 'view' | 'scan';
@@ -79,6 +80,8 @@ export const QRModal: React.FC<QRModalProps> = ({
       };
     }
   }, [mode, isOpen, onScanSuccess, onClose]);
+
+  useBackLayer(isOpen, onClose);
 
   if (!isOpen) return null;
 

@@ -20,6 +20,7 @@ import {
   Activity,
 } from 'lucide-react';
 import { puskesmasUsernameBase } from '@/lib/names';
+import { useBackLayer } from '@/lib/back-navigation';
 
 interface DinkesDashboardProps {
   onExportAll: () => void;
@@ -80,6 +81,11 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
   const [importBusy, setImportBusy] = useState(false);
   const [importReport, setImportReport] = useState<{ dryRun: boolean; report: ImportReportShape } | null>(null);
   const [importError, setImportError] = useState('');
+
+  // Navigasi tombol back OS/hardware untuk modal dashboard.
+  useBackLayer(isCreateOpen, () => setIsCreateOpen(false));
+  useBackLayer(isImportOpen, () => setIsImportOpen(false));
+  useBackLayer(Boolean(resetTarget), () => setResetTarget(null));
 
   const openImport = () => {
     setImportFile(null);

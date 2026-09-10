@@ -8,6 +8,7 @@ import {
 import { TrendingUp, AlertTriangle, User } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
+import { GrowthStatusDistribution } from './GrowthStatusDistribution';
 import { PeriodControl, periodToRange } from './PeriodControl';
 import { EmptyState } from './EmptyState';
 import { INDICATORS } from '@/lib/clinical';
@@ -116,6 +117,9 @@ export function PosyanduAnalisis() {
         <h2 className="text-base font-extrabold text-[#111b21]">Analisis Posyandu</h2>
         <PeriodControl selected={period} onChange={setPeriod} />
       </div>
+
+      {/* 0. Status gizi balita (Permenkes 2/2020) */}
+      <GrowthStatusDistribution from={from} to={to} />
 
       {/* 1. Trend Line */}
       {trendData.length > 0 && (

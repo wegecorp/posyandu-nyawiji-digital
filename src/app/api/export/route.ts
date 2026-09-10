@@ -4,6 +4,12 @@ import type { Prisma } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import { calculateAge, getPatientCategory } from '@/lib/utils';
 import { getAuthSession } from '@/lib/api-auth';
+import { findCategory } from '@/lib/growth';
+
+function statusLabel(index: 'BB_U' | 'TB_U' | 'BB_TB' | 'IMT_U', key: string | null): string {
+  if (!key) return '-';
+  return findCategory(index, key)?.label ?? key;
+}
 
 export async function GET(req: Request) {
   try {
@@ -81,6 +87,14 @@ export async function GET(req: Request) {
         'LiLA (cm)': m.armCircumference ?? '-',
         'Lingkar Perut (cm)': m.waistCircumference ?? '-',
         'IMT (kg/m2)': m.imt ?? '-',
+        'Posisi Ukur': m.position ?? '-',
+        'Z BB/U': m.zWeightAge ?? '-',
+        'Status BB/U': statusLabel('BB_U', m.underweightStatus),
+        'Z TB/U': m.zHeightAge ?? '-',
+        'Status TB/U': statusLabel('TB_U', m.stuntingStatus),
+        'Z BB/TB': m.zWeightHeight ?? '-',
+        'Status BB/TB': statusLabel('BB_TB', m.wastingStatus),
+        'Z IMT/U': m.zBmiAge ?? '-',
         'Tensi Sistolik (mmHg)': m.systolic ?? '-',
         'Tensi Diastolik (mmHg)': m.diastolic ?? '-',
         'Usia Kehamilan (mg)': m.gestationalAge ?? '-',

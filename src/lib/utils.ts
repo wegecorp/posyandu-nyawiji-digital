@@ -37,11 +37,12 @@ export function calculateAge(birthDateString: string | Date, targetDate: Date = 
 export function getPatientCategory(
   birthDateString: string | Date,
   isPregnant: boolean = false,
-  gender?: string | null
+  gender?: string | null,
+  targetDate: Date = new Date()
 ): PatientCategory {
   if (isPregnant && gender !== 'L') return 'BUMIL';
 
-  const { years } = calculateAge(birthDateString);
+  const { years } = calculateAge(birthDateString, targetDate);
 
   if (years < 5) return 'BALITA';
   if (years >= 5 && years < 10) return 'ANAK';

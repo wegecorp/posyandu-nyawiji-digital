@@ -41,6 +41,16 @@ export interface MeasurementData {
   hemoglobin?: number | null;
   waistCircumference?: number | null;
   imt?: number | null;
+  position?: string | null;
+  ageInDays?: number | null;
+  zWeightAge?: number | null;
+  zHeightAge?: number | null;
+  zWeightHeight?: number | null;
+  zBmiAge?: number | null;
+  underweightStatus?: string | null;
+  stuntingStatus?: string | null;
+  wastingStatus?: string | null;
+  growthRefVersion?: string | null;
   visionStatus?: string | null;
   hearingStatus?: string | null;
   noteSource?: string | null;

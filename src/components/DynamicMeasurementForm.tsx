@@ -24,6 +24,13 @@ import {
 } from 'lucide-react';
 import { getCategoryBadge, formatIndoDate } from '@/lib/utils';
 import { validateMeasurementValue, validateBloodPressure, computeImt } from '@/lib/validation';
+import {
+  computeGrowth,
+  ageInCompletedMonths,
+  defaultPosition,
+  findCategory,
+  type StaturePosition,
+} from '@/lib/growth';
 
 interface DynamicMeasurementFormProps {
   patient: PatientData;
@@ -43,6 +50,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   // Form Fields State
   const [weight, setWeight] = useState<string>('');
   const [height, setHeight] = useState<string>('');
+  const [position, setPosition] = useState<string>('');
   const [headCircumference, setHeadCircumference] = useState<string>('');
   const [armCircumference, setArmCircumference] = useState<string>('');
   const [systolic, setSystolic] = useState<string>('');
@@ -74,6 +82,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   const applyMeasurement = (tm: MeasurementData | null | undefined) => {
     setWeight(tm?.weight != null ? String(tm.weight) : '');
     setHeight(tm?.height != null ? String(tm.height) : '');
+    setPosition(tm?.position || '');
     setHeadCircumference(tm?.headCircumference != null ? String(tm.headCircumference) : '');
     setArmCircumference(tm?.armCircumference != null ? String(tm.armCircumference) : '');
     setWaistCircumference(tm?.waistCircumference != null ? String(tm.waistCircumference) : '');
@@ -138,6 +147,27 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
 
   const isReadOnly = user?.role === 'PUSKESMAS' || user?.role === 'DINKES';
 
+  // Posisi efektif (tersimpan atau default menurut umur).
+  const sessionAgeMonths = ageInCompletedMonths(patient.birthDate, sessionDate);
+  const effectivePosition: StaturePosition =
+    (position as StaturePosition) || defaultPosition(sessionAgeMonths);
+
+  // Status gizi live (Permenkes 2/2020) — default BB/U, semua indeks dihitung.
+  const liveGrowth = React.useMemo(
+    () =>
+      category === 'BALITA'
+        ? computeGrowth({
+            gender: patient.gender,
+            birthDate: patient.birthDate,
+            sessionDate,
+            weight: weight === '' ? null : Number(weight),
+            height: height === '' ? null : Number(height),
+            position: effectivePosition,
+          })
+        : null,
+    [category, patient.gender, patient.birthDate, sessionDate, weight, height, effectivePosition],
+  );
+
   // Handle live field change with instant auto-save
   const validateFieldChange = (fieldName: string, value: string): boolean => {
     const errs: Record<string, string> = {};
@@ -171,6 +201,9 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
         break;
       case 'height':
         setHeight(value);
+        break;
+      case 'position':
+        setPosition(value);
         break;
       case 'headCircumference':
         setHeadCircumference(value);
@@ -420,6 +453,58 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 {computeImt(weight, height) != null ? `${computeImt(weight, height)} kg/m²` : '—'}
               </span>
             </div>
+
+            {/* Posisi ukur — hanya balita (menentukan koreksi ±0,7 cm) */}
+            {category === 'BALITA' && (
+              <div className="pt-1">
+                <p className="text-[11px] font-bold text-[#54656f] mb-1.5">Posisi saat diukur</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['TELENTANG', 'BERDIRI'] as const).map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      disabled={isReadOnly}
+                      onClick={() => handleFieldChange('position', p)}
+                      className={`h-11 rounded-xl text-[11px] font-extrabold border transition-all ${
+                        effectivePosition === p
+                          ? 'bg-[#075e54] text-white border-[#075e54]'
+                          : 'bg-[#f0f2f5] text-[#54656f] border-[#e9edef]'
+                      } disabled:opacity-60`}
+                    >
+                      {p === 'TELENTANG' ? 'Telentang (PB)' : 'Berdiri (TB)'}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-[#8696a0] font-medium mt-1">
+                  Default: &lt;24 bln telentang, ≥24 bln berdiri. Koreksi ±0,7 cm otomatis.
+                </p>
+              </div>
+            )}
+
+            {/* Status gizi live (Permenkes 2/2020) */}
+            {category === 'BALITA' && liveGrowth && (
+              <div className="pt-2 border-t border-[#e9edef]">
+                <p className="text-[11px] font-bold text-[#54656f] mb-1.5">
+                  Status Gizi (Permenkes 2/2020)
+                </p>
+                {liveGrowth.ok ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <GrowthBadge label="BB/U" result={liveGrowth.BB_U} />
+                    <GrowthBadge label="TB/U" result={liveGrowth.TB_U} />
+                    <GrowthBadge label="BB/TB" result={liveGrowth.BB_TB} />
+                    <GrowthBadge label="IMT/U" result={liveGrowth.IMT_U} />
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-[#8696a0] font-medium">
+                    {liveGrowth.reason === 'gender'
+                      ? 'Jenis kelamin belum diisi — status gizi tidak dapat dihitung.'
+                      : liveGrowth.reason === 'no-data'
+                        ? 'Isi BB & TB untuk melihat status gizi.'
+                        : 'Umur di luar rentang balita (0–60 bulan).'}
+                  </p>
+                )}
+              </div>
+            )}
           </SectionCard>
 
           {/* B. Ukur Khusus Balita */}
@@ -687,6 +772,12 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                   {hist.imt && (
                     <MetricChip label="IMT" value={`${hist.imt} kg/m²`} />
                   )}
+                  {hist.stuntingStatus && (
+                    <MetricChip
+                      label="TB/U"
+                      value={findCategory('TB_U', hist.stuntingStatus)?.label ?? hist.stuntingStatus}
+                    />
+                  )}
                   {hist.systolic && (
                     <MetricChip label="Tensi" value={`${hist.systolic}/${hist.diastolic} mmHg`} />
                   )}
@@ -933,5 +1024,36 @@ function MetricChip({ label, value }: { label: string; value: string }) {
     <span className="bg-[#f0f2f5] px-2.5 py-1 rounded-full text-[#54656f] font-medium border border-[#e9edef]">
       {label}: <strong className="font-extrabold text-[#111b21]">{value}</strong>
     </span>
+  );
+}
+
+function GrowthBadge({
+  label,
+  result,
+}: {
+  label: string;
+  result?: { z: number; label: string; color: string };
+}) {
+  if (!result) {
+    return (
+      <div className="rounded-xl border border-[#e9edef] bg-[#f0f2f5] px-2.5 py-2">
+        <p className="text-[10px] font-extrabold text-[#8696a0] uppercase">{label}</p>
+        <p className="text-[11px] font-bold text-[#8696a0] mt-0.5">Belum bisa dihitung</p>
+      </div>
+    );
+  }
+  return (
+    <div
+      className="rounded-xl border px-2.5 py-2"
+      style={{ borderColor: `${result.color}55`, backgroundColor: `${result.color}14` }}
+    >
+      <div className="flex items-center justify-between gap-1">
+        <span className="text-[10px] font-extrabold uppercase" style={{ color: result.color }}>
+          {label}
+        </span>
+        <span className="text-[10px] font-bold text-[#54656f]">Z {result.z.toFixed(2)}</span>
+      </div>
+      <p className="text-[11px] font-extrabold text-[#111b21] leading-tight mt-0.5">{result.label}</p>
+    </div>
   );
 }

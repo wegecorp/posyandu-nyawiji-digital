@@ -7,6 +7,7 @@ import {
 } from 'recharts';
 import { TrendingUp, Users, AlertTriangle } from 'lucide-react';
 import { ChartCard } from './ChartCard';
+import { GrowthStatusDistribution } from './GrowthStatusDistribution';
 import { PeriodControl, periodToRange } from './PeriodControl';
 import { UnitScoreboard } from './UnitScoreboard';
 import { EmptyState } from './EmptyState';
@@ -157,6 +158,9 @@ export function DinkesAnalisis() {
         </h2>
         <PeriodControl selected={period} onChange={setPeriod} />
       </div>
+
+      {/* 0. Status gizi balita (Permenkes 2/2020) */}
+      <GrowthStatusDistribution from={from} to={to} />
 
       {/* 1. Trend Line — Partisipasi Kabupaten */}
       {trendData.length > 0 && (

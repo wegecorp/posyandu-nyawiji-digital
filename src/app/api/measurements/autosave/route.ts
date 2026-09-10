@@ -5,6 +5,7 @@ import { calculateAge, getPatientCategory } from '@/lib/utils';
 import { getAuthSession } from '@/lib/api-auth';
 import { isRateLimited } from '@/lib/rate-limit';
 import { computeImt, validateMeasurementValue, validateBloodPressure } from '@/lib/validation';
+import { computeGrowth, type StaturePosition } from '@/lib/growth';
 
 export async function POST(req: Request) {
   try {
@@ -32,6 +33,7 @@ export async function POST(req: Request) {
       version,
       weight,
       height,
+      position,
       headCircumference,
       armCircumference,
       waistCircumference,
@@ -119,20 +121,43 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: bpCheck.message }, { status: 400 });
     }
 
-    const age = calculateAge(patient.birthDate);
+    // Umur dihitung relatif ke tanggal sesi (bukan hari ini) agar data yang
+    // diinput terlambat tetap valid.
+    const age = calculateAge(patient.birthDate, targetDate);
+    const ageInDays = Math.max(
+      0,
+      Math.floor((targetDate.getTime() - new Date(patient.birthDate).getTime()) / 86_400_000),
+    );
 
     // Hitung IMT dari BB/TB efektif (gabung nilai baru + tersimpan).
     const effectiveWeight = weight !== undefined ? weight : existingMeasurement?.weight ?? null;
     const effectiveHeight = height !== undefined ? height : existingMeasurement?.height ?? null;
     const imt = computeImt(effectiveWeight, effectiveHeight);
 
+    // Status gizi balita (BB/U, TB/U, BB/TB, IMT/U) — Permenkes 2/2020.
+    const effectivePosition: StaturePosition | null =
+      position !== undefined
+        ? (position as StaturePosition | null)
+        : (existingMeasurement?.position as StaturePosition | null) ?? null;
+    const growth = computeGrowth({
+      gender: patient.gender,
+      birthDate: patient.birthDate,
+      sessionDate: targetDate,
+      weight: effectiveWeight,
+      height: effectiveHeight,
+      position: effectivePosition,
+    });
+
     const SCREENING_VALUES = ['Normal', 'Tidak Normal'];
     const NOTE_SOURCES = ['Kader', 'Nakes'];
+    const POSITION_VALUES: StaturePosition[] = ['TELENTANG', 'BERDIRI'];
 
     // Build update object only for provided fields
     const fieldData: Record<string, string | number | null> = {};
     if (weight !== undefined) fieldData.weight = weight === '' || weight === null ? null : parseFloat(weight);
     if (height !== undefined) fieldData.height = height === '' || height === null ? null : parseFloat(height);
+    if (position !== undefined)
+      fieldData.position = POSITION_VALUES.includes(position) ? position : null;
     if (headCircumference !== undefined)
       fieldData.headCircumference =
         headCircumference === '' || headCircumference === null ? null : parseFloat(headCircumference);
@@ -166,6 +191,33 @@ export async function POST(req: Request) {
     if (notes !== undefined) fieldData.notes = notes;
     if (recordedBy) fieldData.recordedBy = recordedBy;
     if (weight !== undefined || height !== undefined) fieldData.imt = imt;
+
+    // Simpan status gizi mentah + hasil. Dihitung ulang setiap ada perubahan
+    // BB/TB/posisi; dibersihkan bila data tidak lagi memenuhi syarat.
+    fieldData.ageInDays = ageInDays;
+    if (weight !== undefined || height !== undefined || position !== undefined) {
+      if (growth.ok) {
+        fieldData.position = growth.position ?? effectivePosition;
+        fieldData.zWeightAge = growth.BB_U?.z ?? null;
+        fieldData.zHeightAge = growth.TB_U?.z ?? null;
+        fieldData.zWeightHeight = growth.BB_TB?.z ?? null;
+        fieldData.zBmiAge = growth.IMT_U?.z ?? null;
+        fieldData.underweightStatus = growth.BB_U?.categoryKey ?? null;
+        fieldData.stuntingStatus = growth.TB_U?.categoryKey ?? null;
+        fieldData.wastingStatus = growth.BB_TB?.categoryKey ?? null;
+        fieldData.growthRefVersion = growth.refVersion;
+      } else {
+        fieldData.zWeightAge = null;
+        fieldData.zHeightAge = null;
+        fieldData.zWeightHeight = null;
+        fieldData.zBmiAge = null;
+        fieldData.underweightStatus = null;
+        fieldData.stuntingStatus = null;
+        fieldData.wastingStatus = null;
+        fieldData.growthRefVersion = null;
+      }
+    }
+
     fieldData.updatedBy = session.username;
 
     // Last-write-wins via client version (ms epoch). Tolak tulis yang lebih tua
@@ -185,7 +237,7 @@ export async function POST(req: Request) {
         data: {
           ...(fieldData as unknown as Prisma.MeasurementUncheckedUpdateInput),
           ageInMonths: age.totalMonths,
-          category: getPatientCategory(patient.birthDate, patient.isPregnant, patient.gender),
+          category: getPatientCategory(patient.birthDate, patient.isPregnant, patient.gender, targetDate),
         },
       });
     } else {
@@ -197,7 +249,7 @@ export async function POST(req: Request) {
             posyanduId: session.posyanduId!,
             sessionDate: targetDate,
             ageInMonths: age.totalMonths,
-            category: getPatientCategory(patient.birthDate, patient.isPregnant, patient.gender),
+            category: getPatientCategory(patient.birthDate, patient.isPregnant, patient.gender, targetDate),
           },
         });
       } catch (err) {
@@ -219,7 +271,7 @@ export async function POST(req: Request) {
             data: {
               ...(fieldData as unknown as Prisma.MeasurementUncheckedUpdateInput),
               ageInMonths: age.totalMonths,
-              category: getPatientCategory(patient.birthDate, patient.isPregnant, patient.gender),
+              category: getPatientCategory(patient.birthDate, patient.isPregnant, patient.gender, targetDate),
             },
           });
         } else {

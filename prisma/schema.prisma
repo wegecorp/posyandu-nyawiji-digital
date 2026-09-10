@@ -113,6 +113,19 @@ model Measurement {
   hemoglobin        Float?    // Hemoglobin / HB (g/dL)
   waistCircumference Float?   // Lingkar Perut (cm)
   imt               Float?    // IMT (auto hitung dari BB/TB)
+
+  // Status gizi balita (Permenkes 2/2020, auto hitung saat simpan)
+  position          String?   // Posisi ukur: TELENTANG (PB) / BERDIRI (TB)
+  ageInDays         Int?      // Umur presisi dalam hari saat pengukuran
+  zWeightAge        Float?    // Z BB/U
+  zHeightAge        Float?    // Z PB/U atau TB/U
+  zWeightHeight     Float?    // Z BB/PB atau BB/TB
+  zBmiAge           Float?    // Z IMT/U
+  underweightStatus String?   // Kategori BB/U (severely_underweight/normal/...)
+  stuntingStatus    String?   // Kategori TB/U (severely_stunted/stunted/normal/tall)
+  wastingStatus     String?   // Kategori BB/TB (severely_wasted/.../obese)
+  growthRefVersion  String?   // Versi tabel referensi saat dihitung
+
   visionStatus      String?   // Skrining mata: Normal / Tidak Normal
   hearingStatus     String?   // Skrining telinga: Normal / Tidak Normal
   noteSource        String?   // Sumber catatan: Kader / Nakes

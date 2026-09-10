@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { calculateAge, getPatientCategory } from '@/lib/utils';
 import { getAuthSession } from '@/lib/api-auth';
 import { validateBirthDate, validatePhone, validateTextLength } from '@/lib/validation';
+import { computeGrowth, type StaturePosition } from '@/lib/growth';
 
 async function checkPatientAccess(patientId: string, session: { role: string; posyanduId?: string | null; healthCenterId?: string | null }) {
   const patient = await prisma.patient.findUnique({
@@ -153,13 +154,55 @@ export async function PUT(
       },
     });
 
-    // Recompute snapshot usia & kategori pada semua pengukuran pasien ini.
+    // Usia & kategori untuk RESPONS (usia pasien hari ini).
     const age = calculateAge(updatedPatient.birthDate);
-    const category = getPatientCategory(updatedPatient.birthDate, updatedPatient.isPregnant);
-    await prisma.measurement.updateMany({
-      where: { patientId: id },
-      data: { ageInMonths: age.totalMonths, category },
-    });
+    const category = getPatientCategory(updatedPatient.birthDate, updatedPatient.isPregnant, updatedPatient.gender);
+
+    // Perbaiki snapshot TIAP pengukuran memakai tanggal sesinya sendiri, bukan
+    // usia hari ini — kalau tidak, riwayat lama salah umur/kategori. Sekaligus
+    // hitung ulang status gizi (mis. saat gender pasien dikoreksi).
+    for (const m of updatedPatient.measurements) {
+      const mDate = new Date(m.sessionDate);
+      const mAge = calculateAge(updatedPatient.birthDate, mDate);
+      const mCategory = getPatientCategory(
+        updatedPatient.birthDate,
+        updatedPatient.isPregnant,
+        updatedPatient.gender,
+        mDate,
+      );
+      const growth = computeGrowth({
+        gender: updatedPatient.gender,
+        birthDate: updatedPatient.birthDate,
+        sessionDate: mDate,
+        weight: m.weight,
+        height: m.height,
+        position: (m.position as StaturePosition | null) ?? undefined,
+      });
+      await prisma.measurement.update({
+        where: { id: m.id },
+        data: {
+          ageInMonths: mAge.totalMonths,
+          category: mCategory,
+          ...(growth.ok
+            ? {
+                position: growth.position ?? m.position,
+                ageInDays: Math.max(
+                  0,
+                  Math.floor((mDate.getTime() - new Date(updatedPatient.birthDate).getTime()) / 86_400_000),
+                ),
+                zWeightAge: growth.BB_U?.z ?? null,
+                zHeightAge: growth.TB_U?.z ?? null,
+                zWeightHeight: growth.BB_TB?.z ?? null,
+                zBmiAge: growth.IMT_U?.z ?? null,
+                underweightStatus: growth.BB_U?.categoryKey ?? null,
+                stuntingStatus: growth.TB_U?.categoryKey ?? null,
+                wastingStatus: growth.BB_TB?.categoryKey ?? null,
+                growthRefVersion: growth.refVersion,
+              }
+            : {}),
+        },
+      });
+    }
 
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);

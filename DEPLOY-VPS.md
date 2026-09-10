@@ -146,8 +146,11 @@ otomatis). Total kecil, tapi cukup menutup kasus kesalahan yang baru ketahuan la
 
 ### 9a. Siapkan script
 
+Script otomatis mendeteksi lokasi repo (dari letak dirinya sendiri), jadi bisa
+di-clone di path mana pun — tidak harus `/opt/posyandu_digital`. Jalankan dari
+dalam folder repo:
+
 ```bash
-cd /opt/posyandu_digital
 chmod +x scripts/backup-db.sh scripts/restore-db.sh
 sudo mkdir -p /var/backups/posyandu
 ```
@@ -194,7 +197,8 @@ rclone lsd gdrive:
 sudo crontab -e
 ```
 
-Tambahkan (opsional: isi token Telegram untuk notifikasi saat gagal):
+Tambahkan (opsional: isi token Telegram untuk notifikasi saat gagal).
+Ganti `/opt/posyandu_digital` dengan lokasi repo sebenarnya:
 
 ```cron
 TELEGRAM_BOT_TOKEN=""

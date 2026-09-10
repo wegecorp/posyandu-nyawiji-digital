@@ -127,6 +127,8 @@ npm run build
 pm2 restart posyandu-digital
 ```
 
+Checklist verifikasi lengkap (UAT per peran + rollback): `docs/uat-deploy-checklist.md`.
+
 ## 8. Swap (disarankan untuk VPS 2 GB)
 
 `npm run build` dan Prisma bisa memakai memori lebih dari 1 GB. Tanpa swap, VPS 2 GB

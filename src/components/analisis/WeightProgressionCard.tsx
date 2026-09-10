@@ -3,6 +3,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, TrendingDown, TrendingUp, Users } from 'lucide-react';
 import { ChartCard } from './ChartCard';
+import { DrillSheet } from './DrillSheet';
+import { PatientDrillList } from './PatientDrillList';
 
 type ProgressionRow = {
   ym: string;
@@ -44,6 +46,7 @@ export function WeightProgressionCard({ from, to }: { from: string; to: string }
   const [faltering, setFaltering] = useState<FalteringPatient[]>([]);
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [loading, setLoading] = useState(true);
+  const [drill, setDrill] = useState<{ posyanduId?: string; title: string } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -150,20 +153,26 @@ export function WeightProgressionCard({ from, to }: { from: string; to: string }
         {unitRows.length > 0 && (
           <div className="space-y-1.5">
             {unitRows.map((r) => (
-              <div
+              <button
                 key={r.posyanduId}
-                className={`flex items-center justify-between p-2 rounded-xl border ${
-                  r.duaT > 0 ? 'border-red-200 bg-red-50/50' : 'border-[#e9edef] bg-white'
+                type="button"
+                onClick={() => setDrill({ posyanduId: r.posyanduId, title: r.posyanduName })}
+                className={`w-full flex items-center justify-between p-2 rounded-xl border text-left transition-colors ${
+                  r.duaT > 0 ? 'border-red-200 bg-red-50/50 hover:bg-red-50' : 'border-[#e9edef] bg-white hover:bg-[#f0f2f5]'
                 }`}
               >
-                <span className="text-xs font-bold text-[#111b21] truncate max-w-[60%]">
-                  {r.posyanduName}
+                <span className="min-w-0">
+                  <span className="block text-xs font-bold text-[#111b21] truncate">{r.posyanduName}</span>
+                  {r.healthCenterName && (
+                    <span className="block text-[10px] text-[#8696a0] truncate">{r.healthCenterName}</span>
+                  )}
                 </span>
-                <span className="text-[11px] font-bold text-[#54656f]">
+                <span className="text-[11px] font-bold text-[#54656f] shrink-0">
                   {r.tidakNaik} tidak naik
                   {r.duaT > 0 && <span className="text-red-600"> · {r.duaT} 2T</span>}
+                  <span className="text-[#128c7e]"> ›</span>
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -194,11 +203,33 @@ export function WeightProgressionCard({ from, to }: { from: string; to: string }
                 </div>
               </div>
             ))}
-            {faltering.length > 20 && (
-              <p className="text-[10px] text-[#8696a0] text-center">+ {faltering.length - 20} lainnya</p>
+            {faltering.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setDrill({ title: 'Semua 2T — perlu rujuk' })}
+                className="w-full py-2 bg-white hover:bg-[#f0f2f5] text-[#128c7e] border border-[#e9edef] rounded-lg text-[11px] font-bold transition-colors"
+              >
+                Lihat semua ({faltering.length}) ›
+              </button>
             )}
           </div>
         </ChartCard>
+      )}
+
+      {drill && (
+        <DrillSheet
+          title={drill.title}
+          subtitle="Pasien 2T (2x tidak naik) — perlu rujuk"
+          onClose={() => setDrill(null)}
+        >
+          <PatientDrillList
+            key={drill.posyanduId ?? 'all'}
+            baseUrl={`/api/stats/faltering-patients?from=${from}&to=${to}${
+              drill.posyanduId ? `&posyanduId=${drill.posyanduId}` : ''
+            }`}
+            emptyText="Tidak ada pasien 2T pada filter ini."
+          />
+        </DrillSheet>
       )}
     </>
   );

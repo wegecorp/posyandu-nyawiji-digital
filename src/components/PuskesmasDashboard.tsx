@@ -24,6 +24,8 @@ import {
 const inputCls =
   'w-full px-3.5 py-2.5 text-xs bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all';
 
+const PAGE_SIZE = 10;
+
 interface PuskesmasDashboardProps {
   onEnterPosyandu: (posyanduId: string, posyanduName: string, posyanduCode: string) => void;
   onExport: () => void;
@@ -47,6 +49,7 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
   const [posyandus, setPosyandus] = useState<PosyanduRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
 
   // Referensi lokasi (kapanewon -> kalurahan) dari server
   const [lokasi, setLokasi] = useState<KapanewonRef[]>([]);
@@ -230,7 +233,10 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
   const totalUkur = posyandus.reduce((acc, p) => acc + (p._count?.measurements || 0), 0);
   const pendingCount = posyandus.filter((p) => p.users?.[0]?.mustChangePassword).length;
 
-  const groups = [...new Set(filtered.map((p) => p.kalurahan))].sort((a, b) => a.localeCompare(b));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const groups = [...new Set(paged.map((p) => p.kalurahan))].sort((a, b) => a.localeCompare(b));
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto pb-20">
@@ -268,7 +274,7 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
             className="flex items-center gap-1.5 bg-white text-[#075e54] hover:bg-[#e7fceb] px-3.5 py-1.5 rounded-full text-xs font-bold transition-all touch-press"
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>Export Rekap Wilayah</span>
+            <span>Rekap Wilayah</span>
           </button>
         </div>
       </div>
@@ -295,7 +301,10 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(1);
+            }}
             placeholder="Cari nama / kode posyandu, kalurahan, padukuhan..."
             className="w-full pl-9 pr-3 py-2 text-sm bg-[#f0f2f5] rounded-lg border border-[#e9edef] outline-none focus:bg-white focus:border focus:border-[#075e54] font-medium text-[#111b21] placeholder-[#8696a0] transition-all"
           />
@@ -331,7 +340,7 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
       ) : (
         <div className="space-y-4">
           {groups.map((kalurahan) => {
-            const rows = filtered.filter((pos) => pos.kalurahan === kalurahan);
+            const rows = paged.filter((pos) => pos.kalurahan === kalurahan);
             return (
               <div key={kalurahan}>
                 <div className="flex items-center gap-2 mb-2">
@@ -416,6 +425,28 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
               </div>
             );
           })}
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage <= 1}
+                className="px-3.5 py-2 bg-white hover:bg-[#f0f2f5] text-[#128c7e] border border-[#e9edef] rounded-full text-xs font-bold disabled:opacity-40 transition-all touch-press"
+              >
+                ‹ Sebelumnya
+              </button>
+              <span className="text-[11px] font-bold text-[#54656f]">
+                Halaman {currentPage}/{totalPages} · {filtered.length} posyandu
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+                className="px-3.5 py-2 bg-white hover:bg-[#f0f2f5] text-[#128c7e] border border-[#e9edef] rounded-full text-xs font-bold disabled:opacity-40 transition-all touch-press"
+              >
+                Berikutnya ›
+              </button>
+            </div>
+          )}
         </div>
       )}
 

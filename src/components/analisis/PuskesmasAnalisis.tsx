@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  LineChart, Line, PieChart, Pie, Cell,
+  LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { TrendingUp, Users, AlertTriangle } from 'lucide-react';
@@ -10,15 +10,16 @@ import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
 import { GrowthStatusDistribution } from './GrowthStatusDistribution';
 import { WeightProgressionCard } from './WeightProgressionCard';
+import { OutcomeDonut } from './OutcomeDonut';
+import { IndicatorDrillSheet } from './IndicatorDrillSheet';
 import { PeriodControl, periodToRange } from './PeriodControl';
 import { UnitScoreboard } from './UnitScoreboard';
 import { EmptyState } from './EmptyState';
-import { PARTISIPASI_BURUK_THRESHOLD } from '@/lib/clinical';
+import { PARTISIPASI_BURUK_THRESHOLD, INDICATORS } from '@/lib/clinical';
+
 
 type CoverageData = { ym: string; unitId: string; unitName: string; numerator: number; denominator: number; participation: number };
 type OutcomeData = { ym: string; unitId: string; unitName: string; total: number; normal: number; abnormal: number; notAssessed: number; abnormalByIndicator: Record<string, number> };
-
-const PIE_COLORS = ['#22c55e', '#ef4444', '#cbd5e1'];
 
 function formatYM(ym: string): string {
   const [y, m] = ym.split('-');
@@ -32,6 +33,7 @@ export function PuskesmasAnalisis() {
   const [posyanduCoverage, setPosyanduCoverage] = useState<CoverageData[]>([]);
   const [posyanduOutcome, setPosyanduOutcome] = useState<OutcomeData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [indicatorDrill, setIndicatorDrill] = useState<{ key: string; label: string } | null>(null);
 
   const { from, to } = useMemo(() => periodToRange(period), [period]);
 
@@ -114,6 +116,14 @@ export function PuskesmasAnalisis() {
     return assessed > 0 ? Math.round((latestOutcome.normal / assessed) * 100) : 0;
   }, [latestOutcome]);
 
+  const abnormalByIndicator = useMemo(() => {
+    if (!latestOutcome) return [];
+    return INDICATORS
+      .map((ind) => ({ key: ind.key, label: ind.label, count: latestOutcome.abnormalByIndicator[ind.key] ?? 0 }))
+      .filter((x) => x.count > 0)
+      .sort((a, b) => b.count - a.count);
+  }, [latestOutcome]);
+
   if (loading && posyanduCoverage.length === 0) {
     return <div className="p-8 text-center text-sm font-bold text-[#54656f]">Memuat data statistik...</div>;
   }
@@ -172,14 +182,28 @@ export function PuskesmasAnalisis() {
       {/* 3. Donut */}
       {pieData.length > 0 && pieData.some(d => d.value > 0) && (
         <ChartCard title="Distribusi Hasil Pengukuran" subtitle={`Bulan ${formatYM(latestMonth)}`}>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value"                 label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
-                {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+          <OutcomeDonut data={pieData} />
+        </ChartCard>
+      )}
+
+      {/* 3b. Temuan per indikator — klik untuk detail per posyandu */}
+      {abnormalByIndicator.length > 0 && (
+        <ChartCard title="Temuan Tidak Normal per Indikator" subtitle={`Bulan ${formatYM(latestMonth)} — klik untuk lihat per posyandu`}>
+          <div className="space-y-1.5">
+            {abnormalByIndicator.map((ind) => (
+              <button
+                key={ind.key}
+                type="button"
+                onClick={() => setIndicatorDrill({ key: ind.key, label: ind.label })}
+                className="w-full flex items-center justify-between gap-2 bg-white rounded-xl border border-[#e9edef] p-2.5 text-left hover:bg-[#f0f2f5] transition-colors"
+              >
+                <span className="text-xs font-bold text-[#111b21] truncate">{ind.label}</span>
+                <span className="text-xs font-extrabold text-red-600 shrink-0">
+                  {ind.count} <span className="text-[#128c7e]">›</span>
+                </span>
+              </button>
+            ))}
+          </div>
         </ChartCard>
       )}
 
@@ -205,6 +229,17 @@ export function PuskesmasAnalisis() {
           <p className="text-[10px] text-[#54656f] font-bold">Posyandu</p>
         </div>
       </div>
+
+      {indicatorDrill && (
+        <IndicatorDrillSheet
+          indicator={indicatorDrill.key}
+          label={indicatorDrill.label}
+          from={from}
+          to={to}
+          scope="posyandu"
+          onClose={() => setIndicatorDrill(null)}
+        />
+      )}
     </div>
   );
 }

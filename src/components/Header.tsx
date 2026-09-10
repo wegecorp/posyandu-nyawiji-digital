@@ -148,13 +148,13 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {/* Export Excel Button */}
+          {/* Rekap Ringkas */}
           {showTools && (
             <button
               onClick={onOpenExport}
-              aria-label="Export Rekap Excel"
+              aria-label="Rekap Ringkas"
               className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
-              title="Export Excel Rekap Data"
+              title="Rekap Ringkas"
             >
               <FileSpreadsheet className="w-5 h-5 text-[#25d366]" />
             </button>

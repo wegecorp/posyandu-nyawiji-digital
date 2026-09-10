@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  LineChart, Line, PieChart, Pie, Cell,
+  LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { TrendingUp, AlertTriangle, User } from 'lucide-react';
@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
 import { GrowthStatusDistribution } from './GrowthStatusDistribution';
 import { WeightProgressionCard } from './WeightProgressionCard';
+import { OutcomeDonut } from './OutcomeDonut';
 import { PeriodControl, periodToRange } from './PeriodControl';
 import { EmptyState } from './EmptyState';
 import { INDICATORS } from '@/lib/clinical';
@@ -21,8 +22,6 @@ type AbnormalPatient = {
   indicatorKey: string; indicatorLabel: string; unit: string; value: number | string;
   posyanduId: string; posyanduName: string; kalurahan: string; ym: string;
 };
-
-const PIE_COLORS = ['#22c55e', '#ef4444', '#cbd5e1'];
 
 function formatYM(ym: string): string {
   const [y, m] = ym.split('-');
@@ -167,14 +166,7 @@ export function PosyanduAnalisis() {
       {/* 2. Donut */}
       {pieData.length > 0 && pieData.some(d => d.value > 0) && (
         <ChartCard title="Distribusi Hasil Pengukuran" subtitle={`Bulan ${formatYM(latestMonth)}`}>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value"                 label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
-                {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+          <OutcomeDonut data={pieData} />
         </ChartCard>
       )}
 

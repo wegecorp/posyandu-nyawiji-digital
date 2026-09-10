@@ -849,7 +849,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
         <div className="max-w-xl mx-auto">
           <button
             onClick={onBackToList}
-            className="w-full h-14 bg-[#25d366] hover:bg-[#128c7e] text-white font-black rounded-2xl text-base shadow-lg flex items-center justify-center gap-2 transition-all touch-press active:scale-[0.98]"
+            className="w-full h-14 bg-[#25d366] hover:bg-[#128c7e] text-white font-black rounded-2xl text-sm shadow-lg flex items-center justify-center gap-2 transition-all touch-press active:scale-[0.98]"
           >
             <CheckCircle2 className="w-6 h-6 text-white" />
             <span>{isReadOnly ? 'Tutup & Kembali ke Daftar' : 'Selesai — Kembali ke Daftar'}</span>
@@ -941,7 +941,7 @@ function MetricField({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className={`${numInputCls} ${size === 'lg' ? 'text-2xl' : 'text-lg'}`}
+            className={`${numInputCls} ${size === 'lg' ? 'text-xl' : 'text-lg'}`}
           />
         </div>
         <span className="text-[10px] font-extrabold text-[#075e54] bg-white border border-[#e9edef] rounded-lg px-2 py-1 shrink-0">
@@ -989,16 +989,16 @@ function BloodPressureField({
             value={systolic}
             onChange={(e) => onSystolic(e.target.value)}
             placeholder="Sistolik"
-            className={`${numInputCls} text-xl`}
+            className={`${numInputCls} text-lg`}
           />
-          <span className="text-xl font-bold text-[#8696a0] shrink-0">/</span>
+          <span className="text-lg font-bold text-[#8696a0] shrink-0">/</span>
           <input
             type="number"
             inputMode="numeric"
             value={diastolic}
             onChange={(e) => onDiastolic(e.target.value)}
             placeholder="Diastolik"
-            className={`${numInputCls} text-xl`}
+            className={`${numInputCls} text-lg`}
           />
           <span className="text-[10px] font-extrabold text-[#075e54] bg-white border border-[#e9edef] rounded-lg px-2 py-1 shrink-0">
             mmHg

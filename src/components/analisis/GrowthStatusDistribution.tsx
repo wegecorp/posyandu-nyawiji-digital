@@ -7,6 +7,8 @@ import {
 } from 'recharts';
 import { AlertTriangle, Users, Baby } from 'lucide-react';
 import { ChartCard } from './ChartCard';
+import { DrillSheet } from './DrillSheet';
+import { PatientDrillList } from './PatientDrillList';
 
 type CategoryCount = { key: string; label: string; color: string; count: number; percent: number };
 type GrowthResp = {
@@ -34,6 +36,7 @@ export function GrowthStatusDistribution({ from, to }: { from: string; to: strin
   const [indicator, setIndicator] = useState('BB_U');
   const [data, setData] = useState<GrowthResp | null>(null);
   const [loading, setLoading] = useState(true);
+  const [drill, setDrill] = useState<{ key: string; label: string } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -95,28 +98,36 @@ export function GrowthStatusDistribution({ from, to }: { from: string; to: strin
           </p>
         ) : (
           <>
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie
-                  data={pie}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={85}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                >
-                  {pie.map((d, i) => (
-                    <Cell key={i} fill={d.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <div role="img" aria-label="Distribusi status gizi balita">
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie
+                    data={pie}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={85}
+                    dataKey="value"
+                    isAnimationActive={false}
+                  >
+                    {pie.map((d, i) => (
+                      <Cell key={i} fill={d.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
 
             <div className="mt-2 space-y-1">
               {data.categories.map((c) => (
-                <div key={c.key} className="flex items-center justify-between text-[11px]">
+                <button
+                  key={c.key}
+                  type="button"
+                  disabled={c.count === 0}
+                  onClick={() => setDrill({ key: c.key, label: c.label })}
+                  className="w-full flex items-center justify-between text-[11px] text-left rounded-lg px-1 py-0.5 hover:bg-[#f0f2f5] disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
+                >
                   <span className="flex items-center gap-1.5 font-bold text-[#54656f]">
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c.color }} />
                     {c.label}
@@ -124,8 +135,9 @@ export function GrowthStatusDistribution({ from, to }: { from: string; to: strin
                   <span className="font-extrabold text-[#111b21]">
                     {c.count}{' '}
                     <span className="text-[#8696a0] font-bold">({c.percent.toFixed(1)}%)</span>
+                    {c.count > 0 && <span className="text-[#128c7e] font-bold"> ›</span>}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
             <p className="mt-2 text-[10px] text-[#8696a0] font-medium">
@@ -167,6 +179,20 @@ export function GrowthStatusDistribution({ from, to }: { from: string; to: strin
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
+      )}
+
+      {drill && (
+        <DrillSheet
+          title={`Status Gizi: ${drill.label}`}
+          subtitle={subtitle}
+          onClose={() => setDrill(null)}
+        >
+          <PatientDrillList
+            key={`${indicator}-${drill.key}`}
+            baseUrl={`/api/stats/growth-patients?indicator=${indicator}&category=${drill.key}&from=${from}&to=${to}`}
+            emptyText="Tidak ada balita pada kategori ini."
+          />
+        </DrillSheet>
       )}
     </>
   );

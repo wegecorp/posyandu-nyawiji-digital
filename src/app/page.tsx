@@ -8,7 +8,7 @@ import { PatientCard } from '@/components/PatientCard';
 import { DynamicMeasurementForm } from '@/components/DynamicMeasurementForm';
 import { QuickRegisterModal } from '@/components/QuickRegisterModal';
 import { QRModal } from '@/components/QRModal';
-import { RekapExportModal } from '@/components/RekapExportModal';
+import { ReportModal } from '@/components/ReportModal';
 import { LoginModal } from '@/components/LoginModal';
 import { PuskesmasDashboard } from '@/components/PuskesmasDashboard';
 import { DinkesDashboard } from '@/components/DinkesDashboard';
@@ -458,8 +458,8 @@ export default function PosyanduApp() {
         onClose={() => setIsQRViewOpen(false)}
       />
 
-      {/* 4. Rekap Excel Export Modal */}
-      <RekapExportModal
+      {/* 4. Rekap Ringkas (menggantikan export mentah) */}
+      <ReportModal
         isOpen={isExportOpen}
         onClose={() => setIsExportOpen(false)}
       />

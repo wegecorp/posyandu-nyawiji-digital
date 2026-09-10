@@ -43,6 +43,20 @@ export async function GET(req: Request) {
       where.posyanduId = session.posyanduId;
     }
 
+    // Drill filter unit (dipakai detail per-indikator). Tetap menghormati scope peran.
+    const unitId = searchParams.get('unitId');
+    const unitLevel = searchParams.get('unitLevel');
+    if (unitId && session.role !== 'POSYANDU') {
+      if (unitLevel === 'puskesmas') {
+        if (session.role === 'PUSKESMAS' && unitId !== session.healthCenterId) {
+          return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 });
+        }
+        where.posyandu = { healthCenterId: unitId };
+      } else {
+        where.posyanduId = unitId;
+      }
+    }
+
     // Override with month filter if specified
     if (ym) {
       const [year, month] = ym.split('-').map(Number);
@@ -85,6 +99,8 @@ export async function GET(req: Request) {
       posyanduName: string;
       kalurahan: string;
       ym: string;
+      meta: string;
+      note: string;
     }[] = [];
 
     for (const row of rawRows) {
@@ -132,12 +148,25 @@ export async function GET(req: Request) {
             posyanduName: row.posyandu.name,
             kalurahan: row.posyandu.kalurahan?.name ?? '',
             ym: ymVal,
+            meta: `${row.posyandu.name} · ${row.posyandu.kalurahan?.name ?? ''}`,
+            note: ind.label,
           });
         }
       }
     }
 
-    return NextResponse.json({ success: true, data: results });
+    // Pagination opsional: tanpa `page`, kembalikan semua (kompatibel pemakaian lama).
+    const pageParam = searchParams.get('page');
+    let data = results;
+    const total = results.length;
+    if (pageParam) {
+      const page = Math.max(1, Number(pageParam) || 1);
+      const pageSize = Math.min(100, Math.max(1, Number(searchParams.get('pageSize') ?? 20) || 20));
+      const start = (page - 1) * pageSize;
+      data = results.slice(start, start + pageSize);
+    }
+
+    return NextResponse.json({ success: true, total, data });
   } catch (error) {
     console.error('Stats abnormal-patients error:', error);
     return NextResponse.json({ error: 'Gagal memuat data pasien abnormal' }, { status: 500 });

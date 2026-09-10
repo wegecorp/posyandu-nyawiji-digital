@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  LineChart, Line, BarChart, Bar, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { TrendingUp, Users, AlertTriangle } from 'lucide-react';
 import { ChartCard } from './ChartCard';
 import { GrowthStatusDistribution } from './GrowthStatusDistribution';
 import { WeightProgressionCard } from './WeightProgressionCard';
+import { OutcomeDonut } from './OutcomeDonut';
+import { IndicatorDrillSheet } from './IndicatorDrillSheet';
 import { PeriodControl, periodToRange } from './PeriodControl';
 import { UnitScoreboard } from './UnitScoreboard';
 import { EmptyState } from './EmptyState';
@@ -18,7 +20,6 @@ import { PARTISIPASI_BURUK_THRESHOLD } from '@/lib/clinical';
 type CoverageData = { ym: string; unitId: string; unitName: string; numerator: number; denominator: number; participation: number };
 type OutcomeData = { ym: string; unitId: string; unitName: string; total: number; normal: number; abnormal: number; notAssessed: number; abnormalByIndicator: Record<string, number> };
 
-const PIE_COLORS = ['#22c55e', '#ef4444', '#cbd5e1'];
 const INDICATOR_COLORS: Record<string, string> = {
   hypertension: '#ef4444',
   anemia: '#f97316',
@@ -43,6 +44,7 @@ export function DinkesAnalisis() {
   const [drillHcName, setDrillHcName] = useState<string>('');
   const [drillCoverage, setDrillCoverage] = useState<CoverageData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [indicatorDrill, setIndicatorDrill] = useState<{ key: string; label: string } | null>(null);
 
   const { from, to } = useMemo(() => periodToRange(period), [period]);
 
@@ -130,6 +132,7 @@ export function DinkesAnalisis() {
     return INDICATORS
       .filter(ind => (latestOutcome.abnormalByIndicator[ind.key] ?? 0) > 0)
       .map(ind => ({
+        key: ind.key,
         name: ind.label.length > 20 ? ind.label.slice(0, 18) + '…' : ind.label,
         jumlah: latestOutcome.abnormalByIndicator[ind.key] ?? 0,
         fill: INDICATOR_COLORS[ind.key] ?? '#8884d8',
@@ -233,27 +236,31 @@ export function DinkesAnalisis() {
       {/* 3. Donut — Distribusi Normal vs Tidak Normal */}
       {pieData.length > 0 && pieData.some(d => d.value > 0) && (
         <ChartCard title="Distribusi Hasil Pengukuran" subtitle={`Bulan ${formatYM(latestMonth)}`}>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value"                 label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
-                {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+          <OutcomeDonut data={pieData} />
         </ChartCard>
       )}
 
       {/* 4. Stacked Bar — Abnormal per Indikator */}
       {abnormalByIndicator.length > 0 && (
-        <ChartCard title="Temuan Tidak Normal per Indikator" subtitle={`Bulan ${formatYM(latestMonth)}`}>
+        <ChartCard title="Temuan Tidak Normal per Indikator" subtitle={`Bulan ${formatYM(latestMonth)} — klik batang untuk lihat per wilayah`}>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={abnormalByIndicator}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e9edef" />
               <XAxis dataKey="name" tick={{ fontSize: 9 }} stroke="#8696a0" />
               <YAxis tick={{ fontSize: 10 }} stroke="#8696a0" />
               <Tooltip />
-              <Bar dataKey="jumlah" radius={[4, 4, 0, 0]}>
+              <Bar
+                dataKey="jumlah"
+                radius={[4, 4, 0, 0]}
+                cursor="pointer"
+                onClick={(entry) => {
+                  const e = entry as { key?: string; payload?: { key?: string } };
+                  const k = e.key ?? e.payload?.key;
+                  if (!k) return;
+                  const ind = INDICATORS.find((i) => i.key === k);
+                  if (ind) setIndicatorDrill({ key: ind.key, label: ind.label });
+                }}
+              >
                 {abnormalByIndicator.map((entry, i) => (
                   <Cell key={i} fill={entry.fill} />
                 ))}
@@ -287,6 +294,17 @@ export function DinkesAnalisis() {
           <p className="text-[10px] text-[#54656f] font-bold">Terdaftar</p>
         </div>
       </div>
+
+      {indicatorDrill && (
+        <IndicatorDrillSheet
+          indicator={indicatorDrill.key}
+          label={indicatorDrill.label}
+          from={from}
+          to={to}
+          scope="puskesmas"
+          onClose={() => setIndicatorDrill(null)}
+        />
+      )}
     </div>
   );
 }

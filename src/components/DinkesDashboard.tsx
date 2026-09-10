@@ -58,6 +58,7 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showAllPos, setShowAllPos] = useState<Record<string, boolean>>({});
 
   const [kapanewonList, setKapanewonList] = useState<KapanewonRef[]>([]);
 
@@ -288,7 +289,7 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
             className="flex items-center gap-1.5 bg-white text-[#075e54] hover:bg-[#e7fceb] px-3.5 py-1.5 rounded-full text-xs font-bold transition-all touch-press"
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>Export Se-Kabupaten</span>
+            <span>Rekap Kabupaten</span>
           </button>
         </div>
       </div>
@@ -359,8 +360,9 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
             const pkmUser = pkm.users?.[0];
             const pkmPending = !!pkmUser?.mustChangePassword;
             const isOpen = expandedId === pkm.id || !!q;
-            const groups = groupByKalurahan(pkm.posyandus);
             const posCount = pkm.posyandus?.length || 0;
+            const visiblePosyandus = showAllPos[pkm.id] ? pkm.posyandus : (pkm.posyandus ?? []).slice(0, 10);
+            const groups = groupByKalurahan(visiblePosyandus);
             return (
               <div key={pkm.id} className="bg-white rounded-[20px] border border-[#e9edef] shadow-xs overflow-hidden">
                 {/* Puskesmas header (click to expand) */}
@@ -491,6 +493,14 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
                             </div>
                           </div>
                         ))}
+                        {posCount > 10 && !showAllPos[pkm.id] && (
+                          <button
+                            onClick={() => setShowAllPos((s) => ({ ...s, [pkm.id]: true }))}
+                            className="w-full py-2.5 bg-[#f0f2f5] hover:bg-[#e9edef] text-[#128c7e] border border-[#e9edef] rounded-xl text-xs font-bold transition-all touch-press"
+                          >
+                            Tampilkan semua ({posCount} posyandu)
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>

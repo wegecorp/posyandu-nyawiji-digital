@@ -121,6 +121,7 @@ cd /opt/posyandu_digital
 git pull
 npm ci
 npx prisma db push          # schema baru
+npm run db:backfill         # isi kolom turunan (N/T & 2T) utk data lama — idempoten
 npm run data:gunungkidul -- /tmp/daftarposyandu.csv   # data terbaru (opsional)
 npm run build
 pm2 restart posyandu-digital

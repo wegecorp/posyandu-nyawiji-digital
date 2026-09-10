@@ -308,8 +308,9 @@ Tes baru: `src/lib/analytics.test.ts` (belum dinilai, abnormal, appliesTo, dedup
 | Badge N/T & 2T | ✅ | Tab Riwayat (`DynamicMeasurementForm`) + status BB/U & BB/TB kini tampil |
 | Watchlist peran atas | ✅ | `WeightProgressionCard.tsx` dipakai di Posyandu/Puskesmas/Dinkes Analisis |
 
-**Catatan operasional:** setelah deploy, jalankan sekali `POST /api/dinkes/backfill-growth`
-(khusus DINKES) untuk mengisi kolom baru pada data lama — respons menyertakan `weightUpdated`.
+**Catatan operasional:** setelah deploy, isi kolom baru pada data lama dengan salah satu cara:
+`npm run db:backfill` (CLI, idempoten, lihat `scripts/backfill-weight-progression.mjs`) **atau**
+`POST /api/dinkes/backfill-growth` (khusus DINKES, respons menyertakan `weightUpdated`).
 **Kader beranda chip 2T di daftar pasien belum dikerjakan** (butuh query latest-per-patient); masuk Wave 3.
 
 Verifikasi: `npm test` 102 lulus (+7 `weight-progression.test.ts`), `npm run lint` 0 error,
@@ -328,7 +329,16 @@ Verifikasi: `npm test` 102 lulus (+7 `weight-progression.test.ts`), `npm run lin
 | Chip 2T kader | ✅ | `PatientData.faltering2T` dari pengukuran terbaru; chip merah "2T — perlu rujuk" di `PatientCard` |
 | Belum ditimbang | ✅ | BALITA tanpa ukur bulan berjalan → `lastMeasuredAt`/`measuredThisMonth` di `/api/patients`; badge "Belum ditimbang bulan ini" di `PatientCard`; ringkasan cakupan bulan ini (`coverage` dari `/api/stats/weight-progression`) di `WeightProgressionCard` |
 
-**Sisa (belum):** F10 (chip riwayat menyembunyikan nilai 0 — minor), F19 (batas bulan bergantung TZ server),
-F20 (aksesibilitas chart: label/legend/aria), F21 (tren menyambung lintasi bulan tanpa data).
+| F19 | ✅ | `monthRange` (`analytics.ts`) mem-parse tanggal sebagai **lokal** (`parseLocalDate`), bukan UTC — memperbaiki bucket bulan bergeser di server ber-offset negatif |
 
-Verifikasi: `npm test` 106 lulus (+4 `PeriodControl.test.ts`), `npm run lint` 0 error, `npm run build` sukses.
+**Sisa (belum):** F10 (chip riwayat menyembunyikan nilai 0 — minor), F20 (aksesibilitas chart:
+label/legend/aria), F21 (tren menyambung lintasi bulan tanpa data).
+
+**Verifikasi (diperkuat):**
+- `src/lib/month-range.test.ts` — loop merah/hijau lintas TZ (`Asia/Jakarta`/`UTC`/`America/New_York`).
+- `src/lib/analytics.integration.test.ts` — DB SQLite sementara: `fetchOutcomeBase`+`classifyOutcomes`
+  (dedupe/belum-dinilai/`appliesTo`), `fetchCoverageBase` (denominator historis), dan rantai
+  `recomputePatientWeightProgression` (N/T/2T + hitung ulang setelah edit pengukuran lama).
+- Ops: `npm run db:backfill` ditambahkan ke `package.json` + `DEPLOY-VPS.md` §7.
+
+`npm test` 110 lulus (12 file), `npm run lint` 0 error, `npm run build` sukses.

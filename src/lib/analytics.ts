@@ -220,10 +220,19 @@ export function aggregateToKabupaten(base: CoverageRow[], months: string[]): Agg
   });
 }
 
+/**
+ * Parse 'YYYY-MM-DD' sebagai tanggal LOKAL (bukan UTC seperti `new Date('YYYY-MM-DD')`).
+ * Mencegah pergeseran bulan pada server ber-offset negatif (mis. '2025-10-01' → Sep).
+ */
+function parseLocalDate(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+
 /** Generate YYYY-MM keys in range. */
 export function monthRange(from: string, to: string): string[] {
-  const start = new Date(from);
-  const end = new Date(to);
+  const start = parseLocalDate(from);
+  const end = parseLocalDate(to);
   const months: string[] = [];
   const cur = new Date(start.getFullYear(), start.getMonth(), 1);
   while (cur <= end) {

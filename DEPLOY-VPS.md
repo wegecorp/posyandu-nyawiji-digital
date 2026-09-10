@@ -78,9 +78,15 @@ pm2 save
 pm2 startup   # ikuti instruksi yang muncul agar autostart saat reboot
 ```
 
+Port diambil dari env `PORT`; default `3001`. Kalau perlu ganti:
+
+```bash
+PORT=4000 pm2 start ecosystem.config.cjs --update-env
+```
+
 Cek: `pm2 status` dan `pm2 logs posyandu-digital`.
 
-Aplikasi berjalan di `http://IP_VPS:3000`.
+Aplikasi berjalan di `http://IP_VPS:3001`.
 
 ## 6. (Opsional) Reverse proxy Nginx + HTTPS
 
@@ -90,7 +96,7 @@ server {
     server_name posyandu.domain.id;
 
     location / {
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://127.0.0.1:3001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";

@@ -23,12 +23,16 @@ let exitGuardOnExit: BackHandler | null = null;
 let nextId = 1;
 let suppressPop = 0;
 let listenerAttached = false;
+let exiting = false;
 
 function pushGuardEntry() {
   if (typeof window !== 'undefined') window.history.pushState({ bn: 'root' }, '');
 }
 
 function handlePopState() {
+  // Sedang keluar: jangan konsumsi layer/guard — biarkan browser menutup app.
+  if (exiting) return;
+
   if (suppressPop > 0) {
     suppressPop -= 1;
     return;
@@ -123,8 +127,17 @@ export function useExitGuard(enabled: boolean, onExit: BackHandler) {
 
 /** Keluar dari aplikasi: coba tutup window, fallback mundur keluar dari PWA. */
 export function exitApp() {
+  // Matikan konsumsi popstate & guard agar layer (mis. layer modal konfirmasi
+  // itu sendiri) tidak "menelan" back dan menggagalkan keluar.
+  exiting = true;
+  exitGuardActive = false;
+  exitGuardOnExit = null;
+  layers.length = 0;
+
   window.close();
   window.setTimeout(() => {
-    window.history.go(-1);
+    // window.close() diblokir (bukan script-opened): mundur melewati seluruh
+    // history milik app agar browser/WebAPK menutup aplikasi.
+    window.history.go(-window.history.length);
   }, 60);
 }

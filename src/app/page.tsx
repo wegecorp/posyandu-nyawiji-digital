@@ -18,6 +18,7 @@ import { EditPatientModal } from '@/components/EditPatientModal';
 import { ChangePasswordModal } from '@/components/ChangePasswordModal';
 import { ExitConfirmModal } from '@/components/ExitConfirmModal';
 import { useBackLayer, useExitGuard } from '@/lib/back-navigation';
+import { isStandaloneMode } from '@/lib/pwa';
 import {
   Search,
   UserPlus,
@@ -197,7 +198,8 @@ export default function PosyanduApp() {
   };
 
   // Navigasi tombol back OS/hardware — tiap layer menggeser satu history entry.
-  useExitGuard(Boolean(user), () => setIsExitConfirmOpen(true));
+  // Pop-up keluar hanya di mode standalone (PWA terpasang); di browser biarkan back native.
+  useExitGuard(Boolean(user) && isStandaloneMode(), () => setIsExitConfirmOpen(true));
   useBackLayer(mainView === 'analisis', () => setMainView('beranda'));
   useBackLayer(activeViewMode === 'posyandu_table', () => setActiveViewMode('default'));
   useBackLayer(Boolean(selectedPatient), goBackToList);

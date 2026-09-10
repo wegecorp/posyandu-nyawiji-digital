@@ -20,7 +20,7 @@ import {
   Info,
   Download,
 } from 'lucide-react';
-import { usePwaInstall, type InstallGuide } from '@/lib/pwa';
+import { usePwaInstall, isStandaloneMode, type InstallGuide } from '@/lib/pwa';
 import { InstallAppModal } from '@/components/InstallAppModal';
 import { ExitConfirmModal } from '@/components/ExitConfirmModal';
 import { useBackLayer, useExitGuard } from '@/lib/back-navigation';
@@ -177,7 +177,8 @@ export function AuthPage() {
   };
 
   // Navigasi tombol back OS/hardware.
-  useExitGuard(true, () => setIsExitConfirmOpen(true));
+  // Pop-up keluar hanya di mode standalone (PWA terpasang); di browser biarkan back native.
+  useExitGuard(isStandaloneMode(), () => setIsExitConfirmOpen(true));
   useBackLayer(Boolean(activation), () => setActivation(null));
   useBackLayer(tab === 'posyandu' && step > 0 && !activation, goBack);
 

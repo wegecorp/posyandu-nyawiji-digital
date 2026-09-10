@@ -67,3 +67,25 @@ describe('useExitGuard', () => {
     expect(onExit).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('exitApp', () => {
+  it('tidak membiarkan layer menelan back saat keluar aplikasi', async () => {
+    const { useBackLayer, useExitGuard, exitApp } = await loadModule();
+    const onBack = vi.fn();
+    const onExit = vi.fn();
+
+    renderHook(() => useExitGuard(true, onExit));
+    renderHook(() => useBackLayer(true, onBack));
+
+    const closeSpy = vi.spyOn(window, 'close').mockImplementation(() => {});
+    const goSpy = vi.spyOn(window.history, 'go').mockImplementation(() => {});
+    exitApp();
+    closeSpy.mockRestore();
+    goSpy.mockRestore();
+
+    pressBack();
+
+    expect(onBack).not.toHaveBeenCalled();
+    expect(onExit).not.toHaveBeenCalled();
+  });
+});

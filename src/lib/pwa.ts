@@ -31,7 +31,7 @@ function emit() {
   for (const listener of listeners) listener();
 }
 
-function isStandaloneMode(): boolean {
+export function isStandaloneMode(): boolean {
   if (typeof window === 'undefined') return false;
   return (
     window.matchMedia('(display-mode: standalone)').matches ||

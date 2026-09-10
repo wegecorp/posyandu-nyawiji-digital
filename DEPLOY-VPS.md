@@ -120,13 +120,19 @@ sudo certbot --nginx -d posyandu.domain.id
 cd /opt/posyandu_digital
 git pull
 npm ci
+pm2 stop posyandu-digital   # stop dulu: cegah crash-loop saat .next dihapus
 rm -rf .next                # WAJIB bila ada route yang dihapus/diganti (cegah tipe basi)
 npx prisma db push          # schema baru
 npm run db:backfill         # isi kolom turunan (N/T & 2T) utk data lama — idempoten
 npm run data:gunungkidul -- /tmp/daftarposyandu.csv   # data terbaru (opsional)
-npm run build
-pm2 restart posyandu-digital
+npm run build               # HARUS sukses (ada tabel Route) sebelum start
+pm2 start posyandu-digital
+pm2 save
 ```
+
+> **Jangan `pm2 restart` sebelum `npm run build` sukses** — `next start` tanpa `.next/BUILD_ID`
+> akan crash-loop dengan `Could not find a production build in the '.next' directory`.
+> Setelah `rm -rf .next`, build ulang dulu; kalau build OOM, tambah swap (§8).
 
 > Rilis tanpa perubahan skema (mis. hanya UI/endpoint): `prisma db push` dan `db:backfill`
 > boleh dilewati. `rm -rf .next` tetap disarankan bila ada route lama yang dihapus.

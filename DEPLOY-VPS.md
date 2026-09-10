@@ -248,3 +248,19 @@ Setelah restore, cek `pm2 logs posyandu-digital` dan pastikan data terbaca.
   (`Puskesmas Wonosari II`, bukan `... Ii`).
 - Kader login memakai **cascade picker** (Puskesmas → Kalurahan → Posyandu) — tidak perlu username.
 - Staf Puskesmas/DINKES login memakai **username + password** (username tampil di dashboard DINKES).
+
+---
+
+## 10. Checklist lanjutan (status per 2026-09-10)
+
+VPS cadangan: aplikasi jalan di port 3001 (fork mode, `ecosystem.config.cjs`), 3000 dipakai
+`sirkumboy-dashboard`. Backup lokal berjalan di `/var/backups/posyandu`.
+
+- [ ] Setup `rclone` ke Google Drive memakai akun khusus backup — bagian 9b.
+- [ ] Pasang cron backup harian (harian 7 + bulanan 6) — bagian 9c.
+- [ ] Verifikasi backup terkirim ke Drive, lalu **uji restore** sekali — bagian 9d.
+- [ ] Akses publik tanpa beli domain: Nginx + HTTPS via `sslip.io`, aplikasi bind ke
+      `127.0.0.1:3001`, port 3001 ditutup dari publik.
+- [ ] Buka hanya port yang perlu (80/443) untuk challenge certbot + HTTPS.
+- [ ] (Opsional) Redam error bot di log: blokir `POST` ber-header `Next-Action` di Nginx.
+- [ ] Migrasi ke VPS produksi (asli) dengan langkah yang sama.

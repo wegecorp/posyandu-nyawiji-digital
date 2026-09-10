@@ -20,7 +20,6 @@ interface HeaderProps {
   onOpenScanQR: () => void;
   onOpenExport: () => void;
   onOpenLogin: () => void;
-  onBackToDashboard?: () => void;
   showTools?: boolean;
   mainView?: 'beranda' | 'analisis';
   onNavigateMainView?: (view: 'beranda' | 'analisis') => void;
@@ -30,7 +29,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenScanQR,
   onOpenExport,
   onOpenLogin,
-  onBackToDashboard,
   showTools = true,
   mainView = 'beranda',
   onNavigateMainView,
@@ -122,17 +120,6 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Header Action Buttons */}
         <div className="flex items-center gap-2">
-          {(user?.role === 'PUSKESMAS' || user?.role === 'DINKES') && onBackToDashboard && (
-            <button
-              onClick={onBackToDashboard}
-              className="flex items-center gap-1.5 bg-[#128c7e] hover:bg-[#054c44] text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-xs transition-all touch-press border border-white/20"
-              title="Kembali ke Dashboard Utama"
-            >
-              <LayoutDashboard className="w-4 h-4 text-white" />
-              <span className="hidden sm:inline">Dashboard</span>
-            </button>
-          )}
-
           {/* Install Aplikasi (PWA) ke Layar Utama */}
           {showInstallButton && (
             <button

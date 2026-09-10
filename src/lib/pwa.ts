@@ -13,6 +13,26 @@ export type InstallTapResult = { action: 'prompted' } | { action: 'guide'; guide
 
 const INSTALLED_FLAG_KEY = 'nyawiji_pwa_installed';
 
+// ---------------------------------------------------------------------------
+// State tingkat-modul (singleton).
+//
+// Event `beforeinstallprompt` hanya dipancarkan SEKALI per page load. Bila
+// listener dipasang per-komponen (sebelumnya di dalam useEffect), event bisa
+// hilang saat komponen unmount — mis. login page hilang setelah login sukses,
+// lalu Header memasang listener baru dan prompt sudah tidak ada. Menyimpan
+// prompt & status di tingkat modul membuatnya bertahan lintas mount.
+// ---------------------------------------------------------------------------
+
+let initialized = false;
+let deferredPrompt: BeforeInstallPromptEvent | null = null;
+let installed = false;
+let ready = false;
+const listeners = new Set<() => void>();
+
+function emit() {
+  for (const listener of listeners) listener();
+}
+
 function safeLocalStorageGet(key: string): string | null {
   try {
     return window.localStorage.getItem(key);
@@ -36,6 +56,65 @@ function isStandaloneMode(): boolean {
     (window.navigator as unknown as { standalone?: boolean }).standalone === true
   );
 }
+
+function readInstalled(): boolean {
+  return isStandaloneMode() || safeLocalStorageGet(INSTALLED_FLAG_KEY) === '1';
+}
+
+function init() {
+  if (initialized || typeof window === 'undefined') return;
+  initialized = true;
+
+  const onBeforeInstallPrompt = (event: Event) => {
+    // Tahan prompt bawaan browser agar hanya tombol "INSTALL APLIKASI" kita
+    // yang memicunya (dan prompt bisa dipakai lagi kapan pun).
+    event.preventDefault();
+    deferredPrompt = event as BeforeInstallPromptEvent;
+    emit();
+  };
+
+  const onAppInstalled = () => {
+    installed = true;
+    deferredPrompt = null;
+    safeLocalStorageSet(INSTALLED_FLAG_KEY, '1');
+    emit();
+  };
+
+  const onDisplayModeChange = (event: MediaQueryListEvent) => {
+    if (event.matches) {
+      installed = true;
+      safeLocalStorageSet(INSTALLED_FLAG_KEY, '1');
+      emit();
+    }
+  };
+
+  window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+  window.addEventListener('appinstalled', onAppInstalled);
+
+  const mediaQuery = window.matchMedia('(display-mode: standalone)');
+  if (typeof mediaQuery.addEventListener === 'function') {
+    mediaQuery.addEventListener('change', onDisplayModeChange);
+  } else if (
+    typeof (mediaQuery as { addListener?: (cb: (e: MediaQueryListEvent) => void) => void }).addListener ===
+    'function'
+  ) {
+    (mediaQuery as unknown as { addListener: (cb: (e: MediaQueryListEvent) => void) => void }).addListener(
+      onDisplayModeChange
+    );
+  }
+
+  // Deteksi status awal ditunda (bukan sinkron saat import) agar tidak memicu
+  // cascading render / hydration mismatch.
+  window.setTimeout(() => {
+    installed = readInstalled();
+    ready = true;
+    emit();
+  }, 0);
+}
+
+// Pasang listener sedini mungkin saat modul dimuat di browser — sebelum React
+// sempat melewatkan event.
+if (typeof window !== 'undefined') init();
 
 export function detectPlatform() {
   if (typeof navigator === 'undefined') {
@@ -72,56 +151,31 @@ export function guideForPlatform(): InstallGuide {
   return 'unsupported';
 }
 
+interface PwaSnapshot {
+  ready: boolean;
+  installed: boolean;
+  canNativePrompt: boolean;
+}
+
 export function usePwaInstall() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [installed, setInstalled] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [snapshot, setSnapshot] = useState<PwaSnapshot>(() => ({
+    ready: false,
+    installed: false,
+    canNativePrompt: false,
+  }));
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    // Deteksi status awal ditunda sebentar (bukan sinkron di body effect) agar
-    // tidak memicu cascading render & tidak menimbulkan hydration mismatch.
-    const detectTimer = window.setTimeout(() => {
-      setInstalled(safeLocalStorageGet(INSTALLED_FLAG_KEY) === '1' || isStandaloneMode());
-      setReady(true);
-    }, 0);
-
-    const onBeforeInstallPrompt = (event: Event) => {
-      // Tahan prompt bawaan browser agar tombol "INSTALL APLIKASI" kita yang memicunya.
-      event.preventDefault();
-      setDeferredPrompt(event as BeforeInstallPromptEvent);
-    };
-
-    const onAppInstalled = () => {
-      setInstalled(true);
-      safeLocalStorageSet(INSTALLED_FLAG_KEY, '1');
-    };
-
-    const onDisplayModeChange = (event: MediaQueryListEvent) => {
-      if (event.matches) {
-        setInstalled(true);
-        safeLocalStorageSet(INSTALLED_FLAG_KEY, '1');
-      }
-    };
-
-    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
-    window.addEventListener('appinstalled', onAppInstalled);
-
-    const mediaQuery = window.matchMedia('(display-mode: standalone)');
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', onDisplayModeChange);
-    } else if (typeof (mediaQuery as { addListener?: (cb: (e: MediaQueryListEvent) => void) => void }).addListener === 'function') {
-      (mediaQuery as unknown as { addListener: (cb: (e: MediaQueryListEvent) => void) => void }).addListener(onDisplayModeChange);
-    }
-
+    init();
+    const update = () =>
+      setSnapshot({
+        ready,
+        installed,
+        canNativePrompt: Boolean(deferredPrompt),
+      });
+    listeners.add(update);
+    update();
     return () => {
-      window.clearTimeout(detectTimer);
-      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', onAppInstalled);
-      if (typeof mediaQuery.removeEventListener === 'function') {
-        mediaQuery.removeEventListener('change', onDisplayModeChange);
-      }
+      listeners.delete(update);
     };
   }, []);
 
@@ -133,26 +187,33 @@ export function usePwaInstall() {
    */
   const install = useCallback(async (): Promise<InstallTapResult | null> => {
     if (typeof window === 'undefined') return null;
-    if (isStandaloneMode() || safeLocalStorageGet(INSTALLED_FLAG_KEY) === '1') return null;
+    if (isStandaloneMode() || readInstalled()) return null;
 
-    if (deferredPrompt) {
-      const prompt = deferredPrompt;
-      setDeferredPrompt(null);
+    const prompt = deferredPrompt;
+    if (prompt) {
+      deferredPrompt = null;
+      emit();
       try {
         await prompt.prompt();
+        const choice = await prompt.userChoice;
+        if (choice?.outcome === 'accepted') {
+          installed = true;
+          safeLocalStorageSet(INSTALLED_FLAG_KEY, '1');
+          emit();
+        }
+        return { action: 'prompted' };
       } catch {
         return { action: 'guide', guide: guideForPlatform() };
       }
-      return { action: 'prompted' };
     }
 
     return { action: 'guide', guide: guideForPlatform() };
-  }, [deferredPrompt]);
+  }, []);
 
   return {
     /** Sembunyikan tombol saat belum ter-hydrate, sudah terpasang, atau berjalan sebagai aplikasi. */
-    showInstallButton: ready && !installed,
-    canNativePrompt: Boolean(deferredPrompt),
+    showInstallButton: snapshot.ready && !snapshot.installed,
+    canNativePrompt: snapshot.canNativePrompt,
     install,
   };
 }

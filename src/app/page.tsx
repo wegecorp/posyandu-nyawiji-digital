@@ -218,14 +218,6 @@ export default function PosyanduApp() {
         onOpenExport={() => setIsExportOpen(true)}
         onOpenLogin={() => setIsLoginOpen(true)}
         showTools={user.role === 'POSYANDU' || activeViewMode === 'posyandu_table'}
-        onBackToDashboard={
-          activeViewMode === 'posyandu_table' && (user.role === 'PUSKESMAS' || user.role === 'DINKES')
-            ? () => {
-                setActiveViewMode('default');
-                setSelectedPatient(null);
-              }
-            : undefined
-        }
         mainView={mainView}
         onNavigateMainView={(view) => {
           setMainView(view);

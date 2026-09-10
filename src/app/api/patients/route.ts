@@ -66,6 +66,7 @@ export async function GET(req: Request) {
     type MeasurementRow = Awaited<ReturnType<typeof prisma.measurement.findFirst>>;
     const todayByPatient = new Map<string, NonNullable<MeasurementRow>>();
     const faltering2TPatients = new Set<string>();
+    const latestByPatient = new Map<string, Date>();
     if (patients.length > 0) {
       const ids = patients.map((p) => p.id);
       const [measurements, latestDates] = await Promise.all([
@@ -90,6 +91,7 @@ export async function GET(req: Request) {
       const latestPairs = latestDates
         .filter((l) => l._max.sessionDate)
         .map((l) => ({ patientId: l.patientId, sessionDate: l._max.sessionDate as Date }));
+      for (const l of latestPairs) latestByPatient.set(l.patientId, l.sessionDate);
       if (latestPairs.length > 0) {
         const flagged = await prisma.measurement.findMany({
           where: { OR: latestPairs, weightFaltering2T: true },
@@ -99,10 +101,16 @@ export async function GET(req: Request) {
       }
     }
 
+    const nowMonth = new Date();
     const enrichedPatients = patients.map((p) => {
       const age = calculateAge(p.birthDate);
       const category = getPatientCategory(p.birthDate, p.isPregnant);
       const todayMeasurement = todayByPatient.get(p.id) || null;
+      const latestDate = latestByPatient.get(p.id) ?? null;
+      const measuredThisMonth = latestDate
+        ? latestDate.getFullYear() === nowMonth.getFullYear() &&
+          latestDate.getMonth() === nowMonth.getMonth()
+        : false;
       return {
         ...p,
         category,
@@ -112,6 +120,8 @@ export async function GET(req: Request) {
         todayMeasurement,
         measurementComplete: isMeasurementComplete(todayMeasurement),
         faltering2T: faltering2TPatients.has(p.id),
+        lastMeasuredAt: latestDate ? latestDate.toISOString() : null,
+        measuredThisMonth,
       };
     });
 

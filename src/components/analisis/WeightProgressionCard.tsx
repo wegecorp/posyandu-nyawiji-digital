@@ -17,6 +17,8 @@ type ProgressionRow = {
   belumDinilai: number;
 };
 
+type Coverage = { month: string; balitaTotal: number; balitaMeasured: number };
+
 type FalteringPatient = {
   measurementId: string;
   patientName: string;
@@ -40,6 +42,7 @@ function formatYM(ym: string): string {
 export function WeightProgressionCard({ from, to }: { from: string; to: string }) {
   const [rows, setRows] = useState<ProgressionRow[]>([]);
   const [faltering, setFaltering] = useState<FalteringPatient[]>([]);
+  const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,6 +53,7 @@ export function WeightProgressionCard({ from, to }: { from: string; to: string }
         if (!active || !d.success) return;
         setRows(d.data ?? []);
         setFaltering(d.faltering ?? []);
+        setCoverage(d.coverage ?? null);
       })
       .catch((e) => console.error('Gagal memuat progres berat:', e))
       .finally(() => {
@@ -130,6 +134,18 @@ export function WeightProgressionCard({ from, to }: { from: string; to: string }
             <p className="text-[10px] text-[#54656f] font-bold">2T — rujuk</p>
           </div>
         </div>
+
+        {coverage && coverage.balitaTotal > 0 && (
+          <div className="mb-3 flex items-center justify-between gap-2 p-2.5 rounded-xl border border-[#e9edef] bg-[#f0f2f5]">
+            <span className="text-[11px] font-bold text-[#54656f]">
+              Cakupan penimbangan bulan ini (balita)
+            </span>
+            <span className="text-xs font-extrabold text-[#075e54] shrink-0">
+              {coverage.balitaMeasured}/{coverage.balitaTotal}
+              {` (${Math.round((coverage.balitaMeasured / coverage.balitaTotal) * 100)}%)`}
+            </span>
+          </div>
+        )}
 
         {unitRows.length > 0 && (
           <div className="space-y-1.5">

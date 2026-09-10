@@ -110,6 +110,11 @@ export const PatientCard: React.FC<PatientCardProps> = ({
                 <CircleDashed className="w-3.5 h-3.5 text-[#d97706]" />
                 <span>Diukur sebagian (BB/TB belum lengkap)</span>
               </span>
+            ) : patient.category === 'BALITA' && patient.measuredThisMonth === false ? (
+              <span className="inline-flex items-center gap-1 text-xs font-bold text-red-700 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
+                <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+                <span>Belum ditimbang bulan ini</span>
+              </span>
             ) : (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-[#c2410c] bg-[#fff7ed] px-2.5 py-0.5 rounded-full border border-[#ffedd5]">
                 <CircleDashed className="w-3.5 h-3.5 text-[#ea580c]" />

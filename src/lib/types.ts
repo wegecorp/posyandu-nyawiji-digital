@@ -20,6 +20,10 @@ export interface PatientData {
   measurementComplete?: boolean;
   /** Pengukuran terbaru pasien menandai 2T (2x tidak naik) → perlu rujuk. */
   faltering2T?: boolean;
+  /** Tanggal pengukuran terakhir (ISO) — null bila belum pernah diukur. */
+  lastMeasuredAt?: string | null;
+  /** Apakah pasien sudah diukur pada bulan berjalan. */
+  measuredThisMonth?: boolean;
   latestMeasurement?: MeasurementData | null;
   measurements?: MeasurementData[];
 }

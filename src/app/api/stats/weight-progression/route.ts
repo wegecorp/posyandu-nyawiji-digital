@@ -10,7 +10,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireRole } from '@/lib/api-auth';
 import { getPosyanduInfo } from '@/lib/analytics';
-import { ymOf } from '@/lib/growth-analytics';
+import { registeredBalitaIds, ymOf } from '@/lib/growth-analytics';
 
 export async function GET(req: Request) {
   try {
@@ -49,7 +49,14 @@ export async function GET(req: Request) {
     }
 
     if (posyanduIds.length === 0) {
-      return NextResponse.json({ success: true, data: [], faltering: [], from: fromDate, to: toDate });
+      return NextResponse.json({
+        success: true,
+        data: [],
+        faltering: [],
+        coverage: { month: ymOf(now), balitaTotal: 0, balitaMeasured: 0 },
+        from: fromDate,
+        to: toDate,
+      });
     }
 
     const where = {
@@ -57,10 +64,17 @@ export async function GET(req: Request) {
       sessionDate: { gte: fromObj, lt: toExclusive },
     };
 
-    const [meas, falteringRows, info] = await Promise.all([
+    const [meas, falteringRows, info, patientRows] = await Promise.all([
       prisma.measurement.findMany({
         where,
-        select: { posyanduId: true, sessionDate: true, weight: true, weightStatus: true, weightFaltering2T: true },
+        select: {
+          patientId: true,
+          posyanduId: true,
+          sessionDate: true,
+          weight: true,
+          weightStatus: true,
+          weightFaltering2T: true,
+        },
       }),
       prisma.measurement.findMany({
         where: { ...where, weightFaltering2T: true },
@@ -77,7 +91,25 @@ export async function GET(req: Request) {
         take: 500,
       }),
       getPosyanduInfo(posyanduIds),
+      prisma.patient.findMany({
+        where: { posyanduId: { in: posyanduIds } },
+        select: { id: true, posyanduId: true, gender: true, birthDate: true },
+      }),
     ]);
+
+    // Cakupan penimbangan balita bulan berjalan (BALITA = umur 0-60 bln).
+    const currentYm = ymOf(now);
+    const registeredBalita = registeredBalitaIds(patientRows, now);
+    const measuredThisMonth = new Set(
+      meas.filter((m) => ymOf(m.sessionDate) === currentYm).map((m) => m.patientId),
+    );
+    let balitaMeasured = 0;
+    for (const id of measuredThisMonth) if (registeredBalita.has(id)) balitaMeasured++;
+    const coverage = {
+      month: currentYm,
+      balitaTotal: registeredBalita.size,
+      balitaMeasured,
+    };
 
     type Agg = {
       ym: string;
@@ -130,7 +162,7 @@ export async function GET(req: Request) {
       ym: ymOf(r.sessionDate),
     }));
 
-    return NextResponse.json({ success: true, data, faltering, from: fromDate, to: toDate });
+    return NextResponse.json({ success: true, data, faltering, coverage, from: fromDate, to: toDate });
   } catch (error) {
     console.error('Stats weight-progression error:', error);
     return NextResponse.json({ error: 'Gagal memuat statistik progres berat' }, { status: 500 });

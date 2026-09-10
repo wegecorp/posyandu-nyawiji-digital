@@ -326,9 +326,9 @@ Verifikasi: `npm test` 102 lulus (+7 `weight-progression.test.ts`), `npm run lin
 | F15 | ✅ | Drill-down Dinkes di-refetch saat periode/HC berubah |
 | F18 | ✅ | `ym` daftar abnormal pakai waktu lokal (`ymOf`) |
 | Chip 2T kader | ✅ | `PatientData.faltering2T` dari pengukuran terbaru; chip merah "2T — perlu rujuk" di `PatientCard` |
+| Belum ditimbang | ✅ | BALITA tanpa ukur bulan berjalan → `lastMeasuredAt`/`measuredThisMonth` di `/api/patients`; badge "Belum ditimbang bulan ini" di `PatientCard`; ringkasan cakupan bulan ini (`coverage` dari `/api/stats/weight-progression`) di `WeightProgressionCard` |
 
 **Sisa (belum):** F10 (chip riwayat menyembunyikan nilai 0 — minor), F19 (batas bulan bergantung TZ server),
-F20 (aksesibilitas chart: label/legend/aria), F21 (tren menyambung lintasi bulan tanpa data),
-penanda absen/belum ditimbang.
+F20 (aksesibilitas chart: label/legend/aria), F21 (tren menyambung lintasi bulan tanpa data).
 
 Verifikasi: `npm test` 106 lulus (+4 `PeriodControl.test.ts`), `npm run lint` 0 error, `npm run build` sukses.

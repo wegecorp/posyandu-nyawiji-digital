@@ -180,6 +180,12 @@ rclone mkdir gdrive:posyandu-backup
 sudo BACKUP_ROOT=/var/backups/posyandu scripts/backup-db.sh
 ```
 
+> **Catatan rclone:** gunakan `client_id`/`client_secret` sendiri (bukan shared rclone
+> yang pensiun 2026) dan scope `drive.file` (non-sensitive → tanpa verifikasi/privasi
+> policy). Karena backup dijalankan sebagai **root**, taruh config di
+> `/root/.config/rclone/rclone.conf`. Script otomatis melewati upload bila rclone
+> belum dikonfigurasi.
+
 Cron harian:
 
 ```cron
@@ -280,7 +286,7 @@ Terakhir diperbarui: 2026-09-11.
 - [x] App live dengan HTTPS + domain sendiri
 - [x] PM2 autostart (`pm2 save` + `pm2 startup`, terbukti setelah reboot)
 - [x] Backup lokal harian (cron) ke `/var/backups/posyandu`
-- [ ] **Backup Google Drive (rclone) — TERTUNDA** (menunggu akun Google khusus backup)
+- [x] Backup Google Drive (rclone, `client_id` sendiri + scope `drive.file`), config di `/root/.config/rclone/`
 - [ ] Deploy key GitHub (agar `git pull` tanpa prompt)
 - [ ] Subdomain `www` (opsional)
 - [ ] UAT: `docs/uat-deploy-checklist.md`

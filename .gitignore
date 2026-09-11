@@ -52,7 +52,14 @@ prisma/*.db-shm
 next-env.d.ts
 
 # data kerja / master (belum final, jangan di-track)
+/daftarposyandu.csv
 
 
 # pm2 logs
 /logs
+
+# agent/skill files (bukan bagian aplikasi)
+/.agents/
+/AGENTS.md
+/CLAUDE.md
+/skills-lock.json

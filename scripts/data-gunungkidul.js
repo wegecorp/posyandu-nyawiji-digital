@@ -15,8 +15,18 @@
  */
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+
+function defaultPasswordFromEnv(envKey) {
+  const value = process.env[envKey];
+  if (value && value.trim()) return value;
+  console.warn(
+    `[security] ${envKey} tidak diset — memakai password acak. Set di .env sebelum membuat akun.`
+  );
+  return crypto.randomBytes(24).toString('hex');
+}
 
 const prisma = new PrismaClient();
 const SALT_ROUNDS = 12;
@@ -127,11 +137,11 @@ async function main() {
   console.log(`Baris terbaca: ${rows.length}`);
 
   const posyanduPass = await bcrypt.hash(
-    process.env.POSYANDU_DEFAULT_PASSWORD || 'posyandu2026',
+    defaultPasswordFromEnv('POSYANDU_DEFAULT_PASSWORD'),
     SALT_ROUNDS
   );
   const puskesmasPass = await bcrypt.hash(
-    process.env.PUSKESMAS_DEFAULT_PASSWORD || 'puskesmas2026',
+    defaultPasswordFromEnv('PUSKESMAS_DEFAULT_PASSWORD'),
     SALT_ROUNDS
   );
 

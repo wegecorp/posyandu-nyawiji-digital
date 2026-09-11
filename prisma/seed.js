@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const prisma = new PrismaClient();
 
 const SALT_ROUNDS = 12;
@@ -45,7 +46,13 @@ async function main() {
 
   // 2. Seed DINKES super-admin (akun pemilik aplikasi, langsung aktif).
   const dinkesUsername = (process.env.DINKES_ADMIN_USERNAME || 'dinkes_gk').toLowerCase().trim();
-  const dinkesPassword = process.env.DINKES_ADMIN_PASSWORD || 'adminposyandu123';
+  const envPassword = process.env.DINKES_ADMIN_PASSWORD;
+  if (!envPassword || !envPassword.trim()) {
+    console.warn(
+      '[security] DINKES_ADMIN_PASSWORD tidak diset — memakai password acak. Set di .env sebelum membuat akun.'
+    );
+  }
+  const dinkesPassword = envPassword && envPassword.trim() ? envPassword : crypto.randomBytes(24).toString('hex');
 
   const existing = await prisma.user.findUnique({ where: { username: dinkesUsername } });
 

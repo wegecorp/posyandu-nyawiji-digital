@@ -4,8 +4,19 @@ const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 const SALT_ROUNDS = 12;
 
-const POSYANDU_PASS = process.env.POSYANDU_DEFAULT_PASSWORD || 'posyandu2026';
-const PUSKESMAS_PASS = process.env.PUSKESMAS_DEFAULT_PASSWORD || 'puskesmas2026';
+const crypto = require('crypto');
+
+function defaultPasswordFromEnv(envKey) {
+  const value = process.env[envKey];
+  if (value && value.trim()) return value;
+  console.warn(
+    `[security] ${envKey} tidak diset — memakai password acak. Set di .env sebelum membuat akun.`
+  );
+  return crypto.randomBytes(24).toString('hex');
+}
+
+const POSYANDU_PASS = defaultPasswordFromEnv('POSYANDU_DEFAULT_PASSWORD');
+const PUSKESMAS_PASS = defaultPasswordFromEnv('PUSKESMAS_DEFAULT_PASSWORD');
 
 // Data uji lokal: 1 Puskesmas + beberapa Posyandu di Kapanewon Wonosari.
 // Idempotent — aman dijalankan berulang.

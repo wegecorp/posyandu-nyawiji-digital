@@ -1,14 +1,34 @@
+import { randomBytes } from 'crypto';
 import { prisma } from './prisma';
 import { puskesmasUsernameBase } from './names';
 
+let warnedMissingDefault = false;
+
+/**
+ * Ambil password default dari env. Bila kosong, pakai string acak sekali pakai
+ * (akun tak bisa login sampai env diisi) supaya repo tidak pernah memuat
+ * password default yang valid.
+ */
+function defaultPasswordFromEnv(envKey: string): string {
+  const value = process.env[envKey];
+  if (value && value.trim()) return value;
+  if (!warnedMissingDefault) {
+    console.warn(
+      `[security] ${envKey} tidak diset — memakai password acak. Set di .env sebelum membuat akun.`
+    );
+    warnedMissingDefault = true;
+  }
+  return randomBytes(24).toString('hex');
+}
+
 /** Password default seragam utk akun baru POSYANDU. */
 export function getPosyanduDefaultPassword(): string {
-  return process.env.POSYANDU_DEFAULT_PASSWORD || 'posyandu2026';
+  return defaultPasswordFromEnv('POSYANDU_DEFAULT_PASSWORD');
 }
 
 /** Password default khusus akun staf PUSKESMAS (beda dari posyandu). */
 export function getPuskesmasDefaultPassword(): string {
-  return process.env.PUSKESMAS_DEFAULT_PASSWORD || 'puskesmas2026';
+  return defaultPasswordFromEnv('PUSKESMAS_DEFAULT_PASSWORD');
 }
 
 /** Password default sesuai role akun. */

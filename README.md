@@ -44,16 +44,22 @@ npm install
 ```
 
 ### 3. Setup Environment (.env)
-Buat file `.env` di root folder (atau sesuaikan jika sudah ada):
-```env
-DATABASE_URL="file:./dev.db"
-NEXT_PUBLIC_APP_NAME="POSYANDU NYAWIJI"
-SESSION_SECRET="ganti_dengan_string_acak_panjang"
-DINKES_ADMIN_USERNAME="dinkes_gk"
-DINKES_ADMIN_PASSWORD="ganti_password_admin"
-POSYANDU_DEFAULT_PASSWORD="posyandu2026"
-PUSKESMAS_DEFAULT_PASSWORD="puskesmas2026"
+Salin contoh lalu isi nilainya:
+```bash
+cp .env.example .env
 ```
+```env
+DATABASE_URL="file:./dev.db?connection_limit=1"
+NEXT_PUBLIC_APP_NAME="POSYANDU NYAWIJI"
+SESSION_SECRET="<string acak panjang, 64+ karakter>"
+DINKES_ADMIN_USERNAME="dinkes_gk"
+DINKES_ADMIN_PASSWORD="<password admin kuat>"
+POSYANDU_DEFAULT_PASSWORD="<password kader kuat>"
+PUSKESMAS_DEFAULT_PASSWORD="<password staf kuat, beda dari kader>"
+```
+
+> **Wajib ganti semua password** sebelum deploy ke VPS. Bila env kosong, aplikasi
+> memakai password acak (akun tidak bisa dipakai login) sampai diisi.
 
 ### 4. Setup Database Prisma
 Jalankan perintah berikut untuk membuat database SQLite lokal:

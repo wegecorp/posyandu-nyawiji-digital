@@ -287,8 +287,8 @@ Terakhir diperbarui: 2026-09-11.
 - [x] PM2 autostart (`pm2 save` + `pm2 startup`, terbukti setelah reboot)
 - [x] Backup lokal harian (cron) ke `/var/backups/posyandu`
 - [x] Backup Google Drive (rclone, `client_id` sendiri + scope `drive.file`), config di `/root/.config/rclone/`
-- [ ] Deploy key GitHub (agar `git pull` tanpa prompt)
-- [ ] Subdomain `www` (opsional)
+- [x] Repo GitHub public (server `git pull` tanpa kredensial; deploy key tak perlu)
+- [ ] Subdomain `www` (opsional) — CNAME `www` → `posyandunyawiji.my.id` belum dibuat
 - [ ] UAT: `docs/uat-deploy-checklist.md`
 
 > Lanjutkan backup Drive kapan saja: §5 di dokumen ini + `DEPLOY-VPS.md §9b`.

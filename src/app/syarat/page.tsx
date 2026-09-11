@@ -86,7 +86,11 @@ export default function SyaratPage() {
       <LegalSection title="12. Kontak">
         <p>
           Pertanyaan mengenai ketentuan ini dapat disampaikan ke Dinas Kesehatan Kabupaten
-          Gunungkidul (email: <em>isi-email-resmi@gunungkidulkab.go.id</em>).
+          Gunungkidul (email:{' '}
+          <a href="mailto:kesehatan@gunungkidulkab.go.id" className="font-bold text-[#075e54] hover:underline">
+            kesehatan@gunungkidulkab.go.id
+          </a>
+          ).
         </p>
       </LegalSection>
 

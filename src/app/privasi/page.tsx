@@ -107,7 +107,11 @@ export default function PrivasiPage() {
       <LegalSection title="12. Kontak">
         <p>
           Pertanyaan mengenai privasi dapat disampaikan ke Pengelola melalui Dinas Kesehatan
-          Kabupaten Gunungkidul (email: <em>isi-email-resmi@gunungkidulkab.go.id</em>).
+          Kabupaten Gunungkidul (email:{' '}
+          <a href="mailto:kesehatan@gunungkidulkab.go.id" className="font-bold text-[#075e54] hover:underline">
+            kesehatan@gunungkidulkab.go.id
+          </a>
+          ).
         </p>
       </LegalSection>
 

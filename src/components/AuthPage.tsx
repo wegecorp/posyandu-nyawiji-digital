@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import {
   Lock,
@@ -656,7 +657,16 @@ export function AuthPage() {
           </p>
         </div>
 
-        <div className="text-center mt-4 text-xs text-[#54656f]">
+        <div className="text-center mt-4 text-xs text-[#54656f] space-y-1.5">
+          <p className="flex items-center justify-center gap-2">
+            <Link href="/privasi" className="font-bold text-[#075e54] hover:underline">
+              Kebijakan Privasi
+            </Link>
+            <span aria-hidden>·</span>
+            <Link href="/syarat" className="font-bold text-[#075e54] hover:underline">
+              Syarat &amp; Ketentuan
+            </Link>
+          </p>
           <p>© 2026 POSYANDU NYAWIJI DIGITAL — Dinas Kesehatan Kab. Gunungkidul</p>
         </div>
       </div>

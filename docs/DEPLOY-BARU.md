@@ -273,16 +273,16 @@ Tetap jalankan sslip.io untuk sementara; saat domain siap:
 
 ## Status deploy
 
-Terakhir diperbarui: 2026-09-11 (domain `<domain-anda>`).
+Terakhir diperbarui: 2026-09-11.
 
 - [x] VPS Ubuntu 24.04 + hardening (ufw, fail2ban) + swap 2 GB
 - [x] Node 22, PM2, Nginx, sqlite3, certbot
-- [x] App live: `https://<domain-anda>`
+- [x] App live dengan HTTPS + domain sendiri
 - [x] PM2 autostart (`pm2 save` + `pm2 startup`, terbukti setelah reboot)
 - [x] Backup lokal harian (cron) ke `/var/backups/posyandu`
 - [ ] **Backup Google Drive (rclone) — TERTUNDA** (menunggu akun Google khusus backup)
 - [ ] Deploy key GitHub (agar `git pull` tanpa prompt)
-- [ ] `www.<domain-anda>` (opsional)
+- [ ] Subdomain `www` (opsional)
 - [ ] UAT: `docs/uat-deploy-checklist.md`
 
 > Lanjutkan backup Drive kapan saja: §5 di dokumen ini + `DEPLOY-VPS.md §9b`.

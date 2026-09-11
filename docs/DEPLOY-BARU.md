@@ -253,6 +253,14 @@ Tetap jalankan sslip.io untuk sementara; saat domain siap:
    sudo certbot --nginx -d posyandu.<domain> --redirect
    curl -I https://posyandu.<domain>
    ```
+
+   > Bila muncul **"Could not automatically find a matching server block"**, artinya
+   > `server_name` di Nginx belum memuat domain (langkah 2 belum jalan). Perbaiki
+   > `server_name` dulu, reload, lalu pasang cert yang sudah terbit:
+   > ```bash
+   > sudo certbot install --cert-name posyandu.<domain> --nginx
+   > ```
+   > Nama file config biasanya `/etc/nginx/sites-available/posyandu` (bukan `nyawiji`).
 4. **Opsional** hapus cert sslip.io setelah domain stabil:
    ```bash
    sudo certbot delete --cert-name <IP-strip>.sslip.io

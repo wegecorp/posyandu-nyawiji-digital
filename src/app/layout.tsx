@@ -12,10 +12,10 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "POSYANDU NYAWIJI",
+    title: "POSYANDU NYAWIJI DIGITAL",
   description: "Aplikasi Mobile Pelayanan & Pengukuran Posyandu Se-Kabupaten Gunungkidul",
   manifest: "/manifest.json",
-  applicationName: "POSYANDU NYAWIJI",
+  applicationName: "POSYANDU NYAWIJI DIGITAL",
   icons: {
     icon: [
       { url: "/brand/logo-192.png", type: "image/png", sizes: "192x192" },
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "POSYANDU NYAWIJI",
+  title: "POSYANDU NYAWIJI DIGITAL",
   },
 };
 

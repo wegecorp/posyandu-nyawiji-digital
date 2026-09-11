@@ -1,4 +1,4 @@
-# Placeholder brand logo generator (POSYANDU NYAWIJI).
+# Placeholder brand logo generator (POSYANDU NYAWIJI DIGITAL).
 # Menghasilkan ikon hijau (#075e54) bermotif hati putih sebagai pengganti logo sementara.
 # Swap ke logo asli nanti cukup dengan menimpa file di public/brand/ + src/app/favicon.ico.
 

@@ -49,17 +49,17 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({ guide, onClose
   const body =
     guide === 'ios' ? (
       <ul className="space-y-3">
-        {stepCard('1', <>Buka <strong>POSYANDU NYAWIJI</strong> memakai <strong>Safari</strong> (browser bawaan iPhone/iPad).</>)}
+        {stepCard('1', <>Buka <strong>POSYANDU NYAWIJI DIGITAL</strong> memakai <strong>Safari</strong> (browser bawaan iPhone/iPad).</>)}
         {stepCard('2', <>Ketuk tombol <strong>Bagikan</strong> <span className="inline-flex align-middle mx-1">&#8679;</span> di bar bawah Safari.</>)}
         {stepCard('3', <>Gulir lalu pilih <strong>&ldquo;Tambahkan ke Layar Utama&rdquo; (Add to Home Screen)</strong>.</>)}
         {stepCard('4', <>Ketuk <strong>Tambah</strong> di kanan atas. Ikon aplikasi akan muncul di layar utama HP Anda.</>)}
       </ul>
     ) : guide === 'android' ? (
       <ul className="space-y-3">
-        {stepCard('1', <>Buka POSYANDU NYAWIJI di <strong>{browserLabel}</strong>.</>)}
+        {stepCard('1', <>Buka POSYANDU NYAWIJI DIGITAL di <strong>{browserLabel}</strong>.</>)}
         {stepCard('2', <>Ketuk ikon <strong>menu titik tiga</strong> <span className="inline-flex align-middle mx-1">&#8942;&#8942; / &#8801;</span> di pojok kanan atas.</>)}
         {stepCard('3', <>Pilih <strong>&ldquo;Instal aplikasi&rdquo;</strong>, <strong>&ldquo;Tambahkan ke Layar Utama&rdquo;</strong>, atau <strong>&ldquo;Instal halaman&rdquo;</strong>.</>)}
-        {stepCard('4', <>Ketuk <strong>Instal / Tambahkan</strong> untuk konfirmasi. Ikon POSYANDU NYAWIJI akan tersimpan di layar utama.</>)}
+        {stepCard('4', <>Ketuk <strong>Instal / Tambahkan</strong> untuk konfirmasi. Ikon POSYANDU NYAWIJI DIGITAL akan tersimpan di layar utama.</>)}
       </ul>
     ) : guide === 'desktop' ? (
       <ul className="space-y-3">
@@ -88,7 +88,7 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({ guide, onClose
               <Download className="w-5 h-5 text-[#25d366]" />
             </div>
             <div>
-              <h2 className="font-extrabold text-sm leading-snug">Install Aplikasi POSYANDU NYAWIJI</h2>
+              <h2 className="font-extrabold text-sm leading-snug">Install Aplikasi POSYANDU NYAWIJI DIGITAL</h2>
               <p className="text-[11px] text-[#e9edef] mt-0.5">{headline}</p>
             </div>
           </div>

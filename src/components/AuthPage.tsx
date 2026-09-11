@@ -297,11 +297,11 @@ export function AuthPage() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/brand/logo-192.png"
-            alt="Logo POSYANDU NYAWIJI"
+            alt="Logo POSYANDU NYAWIJI DIGITAL"
             className="w-16 h-16 rounded-2xl shadow-md border-2 border-white object-cover"
           />
         </div>
-        <h1 className="text-2xl font-black text-[#075e54] tracking-tight">POSYANDU NYAWIJI</h1>
+        <h1 className="text-2xl font-black text-[#075e54] tracking-tight">POSYANDU NYAWIJI DIGITAL</h1>
         <p className="text-sm text-[#54656f] font-bold">Kabupaten Gunungkidul — D.I. Yogyakarta</p>
       </div>
 
@@ -657,7 +657,7 @@ export function AuthPage() {
         </div>
 
         <div className="text-center mt-4 text-xs text-[#54656f]">
-          <p>© 2026 POSYANDU NYAWIJI — Dinas Kesehatan Kab. Gunungkidul</p>
+          <p>© 2026 POSYANDU NYAWIJI DIGITAL — Dinas Kesehatan Kab. Gunungkidul</p>
         </div>
       </div>
 

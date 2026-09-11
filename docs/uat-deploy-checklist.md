@@ -14,14 +14,14 @@ Non-blocker yang sengaja dibiarkan: F10, F20, F21, dan D (perf `recompute`) — 
 ## 1. Deploy (VPS)
 
 ```bash
-cd /opt/posyandu_digital
+cd /opt/nyawiji
 git pull
 npm ci
 npx prisma db push        # kolom weightGain/weightStatus/weightFaltering2T (aditif, aman)
 npm run db:backfill       # isi N/T & 2T untuk data lama (idempoten, bisa diulang)
 npm run build
-pm2 restart posyandu-digital
-pm2 logs posyandu-digital --lines 50   # pastikan tidak ada error
+pm2 restart posyandu-nyawiji
+pm2 logs posyandu-nyawiji --lines 50   # pastikan tidak ada error
 ```
 
 ## 2. UAT — Kader (POSYANDU)

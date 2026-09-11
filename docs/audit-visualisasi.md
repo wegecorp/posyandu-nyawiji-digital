@@ -1,4 +1,4 @@
-# Audit Visualisasi Data — posyandu_digital
+# Audit Visualisasi Data — posyandu-nyawiji-digital
 
 > Dokumen ini ditulis **untuk konsumsi agen** (referensi `file:line` presisi, spesifikasi
 > actionable). Manusia cukup membaca bagian **Ringkasan Eksekutif** di bawah.

@@ -28,9 +28,9 @@ sudo npm i -g pm2
 
 ```bash
 cd /opt
-sudo git clone <URL_REPOSITORY_KAMU> posyandu_digital
-sudo chown -R $USER:$USER posyandu_digital
-cd posyandu_digital
+sudo git clone https://github.com/wegecorp/posyandu-nyawiji-digital.git nyawiji
+sudo chown -R $USER:$USER nyawiji
+cd nyawiji
 npm ci
 ```
 
@@ -40,7 +40,7 @@ Buat `.env` di folder project:
 
 ```env
 DATABASE_URL="file:./dev.db?connection_limit=1"
-NEXT_PUBLIC_APP_NAME="POSYANDU NYAWIJI"
+NEXT_PUBLIC_APP_NAME="Posyandu Nyawiji Digital"
 SESSION_SECRET="<string acak sangat panjang — WAJIB beda dari dev>"
 DINKES_ADMIN_USERNAME="dinkes_gk"
 DINKES_ADMIN_PASSWORD="<password admin yang kuat>"
@@ -84,7 +84,7 @@ Port diambil dari env `PORT`; default `3001`. Kalau perlu ganti:
 PORT=4000 pm2 start ecosystem.config.cjs --update-env
 ```
 
-Cek: `pm2 status` dan `pm2 logs posyandu-digital`.
+Cek: `pm2 status` dan `pm2 logs posyandu-nyawiji`.
 
 Aplikasi berjalan di `http://IP_VPS:3001`.
 
@@ -117,16 +117,16 @@ sudo certbot --nginx -d posyandu.domain.id
 ## 7. Update aplikasi (rutin)
 
 ```bash
-cd /opt/posyandu_digital
+cd /opt/nyawiji
 git pull
 npm ci
-pm2 stop posyandu-digital   # stop dulu: cegah crash-loop saat .next dihapus
+pm2 stop posyandu-nyawiji   # stop dulu: cegah crash-loop saat .next dihapus
 rm -rf .next                # WAJIB bila ada route yang dihapus/diganti (cegah tipe basi)
 npx prisma db push          # schema baru
 npm run db:backfill         # isi kolom turunan (N/T & 2T) utk data lama — idempoten
 npm run data:gunungkidul -- /tmp/daftarposyandu.csv   # data terbaru (opsional)
 npm run build               # HARUS sukses (ada tabel Route) sebelum start
-pm2 start posyandu-digital
+pm2 start posyandu-nyawiji
 pm2 save
 ```
 
@@ -166,7 +166,7 @@ otomatis). Total kecil, tapi cukup menutup kasus kesalahan yang baru ketahuan la
 ### 9a. Siapkan script
 
 Script otomatis mendeteksi lokasi repo (dari letak dirinya sendiri), jadi bisa
-di-clone di path mana pun — tidak harus `/opt/posyandu_digital`. Jalankan dari
+di-clone di path mana pun — tidak harus `/opt/nyawiji`. Jalankan dari
 dalam folder repo:
 
 ```bash
@@ -217,12 +217,12 @@ sudo crontab -e
 ```
 
 Tambahkan (opsional: isi token Telegram untuk notifikasi saat gagal).
-Ganti `/opt/posyandu_digital` dengan lokasi repo sebenarnya:
+Ganti `/opt/nyawiji` dengan lokasi repo sebenarnya:
 
 ```cron
 TELEGRAM_BOT_TOKEN=""
 TELEGRAM_CHAT_ID=""
-0 2 * * * /opt/posyandu_digital/scripts/backup-db.sh >> /var/log/posyandu-backup.log 2>&1
+0 2 * * * /opt/nyawiji/scripts/backup-db.sh >> /var/log/posyandu-backup.log 2>&1
 ```
 
 Lihat hasilnya: `sudo tail -n 20 /var/log/posyandu-backup.log`.
@@ -233,7 +233,7 @@ Lihat hasilnya: `sudo tail -n 20 /var/log/posyandu-backup.log`.
 sementara, database lama disimpan sebagai `dev.db.bak-<timestamp>`.
 
 ```bash
-cd /opt/posyandu_digital
+cd /opt/nyawiji
 sudo scripts/restore-db.sh daily:2026-09-10
 # dari Google Drive:
 sudo scripts/restore-db.sh monthly:2026-09-01 --from-drive
@@ -241,7 +241,7 @@ sudo scripts/restore-db.sh monthly:2026-09-01 --from-drive
 sudo scripts/restore-db.sh daily:2026-09-10 --yes
 ```
 
-Setelah restore, cek `pm2 logs posyandu-digital` dan pastikan data terbaca.
+Setelah restore, cek `pm2 logs posyandu-nyawiji` dan pastikan data terbaca.
 
 > Uji restore minimal sekali sebelum benar-benar mengandalkannya. Backup yang tak
 > pernah diuji belum bisa disebut backup.

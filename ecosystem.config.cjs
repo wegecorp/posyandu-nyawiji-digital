@@ -4,7 +4,7 @@ const PORT = process.env.PORT || 3001;
 module.exports = {
   apps: [
     {
-      name: 'posyandu-digital',
+      name: 'posyandu-nyawiji',
       cwd: __dirname,
       script: 'node_modules/next/dist/bin/next',
       args: `start -p ${PORT}`,

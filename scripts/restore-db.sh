@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="${PROJECT_DIR:-$(dirname "$SCRIPT_DIR")}"
 DB_PATH="${DB_PATH:-$PROJECT_DIR/prisma/dev.db}"
 BACKUP_ROOT="${BACKUP_ROOT:-/var/backups/posyandu}"
-PM2_NAME="${PM2_NAME:-posyandu-digital}"
+PM2_NAME="${PM2_NAME:-posyandu-nyawiji}"
 RCLONE_REMOTE="${RCLONE_REMOTE:-gdrive:posyandu-backup}"
 
 ASSUME_YES=0

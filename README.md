@@ -1,4 +1,4 @@
-# 🏥 POSYANDU NYAWIJI
+# 🏥 POSYANDU NYAWIJI DIGITAL
 
 Aplikasi web modern untuk digitalisasi pencatatan, pemantauan kesehatan balita & ibu hamil, serta manajemen pelayanan Posyandu, Puskesmas, hingga Dinas Kesehatan.
 
@@ -38,8 +38,8 @@ Pastikan [Node.js](https://nodejs.org/) (v18+) dan `npm` sudah terinstal di komp
 
 ### 2. Clone & Install Dependency
 ```bash
-git clone <URL_REPOSITORY_GITHUB_KAMU>
-cd posyandu_digital
+git clone https://github.com/wegecorp/posyandu-nyawiji-digital.git
+cd posyandu-nyawiji-digital
 npm install
 ```
 
@@ -50,7 +50,7 @@ cp .env.example .env
 ```
 ```env
 DATABASE_URL="file:./dev.db?connection_limit=1"
-NEXT_PUBLIC_APP_NAME="POSYANDU NYAWIJI"
+NEXT_PUBLIC_APP_NAME="Posyandu Nyawiji Digital"
 SESSION_SECRET="<string acak panjang, 64+ karakter>"
 DINKES_ADMIN_USERNAME="dinkes_gk"
 DINKES_ADMIN_PASSWORD="<password admin kuat>"

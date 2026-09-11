@@ -1,4 +1,4 @@
-/* POSYANDU NYAWIJI — Service Worker
+/* POSYANDU NYAWIJI DIGITAL — Service Worker
  *
  * Tujuan:
  *  1. Memenuhi syarat "installable PWA" (wajib ada fetch handler).
@@ -8,7 +8,7 @@
  *
  * Saat versi berubah, cukup naikkan VERSION untuk membersihkan cache lama.
  */
-const VERSION = '2026.09-v1';
+const VERSION = '2026.09-v2';
 const APP_SHELL_CACHE = `nyawiji-shell-${VERSION}`;
 const STATIC_CACHE = `nyawiji-static-${VERSION}`;
 

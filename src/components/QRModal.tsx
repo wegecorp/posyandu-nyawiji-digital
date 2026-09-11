@@ -137,7 +137,7 @@ export const QRModal: React.FC<QRModalProps> = ({
               <div className="mt-3 flex items-center justify-center gap-2 text-xs text-[#54656f] font-medium">
                 <span>{patient.ageDisplay}</span>
                 <span>•</span>
-                <span>POSYANDU NYAWIJI</span>
+                <span>POSYANDU NYAWIJI DIGITAL</span>
               </div>
             </div>
 

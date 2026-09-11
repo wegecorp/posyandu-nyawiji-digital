@@ -58,7 +58,8 @@ fi
 find "$DAILY_DIR" -type f -name 'posyandu-*.db.gz' -mtime +"$DAILY_KEEP" -delete
 find "$MONTHLY_DIR" -type f -name 'posyandu-*.db.gz' 2>/dev/null | sort | head -n -"$MONTHLY_KEEP" | xargs -r rm -f
 
-if command -v rclone >/dev/null 2>&1; then
+RCLONE_REMOTE_NAME="${RCLONE_REMOTE%%:*}"
+if command -v rclone >/dev/null 2>&1 && rclone listremotes 2>/dev/null | grep -qx "${RCLONE_REMOTE_NAME}:"; then
   rclone copy "$DAILY_DIR" "$RCLONE_REMOTE/daily" --include 'posyandu-*.db.gz' --no-traverse
   if [ "$IS_FIRST_DAY" = "1" ]; then
     rclone copy "$MONTHLY_DIR" "$RCLONE_REMOTE/monthly" --include 'posyandu-*.db.gz' --no-traverse
@@ -68,7 +69,7 @@ if command -v rclone >/dev/null 2>&1; then
     [ -n "$old" ] && rclone deletefile "$RCLONE_REMOTE/monthly/$old"
   done
 else
-  notify "rclone tidak ditemukan, backup hanya tersimpan lokal"
+  notify "rclone belum dikonfigurasi, backup hanya tersimpan lokal"
 fi
 
 FREE="$(df -h "$BACKUP_ROOT" | awk 'NR==2 {print $4}')"

@@ -21,6 +21,7 @@ import { requireRole } from '@/lib/api-auth';
 import { getPatientCategory } from '@/lib/utils';
 import { INDICATORS, checkIndicator, type IndicatorDef } from '@/lib/clinical';
 import { computeGrowth, type StaturePosition } from '@/lib/growth';
+import { buildRoster, buildDetails, type ExportRow } from '@/lib/member-export';
 import type { PatientCategory } from '@/lib/types';
 
 type Bucket = { abnormal: number; assessed: number };
@@ -245,7 +246,12 @@ export async function GET(req: Request) {
     };
 
     if (searchParams.get('format') === 'xlsx') {
-      return xlsxResponse(payload);
+      // Data individu HANYA untuk role POSYANDU. PUSKESMAS & DINKES tetap agregat.
+      const members =
+        session.role === 'POSYANDU' && session.posyanduId
+          ? await memberSheets(session.posyanduId, fromObj, toExclusive)
+          : null;
+      return xlsxResponse(payload, members);
     }
     return NextResponse.json(payload);
   } catch (error) {
@@ -306,7 +312,46 @@ function flatRow(no: number | string, r: ReportRow) {
   return out;
 }
 
-function xlsxResponse(p: ReportPayload) {
+type MemberSheets = { roster: ExportRow[]; details: ExportRow[] };
+
+/** Ambil data anggota + pengukuran periode untuk 1 posyandu (khusus export POSYANDU). */
+async function memberSheets(
+  posyanduId: string,
+  fromObj: Date,
+  toExclusive: Date,
+): Promise<MemberSheets> {
+  const patients = await prisma.patient.findMany({
+    where: { posyanduId, createdAt: { lt: toExclusive } },
+    select: {
+      id: true,
+      regNumber: true,
+      name: true,
+      birthDate: true,
+      gender: true,
+      isPregnant: true,
+    },
+  });
+  const ids = patients.map((p) => p.id);
+  const measurements = ids.length
+    ? await prisma.measurement.findMany({
+        where: { posyanduId, patientId: { in: ids }, sessionDate: { gte: fromObj, lt: toExclusive } },
+      })
+    : [];
+  const periodEnd = new Date(toExclusive.getTime() - 1);
+  return {
+    roster: buildRoster(patients, measurements, periodEnd),
+    details: buildDetails(patients, measurements),
+  };
+}
+
+/** Lebar kolom proporsional judul (SheetJS community tak dukung styling sel). */
+function setCols(ws: XLSX.WorkSheet, rows: ExportRow[]) {
+  const sample = rows[0];
+  if (!sample) return;
+  ws['!cols'] = Object.keys(sample).map((k) => ({ wch: Math.max(k.length + 2, 12) }));
+}
+
+function xlsxResponse(p: ReportPayload, members: MemberSheets | null) {
   const wb = XLSX.utils.book_new();
 
   const globalSheet = XLSX.utils.json_to_sheet([flatRow('TOTAL', p.global)]);
@@ -317,12 +362,28 @@ function xlsxResponse(p: ReportPayload) {
   );
   XLSX.utils.book_append_sheet(wb, unitSheet, p.unitLabel);
 
+  if (members) {
+    const rosterSheet = XLSX.utils.json_to_sheet(members.roster);
+    setCols(rosterSheet, members.roster);
+    XLSX.utils.book_append_sheet(wb, rosterSheet, 'Daftar Anggota');
+
+    const detailSheet = XLSX.utils.json_to_sheet(members.details);
+    setCols(detailSheet, members.details);
+    XLSX.utils.book_append_sheet(wb, detailSheet, 'Detail Pengukuran');
+  }
+
   const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
-  const filename = `Rekap_${p.unitLabel}_${p.to}.xlsx`;
+  const filename = members
+    ? `Data_Posyandu_${sanitizeName(p.units[0]?.unitName ?? 'Posyandu')}_${p.from}_${p.to}.xlsx`
+    : `Rekap_${p.unitLabel}_${p.to}.xlsx`;
   return new NextResponse(buffer, {
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'Content-Disposition': `attachment; filename="${filename}"`,
     },
   });
+}
+
+function sanitizeName(name: string): string {
+  return name.trim().replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'Posyandu';
 }

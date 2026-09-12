@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
-import { APP_NAME, APP_ORG } from '@/lib/branding';
+import { APP_NAME, APP_TAGLINE, APP_ORG } from '@/lib/branding';
 import {
   Lock,
   User,
@@ -304,7 +304,7 @@ export function AuthPage() {
           />
         </div>
         <h1 className="text-2xl font-black text-[#075e54] tracking-tight">{APP_NAME}</h1>
-        <p className="text-sm text-[#54656f] font-bold">Kabupaten Gunungkidul — D.I. Yogyakarta</p>
+        <p className="text-sm text-[#54656f] font-bold">{APP_TAGLINE}</p>
       </div>
 
       <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-300">

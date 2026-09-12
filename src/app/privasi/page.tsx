@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { LegalPage, LegalSection } from '@/components/LegalPage';
+import { APP_NAME, APP_TAGLINE } from '@/lib/branding';
 
 export const metadata: Metadata = {
-  title: 'Kebijakan Privasi — POSYANDU NYAWIJI DIGITAL',
-  description: 'Kebijakan privasi aplikasi Posyandu Nyawiji Digital.',
+  title: `Kebijakan Privasi — ${APP_NAME}`,
+  description: `Kebijakan privasi aplikasi ${APP_TAGLINE}.`,
 };
 
 export default function PrivasiPage() {
@@ -12,7 +13,7 @@ export default function PrivasiPage() {
     <LegalPage title="Kebijakan Privasi" updated="11 September 2026">
       <LegalSection title="1. Pendahuluan">
         <p>
-          Aplikasi <strong>Posyandu Nyawiji Digital</strong> (&ldquo;Aplikasi&rdquo;) dikelola oleh
+          Aplikasi <strong>{APP_NAME}</strong> (&ldquo;Aplikasi&rdquo;) dikelola oleh
           Dinas Kesehatan Kabupaten Gunungkidul (&ldquo;Pengelola&rdquo;). Kebijakan ini menjelaskan
           bagaimana data pribadi dikumpulkan, digunakan, disimpan, dan dilindungi, sejalan dengan
           Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi.

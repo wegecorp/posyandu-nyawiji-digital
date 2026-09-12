@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { LegalPage, LegalSection } from '@/components/LegalPage';
+import { APP_NAME, APP_TAGLINE } from '@/lib/branding';
 
 export const metadata: Metadata = {
-  title: 'Syarat & Ketentuan — POSYANDU NYAWIJI DIGITAL',
-  description: 'Syarat dan ketentuan penggunaan aplikasi Posyandu Nyawiji Digital.',
+  title: `Syarat & Ketentuan — ${APP_NAME}`,
+  description: `Syarat dan ketentuan penggunaan aplikasi ${APP_TAGLINE}.`,
 };
 
 export default function SyaratPage() {
@@ -12,7 +13,7 @@ export default function SyaratPage() {
     <LegalPage title="Syarat &amp; Ketentuan" updated="11 September 2026">
       <LegalSection title="1. Penerimaan Syarat">
         <p>
-          Dengan menggunakan aplikasi <strong>Posyandu Nyawiji Digital</strong> (&ldquo;Aplikasi&rdquo;),
+          Dengan menggunakan aplikasi <strong>{APP_NAME}</strong> (&ldquo;Aplikasi&rdquo;),
           Anda menyatakan telah membaca dan menyetujui Syarat &amp; Ketentuan ini.
         </p>
       </LegalSection>

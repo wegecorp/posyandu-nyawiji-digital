@@ -6,6 +6,7 @@ import QRCode from 'qrcode';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { X, QrCode, Camera } from 'lucide-react';
 import { useBackLayer } from '@/lib/back-navigation';
+import { APP_NAME } from '@/lib/branding';
 
 interface QRModalProps {
   mode: 'view' | 'scan';
@@ -137,7 +138,7 @@ export const QRModal: React.FC<QRModalProps> = ({
               <div className="mt-3 flex items-center justify-center gap-2 text-xs text-[#54656f] font-medium">
                 <span>{patient.ageDisplay}</span>
                 <span>•</span>
-                <span>POSYANDU NYAWIJI DIGITAL</span>
+                <span>{APP_NAME}</span>
               </div>
             </div>
 

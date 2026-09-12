@@ -2,6 +2,7 @@
 
 import React, { useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { APP_NAME } from '@/lib/branding';
 import {
   ShieldCheck,
   X,
@@ -84,7 +85,7 @@ export const LoginModal: React.FC<AccountModalProps> = ({ isOpen, onClose, onCha
             </div>
             <div>
               <h2 className="font-extrabold text-sm leading-tight">Detail Akun Sesi</h2>
-              <p className="text-[11px] text-[#e9edef]">POSYANDU NYAWIJI DIGITAL</p>
+              <p className="text-[11px] text-[#e9edef]">{APP_NAME}</p>
             </div>
           </div>
           <button

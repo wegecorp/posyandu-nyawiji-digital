@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
+import { APP_NAME, APP_ORG } from '@/lib/branding';
 
 interface LegalPageProps {
   title: string;
@@ -30,7 +31,7 @@ export function LegalPage({ title, updated, children }: LegalPageProps) {
           {children}
         </div>
         <p className="text-center text-xs text-[#54656f] mt-4">
-          © 2026 POSYANDU NYAWIJI DIGITAL — Dinas Kesehatan Kab. Gunungkidul
+          © 2026 {APP_NAME} — {APP_ORG}
         </p>
       </main>
     </div>

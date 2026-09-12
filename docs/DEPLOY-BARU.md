@@ -88,7 +88,7 @@ Isi `.env` (semua password **baru & kuat**, bukan default lama):
 
 ```env
 DATABASE_URL="file:./dev.db?connection_limit=1"
-NEXT_PUBLIC_APP_NAME="Posyandu Nyawiji Digital"
+NEXT_PUBLIC_APP_NAME="PORTAL NYAWIJI"
 SESSION_SECRET="<hasil openssl rand -hex 32>"
 DINKES_ADMIN_USERNAME="dinkes_gk"
 DINKES_ADMIN_PASSWORD="<kuat>"

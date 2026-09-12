@@ -1,4 +1,4 @@
-# Panduan Pengguna POSYANDU NYAWIJI DIGITAL
+# Panduan Pengguna PORTAL NYAWIJI
 
 Panduan untuk pengguna aplikasi (kader Posyandu, petugas Puskesmas, dan Dinas Kesehatan). Aplikasi ini mencatat data dan pengukuran kesehatan warga secara digital, dari tingkat Posyandu sampai Dinas Kesehatan.
 

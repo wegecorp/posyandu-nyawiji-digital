@@ -1,4 +1,4 @@
-# 🏥 POSYANDU NYAWIJI DIGITAL
+# 🏥 PORTAL NYAWIJI
 
 Aplikasi web modern untuk digitalisasi pencatatan, pemantauan kesehatan balita & ibu hamil, serta manajemen pelayanan Posyandu, Puskesmas, hingga Dinas Kesehatan.
 
@@ -50,7 +50,7 @@ cp .env.example .env
 ```
 ```env
 DATABASE_URL="file:./dev.db?connection_limit=1"
-NEXT_PUBLIC_APP_NAME="Posyandu Nyawiji Digital"
+NEXT_PUBLIC_APP_NAME="PORTAL NYAWIJI"
 SESSION_SECRET="<string acak panjang, 64+ karakter>"
 DINKES_ADMIN_USERNAME="dinkes_gk"
 DINKES_ADMIN_PASSWORD="<password admin kuat>"

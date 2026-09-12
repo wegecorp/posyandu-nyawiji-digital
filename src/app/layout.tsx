@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { PwaServiceWorker } from "@/components/PwaServiceWorker";
+import { APP_NAME, APP_DESCRIPTION } from "@/lib/branding";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -12,10 +13,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-    title: "POSYANDU NYAWIJI DIGITAL",
-  description: "Aplikasi Mobile Pelayanan & Pengukuran Posyandu Se-Kabupaten Gunungkidul",
-  manifest: "/manifest.json",
-  applicationName: "POSYANDU NYAWIJI DIGITAL",
+    title: APP_NAME,
+  description: APP_DESCRIPTION,
+  applicationName: APP_NAME,
   icons: {
     icon: [
       { url: "/brand/logo-192.png", type: "image/png", sizes: "192x192" },
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-  title: "POSYANDU NYAWIJI DIGITAL",
+  title: APP_NAME,
   },
 };
 

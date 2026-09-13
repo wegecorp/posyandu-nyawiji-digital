@@ -26,6 +26,7 @@ import { usePwaInstall, isStandaloneMode, type InstallGuide } from '@/lib/pwa';
 import { InstallAppModal } from '@/components/InstallAppModal';
 import { ExitHint } from '@/components/ExitHint';
 import { useBackLayer, useExitGuard } from '@/lib/back-navigation';
+import { saveCredential } from '@/lib/credential-store';
 
 type LoginTab = 'posyandu' | 'staf';
 type CascadeStep = 0 | 1 | 2 | 3; // 0:puskesmas 1:kalurahan 2:posyandu 3:password
@@ -274,6 +275,11 @@ export function AuthPage() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Aktivasi gagal');
+      void saveCredential({
+        id: activation.identity.username ?? activation.identity.label,
+        password: newPassword,
+        name: activation.identity.label,
+      });
       login(json.user);
     } catch (err) {
       setActivationMsg(getErrMsg(err));
@@ -313,6 +319,28 @@ export function AuthPage() {
           {/* ====== AKTIVASI AKUN BARU ====== */}
           {activation ? (
             <form onSubmit={submitActivation} className="p-5 space-y-4">
+              {/* Penanda akun untuk password manager browser. Sr-only agar tak terlihat,
+                  tapi tetap dibaca browser saat submit -> memicu "Perbarui sandi". */}
+              <input
+                type="text"
+                name="username"
+                autoComplete="username"
+                readOnly
+                tabIndex={-1}
+                aria-hidden="true"
+                value={activation.identity.username ?? ''}
+                className="sr-only"
+              />
+              <input
+                type="password"
+                name="currentPassword"
+                autoComplete="current-password"
+                readOnly
+                tabIndex={-1}
+                aria-hidden="true"
+                value={activation.currentPassword}
+                className="sr-only"
+              />
               <div className="bg-[#075e54] -mx-5 -mt-5 px-5 py-4 text-white mb-1">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-white/10 rounded-full">

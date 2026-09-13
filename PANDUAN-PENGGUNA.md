@@ -18,8 +18,9 @@ Dokumen ini juga memuat **Skenario Hari Buka Posyandu** yang memadankan alur ker
    - [5.3 Dinas Kesehatan](#53-dinas-kesehatan)
 6. [Data yang Dicatat & Kelompok Sasaran](#6-data-yang-dicatat--kelompok-sasaran)
 7. [Fitur Bersama](#7-fitur-bersama)
-8. [Tips Umum](#8-tips-umum)
-9. [Skenario Hari Buka Posyandu (5 Langkah ILP)](#9-skenario-hari-buka-posyandu-5-langkah-ilp)
+8. [Alur & Kepemilikan Data](#8-alur--kepemilikan-data)
+9. [Tips Umum](#9-tips-umum)
+10. [Skenario Hari Buka Posyandu (5 Langkah ILP)](#10-skenario-hari-buka-posyandu-5-langkah-ilp)
 
 ---
 
@@ -51,15 +52,19 @@ Tata urut pembuatan akun (dari atas ke bawah):
 
 ### Aturan privasi data pasien
 
-- Identitas pasien (**nama** dan **nomor registrasi**) hanya dapat dilihat oleh **Posyandu** dan **Puskesmas**.
+- **Kader Posyandu** hanya melihat data pasien **posyandunya sendiri**, dan boleh mengunduh **data anggotanya sendiri** (nama, nomor registrasi, dan rincian pengukuran) lewat **Rekap Ringkas → Excel** — lihat bagian 7.
+- **Puskesmas** melihat data pasien di posyandu binaannya (termasuk nama, untuk pembinaan).
 - **Dinas Kesehatan** hanya melihat **agregat per wilayah** (jumlah, persentase) tanpa nama pasien, untuk perencanaan dan evaluasi.
-- Rekap Excel berisi **ringkasan agregat**, bukan data mentah per pasien.
+- Rekap untuk **Puskesmas** dan **Dinas Kesehatan** berisi **agregat** (ringkasan per unit), **bukan** baris per pasien.
+- Aturan lengkap ada pada halaman **Kebijakan Privasi** dan **Syarat & Ketentuan** di aplikasi (tautan tersedia di halaman login).
 
 ---
 
 ## 2. Cara Login
 
 Buka aplikasi di browser (HP/laptop) lalu pilih tab sesuai jenjang Anda.
+
+![Halaman login — pilihan tab Kader Posyandu / Puskesmas / Dinkes](docs/panduan/01-login.png)
 
 ### a. Kader Posyandu (login tanpa username)
 
@@ -158,6 +163,8 @@ Setelah masuk, kader melihat **beranda** posyandu:
 - **Filter status**: **Semua**, **Belum**, **Selesai** — untuk melihat siapa yang belum diukur.
 - **Chip kategori usia**: Semua Usia, Balita, Anak, Remaja, Dewasa/Lansia, Ibu Hamil.
 
+![Daftar pasien — pencarian, filter status, chip usia, dan kartu pasien](docs/panduan/02-daftar-pasien.png)
+
 #### Arti badge pada kartu pasien
 
 | Badge | Artinya |
@@ -186,12 +193,15 @@ Setelah masuk, kader melihat **beranda** posyandu:
    | Kolom | Untuk siapa |
    |---|---|
    | Berat Badan (BB) dan Tinggi/Panjang Badan (TB) | Semua pasien (wajib) |
+   | Posisi Ukur (Telentang / Berdiri) | Balita — menentukan koreksi tinggi ±0,7 cm |
    | Lingkar Kepala (LK) | Balita |
    | Lingkar Lengan Atas (LiLA), Lingkar Perut | Semua pasien (opsional) |
    | Tekanan Darah (Tensi) | Remaja, Dewasa/Lansia, dan Ibu Hamil |
    | Usia Kehamilan | Ibu Hamil |
    | Gula darah, kolesterol, asam urat, HB | Sesuai kebutuhan pelayanan |
    | Skrining mata/telinga, Catatan | Sesuai kebutuhan |
+
+![Input Hari Ini — kolom ukur menyesuaikan usia, tersimpan otomatis](docs/panduan/03-input-hari-ini.png)
 
 3. Nilai **tersimpan otomatis** — tidak ada tombol simpan. Tunggu tanda **Tersimpan Otomatis** setelah selesai mengisi.
 4. Bila seluruh ukuran wajib lengkap, status pasien menjadi **Selesai**. Klik **Selesai — Kembali ke Daftar** untuk mengukur pasien berikutnya.
@@ -203,6 +213,36 @@ Setelah masuk, kader melihat **beranda** posyandu:
 - **Status gizi otomatis**: begitu BB, TB, dan tanggal lahir lengkap, aplikasi menampilkan status **BB/U, TB/U, dan BB/TB** beserta nilai Z (standar Permenkes 2/2020).
 - **Tab Riwayat**: menampilkan seluruh pengukuran pasien per tanggal, lengkap dengan tanda **BB N/T** (naik / tidak naik) dan peringatan **2T — perlu rujuk**.
 - **Kurva KMS — Berat Badan / Umur** (khusus Balita): garis tebal = berat anak; pita abu/kuning = batas normal. Garis di bawah ambang merah menandakan berat sangat kurang.
+
+#### Kartu QR & Pindai Pasien
+
+Setiap pasien punya **kode QR** berisi nomor registrasinya. Berguna untuk **pencarian kilat** saat hari pelayanan — tidak perlu mengetik nama.
+
+**Membuat / melihat kartu QR:**
+
+1. Pada kartu pasien, ketuk ikon **QR** di sisi kanan.
+2. Muncul **Kartu QR Pasien** berisi nama, nomor registrasi, dan gambar QR.
+3. Tunjukkan QR ini ke petugas, atau simpan tangkapan layar untuk dicetak/dibagikan ke warga.
+
+![Kartu QR pasien — nama, nomor registrasi, dan kode QR](docs/panduan/05-kartu-qr.png)
+
+**Memindai QR untuk mencari pasien:**
+
+1. Ketuk ikon **QR** di **bar atas** aplikasi, atau tombol QR di samping **kotak pencarian**.
+2. Arahkan kamera ke kode QR pada kartu pasien / HP warga.
+3. Bila cocok, aplikasi **langsung membuka** pasien tersebut. Bila tidak ditemukan di posyandu ini, nomor registrasi otomatis masuk ke kotak pencarian.
+
+> Pindai QR butuh izin kamera browser. Bila kamera tidak bisa dipakai, cari pasien dengan mengetik nama atau nomor registrasi seperti biasa.
+
+#### Edit / Koreksi Data Pasien
+
+Salah ketik nama, tanggal lahir, atau data lain? Kader dapat memperbaikinya tanpa membuat pasien baru.
+
+1. Pada kartu pasien, ketuk ikon **pensil** (Edit).
+2. Perbaiki kolom yang perlu: nama, tanggal lahir, jenis kelamin, status ibu hamil (Bumil), nama wali, alamat, atau nomor HP.
+3. Simpan. Daftar dan pengukuran pasien ikut memakai data terbaru.
+
+> Perubahan **tanggal lahir** memengaruhi perhitungan **usia**, **kelompok sasaran**, dan **status gizi**. Perhatikan peringatan data ganda saat menyimpan agar tidak ada pasien tercatat dua kali.
 
 ### 5.2 Staf Puskesmas
 
@@ -261,6 +301,7 @@ Form pengukuran menyesuaikan kolomnya **secara otomatis** dengan umur pasien (di
 |---|---|---|---|
 | Berat Badan (BB) | kg | Semua kelompok | **Wajib** |
 | Tinggi / Panjang Badan (TB/PB) | cm | Semua kelompok | **Wajib** |
+| Posisi Ukur (Telentang / Berdiri) | — | Balita | Opsional (default otomatis menurut umur) |
 | Indeks Massa Tubuh (IMT) | kg/m² | Semua kelompok | Otomatis dihitung dari BB & TB |
 | Lingkar Kepala (LK) | cm | Balita | Opsional |
 | Lingkar Lengan Atas (LiLA) | cm | Semua kelompok | Opsional |
@@ -278,6 +319,7 @@ Form pengukuran menyesuaikan kolomnya **secara otomatis** dengan umur pasien (di
 Keterangan singkat tiap bagian:
 
 - **Ukur Fisik Utama (BB & TB)** — wajib untuk semua pasien. Bila dua kolom ini kosong, pasien berstatus **"Belum diukur"**. IMT dihitung otomatis dari keduanya.
+- **Posisi Ukur (Balita)** — pilih **Telentang** bila diukur kurang dari 24 bulan, atau **Berdiri** bila 24 bulan ke atas. Aplikasi memakai posisi ini untuk **koreksi tinggi ±0,7 cm** agar status gizi (TB/U, BB/TB) tepat. Default mengikuti umur; ubah bila cara ukur di lapangan berbeda.
 - **Ukur Khusus Balita** — Lingkar Kepala memantau pertumbuhan otak balita.
 - **Ukur Tambahan** — LiLA & Lingkar Perut (opsional), sering dipakai untuk sasaran dewasa/menyusui.
 - **Ukur Khusus Remaja / Dewasa-Lansia & Pemeriksaan Ibu Hamil** — Tensi (dan Usia Kehamilan untuk bumil).
@@ -312,20 +354,26 @@ Menu **Analisis** otomatis menghitung hasil dan menyorot nilai yang patut diwasp
 
 ### Rekap Ringkas
 
-Fitur ini menggantikan ekspor data mentah. Isinya **ringkasan agregat** (jumlah, persen) untuk **semua kelompok umur**, bukan baris per pasien.
+Ringkasan pelayanan untuk **semua kelompok umur**, diunduh sebagai berkas **Excel**. Isi berkas **berbeda menurut jenjang**:
 
-- **Kader Posyandu:** rekap posyandu sendiri, untuk disetorkan ke Puskesmas.
-- **Puskesmas:** rekap per posyandu binaan.
-- **Dinkes:** rekap **global kabupaten** dan **per puskesmas**.
+| Jenjang | Isi berkas Excel | Identitas pasien? |
+|---|---|---|
+| **Kader Posyandu** | `Ringkasan`, daftar posyandu, **`Daftar Anggota`** (1 baris per pasien), **`Detail Pengukuran`** (1 baris per kunjungan) | **Ya** — nama & nomor registrasi milik posyandu sendiri |
+| **Puskesmas** | `Ringkasan` + satu baris per posyandu binaan | Tidak — agregat |
+| **Dinkes** | `Ringkasan` global kabupaten + satu baris per puskesmas | Tidak — agregat |
+
+> Berkas untuk **kader memuat data individu** (nama, nomor registrasi, BB/TB, status gizi, N/T, 2T, hasil lab, catatan) karena hanya untuk posyandu sendiri. Berkas **Puskesmas & Dinkes tetap agregat** — lihat [Aturan privasi data pasien](#aturan-privasi-data-pasien).
+
+Isi rekap antara lain: jumlah terdaftar & terukur, status gizi balita, **N / T / 2T**, serta temuan per indikator (hipertensi, anemia, gula darah, kolesterol, asam urat, skrining mata/telinga).
 
 Cara memakai:
 
 1. Buka **Rekap Ringkas** (ikon berkas di bar atas, atau tombol **Rekap Wilayah / Rekap Kabupaten** di beranda).
 2. Pilih **periode** (maksimal **12 bulan** untuk kader/Puskesmas, **24 bulan** untuk Dinkes).
 3. Periksa ringkasan yang tampil.
-4. Klik **Unduh Rekap Excel**, lalu kirim ke jenjang di atasnya.
+4. Klik **Unduh Rekap Excel**, lalu simpan atau kirim ke jenjang di atasnya.
 
-Isi rekap antara lain: jumlah terdaftar & terukur, status gizi balita, **N / T / 2T**, serta temuan per indikator (hipertensi, anemia, gula darah, kolesterol, asam urat, skrining mata/telinga).
+![Rekap Ringkas — pilih periode lalu Unduh Rekap Excel](docs/panduan/04-rekap-excel.png)
 
 ### Menu Analisis (tab di bagian atas)
 
@@ -353,7 +401,37 @@ Contoh temuan yang dipantau: **tensi tinggi (hipertensi), anemia (HB rendah), gu
 
 ---
 
-## 8. Tips Umum
+## 8. Alur & Kepemilikan Data
+
+Bagian ini merangkum perjalanan data dari Posyandu sampai Dinas Kesehatan — untuk menyamakan pemahaman **kader** dan **Puskesmas**.
+
+### 8.1 Alur data
+
+| Tahap | Pelaku | Yang terjadi |
+|---|---|---|
+| 1. Pendaftaran | Kader | Pasien didaftarkan (nama + tanggal lahir), dapat **kartu QR** |
+| 2. Pengukuran | Kader | BB/TB/LK/tensi/lab dicatat; **tersimpan otomatis** |
+| 3. Penilaian | Aplikasi | Usia, status gizi, **N/T**, dan **2T** dihitung otomatis |
+| 4. Rekap | Kader | Unduh **Excel** (termasuk data anggota) → setor ke Puskesmas |
+| 5. Pembinaan | Puskesmas | Pantau posyandu binaan, **buka meja** (mode lihat), reset akun kader |
+| 6. Perencanaan | Dinkes | Pantau **agregat** kabupaten per puskesmas |
+
+### 8.2 Siapa melihat apa
+
+| Data | Kader Posyandu | Puskesmas | Dinkes |
+|---|---|---|---|
+| Nama & nomor registrasi pasien | Posyandu sendiri | Posyandu binaan | Tidak (agregat) |
+| Detail pengukuran per pasien | Ya | Ya (mode lihat) | Tidak |
+| Unduh data individu (Excel) | Ya (posyandu sendiri) | Tidak | Tidak |
+| Rekap agregat per unit | Ya | Ya | Ya |
+| Kelola / reset akun posyandu | Tidak | Ya | Ya |
+| Buat akun puskesmas | Tidak | Tidak | Ya |
+
+> Puskesmas dapat **membuka meja** untuk melihat data posyandu binaan, tetapi **tidak bisa mengubah atau menghapus** data — hak input tetap milik kader. Rincian privasi ada di [Aturan privasi data pasien](#aturan-privasi-data-pasien).
+
+---
+
+## 9. Tips Umum
 
 1. **Ganti password default segera** saat login pertama.
 2. **Jangan bagikan akun** — setiap posyandu/puskesmas punya akun sendiri.
@@ -366,16 +444,19 @@ Contoh temuan yang dipantau: **tensi tinggi (hipertensi), anemia (HB rendah), gu
 5. Bila terjadi **bentrok data** (dua perangkat mengisi bersamaan), aplikasi menampilkan peringatan "Data Bentrok — Muat Ulang". Muat ulang halaman untuk mengambil data terbaru. Sebaiknya gunakan **satu HP utama** untuk input.
 6. Nomor registrasi, kode posyandu, dan kode puskesmas **dibuat otomatis oleh sistem** — tidak perlu dihafal, cukup pakai pencarian nama.
 7. Untuk bantuan/lupa password: hubungi jenjang di atas Anda.
+8. **Manfaatkan kartu QR.** Simpan/minta warga membawa kartu QR pasien agar saat hari buka cukup **memindai**, tidak perlu mengetik nama.
+9. **Salah input data? Edit, jangan daftar ulang.** Gunakan ikon **pensil** pada kartu pasien (bagian 5.1) supaya tidak terjadi data ganda.
+10. **Data berhak dikoreksi.** Subjek data/wali dapat meminta perbaikan lewat Posyandu/Puskesmas — lihat **Kebijakan Privasi**.
 
 ---
 
-## 9. Skenario Hari Buka Posyandu (5 Langkah ILP)
+## 10. Skenario Hari Buka Posyandu (5 Langkah ILP)
 
 Bagian ini menjelaskan **tujuan** dan **cara** memakai aplikasi pada hari buka posyandu. Alurnya mengikuti **5 Langkah Posyandu Integrasi Layanan Primer (ILP)**: Pendaftaran → Penimbangan & Pengukuran → Pencatatan & Pemeriksaan → Pelayanan Kesehatan & Penyuluhan → Validasi & Sinkronisasi Data.
 
 > Istilah "5 Meja" (pendaftaran, penimbangan, pengisian KMS, penyuluhan, pelayanan kesehatan) adalah sebutan lama. Sesudah ILP, langkahnya diperluas dan mencakup **semua sasaran** (ibu hamil, bayi, balita, remaja, dewasa, lansia), bukan hanya balita.
 
-### 9.1 Ringkasan cepat
+### 10.1 Ringkasan cepat
 
 | Langkah ILP | Kegiatan di meja | Di aplikasi |
 |---|---|---|
@@ -385,14 +466,14 @@ Bagian ini menjelaskan **tujuan** dan **cara** memakai aplikasi pada hari buka p
 | 4. Pelayanan Kesehatan & Penyuluhan | Nakes: imunisasi, vitamin, rujukan; kader: penyuluhan | Isi kolom **Catatan** (sumber Kader/Nakes); tandai **2T — perlu rujuk** |
 | 5. Validasi & Sinkronisasi Data | Rapikan & serahkan rekap | Pastikan **online**, antrean sinkron kosong, lalu **Rekap Ringkas → Unduh Excel** → setor ke Puskesmas |
 
-### 9.2 Langkah rinci
+### 10.2 Langkah rinci
 
 **Langkah 1 — Pendaftaran**
 1. Buka beranda Posyandu (pastikan sudah login).
 2. Untuk peserta baru, klik **PASIEN BARU**, isi **Nama Lengkap** dan **Tanggal Lahir**.
 3. Pilih **Jenis Kelamin**; centang **Pasien Ibu Hamil (Bumil)** bila perlu.
 4. Data tambahan (wali/alamat/HP) diisi melalui **Isi (opsional)** bila ada.
-5. Klik **Daftar & Langsung Ukur**. Peserta lama cukup dicari namanya di kotak pencarian.
+5. Klik **Daftar & Langsung Ukur**. Peserta lama cukup dicari namanya di kotak pencarian, atau **pindai kartu QR** miliknya (lihat bagian 5.1) agar langsung terbuka.
 
 **Langkah 2 — Penimbangan & Pengukuran**
 1. Lakukan penimbangan/pengukuran sesuai jenis sasaran (BB, TB/PB, LK, LiLA, lingkar perut, tensi).
@@ -400,7 +481,7 @@ Bagian ini menjelaskan **tujuan** dan **cara** memakai aplikasi pada hari buka p
 
 **Langkah 3 — Pencatatan & Pemeriksaan**
 1. Pilih nama peserta di aplikasi, buka tab **Input Hari Ini**.
-2. Isi kolom yang muncul otomatis sesuai usia (lihat bagian 6.2). Untuk balita, pastikan **BB** dan **TB** terisi.
+2. Isi kolom yang muncul otomatis sesuai usia (lihat bagian 6.2). Untuk balita, pastikan **BB** dan **TB** terisi, dan periksa **Posisi Ukur** (Telentang/Berdiri).
 3. Isi hasil skrining dan pemeriksaan lain bila ada. Nilai **tersimpan otomatis** — tidak ada tombol simpan.
 4. Perhatikan badge pada kartu peserta:
    - **2T — perlu rujuk** → segera diarahkan pada Langkah 4.
@@ -416,15 +497,15 @@ Bagian ini menjelaskan **tujuan** dan **cara** memakai aplikasi pada hari buka p
 1. Pastikan perangkat terhubung **internet (online)**. Bila sebelumnya sempat luring, tunggu sampai tidak ada lagi pemberitahuan "menunggu sinkron ke server".
 2. Buka **Rekap Ringkas**, pilih periode (bulan ini).
 3. Periksa ringkasan: jumlah terdaftar, terukur, N/T, 2T, dan temuan. Cocokkan dengan catatan hari itu.
-4. Klik **Unduh Rekap Excel**, lalu setorkan ke Puskesmas sesuai jalur yang berlaku.
+4. Klik **Unduh Rekap Excel**, lalu setorkan ke Puskesmas sesuai jalur yang berlaku. Berkas kader memuat **Daftar Anggota** & **Detail Pengukuran** (lihat bagian 7).
 
-### 9.3 Catatan perlengkapan & perangkat
+### 10.3 Catatan perlengkapan & perangkat
 
 - **Gunakan satu HP/tablet utama** untuk input. Akun Posyandu bersifat bersama, sehingga bila dua perangkat menginput peserta yang sama secara bersamaan dapat muncul peringatan **"Data Bentrok"**.
 - Bila tersedia lebih dari satu perangkat, atur pembagian peserta (mis. per RT) agar tidak ada peserta yang diinput dua kali.
 - Bila lokasi kurang sinyal, tetap **utamakan** mencari titik yang ada koneksi. Fitur luring hanya cadangan: data akan tersinkron otomatis saat kembali online — **jangan logout** sebelum itu.
 
-### 9.4 Sasaran non-balita (remaja, dewasa/lansia, ibu hamil)
+### 10.4 Sasaran non-balita (remaja, dewasa/lansia, ibu hamil)
 
 Alur 5 Langkah yang sama berlaku untuk semua sasaran. Yang membedakan hanya kolom pengukuran:
 
@@ -433,7 +514,7 @@ Alur 5 Langkah yang sama berlaku untuk semua sasaran. Yang membedakan hanya kolo
 
 Status "2T" dan kurva KMS hanya berlaku untuk **balita** (karena berbasis berat/umur). Untuk sasaran lain, perhatikan temuan **Tidak Normal** pada menu Analisis.
 
-### 9.5 Rujukan sumber
+### 10.5 Rujukan sumber
 
 - Dinas Kesehatan Kota Semarang, Puskesmas Genuk — *Integrasi Layanan Primer (ILP) Posyandu*: `dinkes.semarangkota.go.id/genuk/post/1288`.
 - Desa Klampok — *5 Langkah Posyandu ILP*: `klampok.id/blog/2025/06/15/5-langkah-posyandu-ilp/`.

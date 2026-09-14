@@ -25,6 +25,8 @@ export interface SessionPayload {
   role: 'DINKES' | 'PUSKESMAS' | 'POSYANDU';
   healthCenterId?: string | null;
   posyanduId?: string | null;
+  // Dicocokkan dengan User.tokenVersion di DB; beda = sesi dicabut (logout/ganti/reset).
+  tokenVersion?: number;
 }
 
 export async function createSession(payload: SessionPayload): Promise<string> {

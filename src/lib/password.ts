@@ -7,11 +7,10 @@ export async function hashPassword(plaintext: string): Promise<string> {
 }
 
 export async function verifyPassword(plaintext: string, hash: string): Promise<boolean> {
-  // Legacy support: if stored password is not a bcrypt hash, compare plaintext
-  // This allows gradual migration from plaintext to hashed passwords
-  if (!hash.startsWith('$2a$') && !hash.startsWith('$2b$') && !hash.startsWith('$2y$')) {
-    return plaintext === hash;
-  }
+  // Hanya hash bcrypt yang diterima. Password plaintext lama (pra-migrasi)
+  // tidak lagi bisa login — akun begitu harus direset oleh admin (DINKES/Puskesmas),
+  // yang akan menulis hash baru.
+  if (!isPasswordHashed(hash)) return false;
   return bcrypt.compare(plaintext, hash);
 }
 

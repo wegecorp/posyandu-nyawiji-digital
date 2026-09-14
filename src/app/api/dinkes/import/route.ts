@@ -238,6 +238,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'File wajib diunggah.' }, { status: 400 });
     }
 
+    // Batas pertahanan sebelum mem-parse (pustaka xlsx npm punya celah
+    // prototype-pollution/ReDoS; endpoint ini khusus DINKES).
+    const MAX_BYTES = 5 * 1024 * 1024;
+    if (file.size === 0 || file.size > MAX_BYTES) {
+      return NextResponse.json({ error: 'Ukuran file harus antara 1 byte dan 5 MB.' }, { status: 400 });
+    }
+    if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
+      return NextResponse.json({ error: 'Format file harus .xlsx, .xls, atau .csv.' }, { status: 400 });
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer());
     const { rows, error } = parseRows(buffer);
     if (error) return NextResponse.json({ error }, { status: 400 });

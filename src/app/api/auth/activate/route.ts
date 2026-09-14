@@ -85,6 +85,7 @@ export async function POST(req: Request) {
       username: fresh.username,
       name: fresh.name,
       role: fresh.role as SessionPayload['role'],
+      tokenVersion: fresh.tokenVersion,
     };
     if (fresh.role === 'POSYANDU' && fresh.posyandu) {
       sessionPayload.posyanduId = fresh.posyandu.id;

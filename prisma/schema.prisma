@@ -63,6 +63,7 @@ model User {
   name                String        // Nama entitas / institusi
   role                String        @default("POSYANDU") // DINKES, PUSKESMAS, POSYANDU
   mustChangePassword  Boolean       @default(true) // akun baru wajib aktivasi (ganti password default)
+  tokenVersion        Int           @default(0) // naikkan untuk mencabut semua sesi/token user ini
   healthCenterId      String?
   healthCenter        HealthCenter? @relation(fields: [healthCenterId], references: [id], onDelete: Cascade)
   posyanduId          String?

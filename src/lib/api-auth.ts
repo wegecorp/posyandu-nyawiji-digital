@@ -1,5 +1,22 @@
 import { NextResponse } from 'next/server';
 import { verifySession, getSessionFromCookies, SESSION_COOKIE_NAME, type SessionPayload } from './session';
+import { prisma } from './prisma';
+
+/**
+ * Cocokkan tokenVersion JWT dengan DB. Beda = sesi sudah dicabut (logout,
+ * ganti password, atau reset oleh admin). Sesi lama tanpa tokenVersion
+ * (terbit sebelum fitur ini) juga ditolak → paksa login ulang sekali.
+ */
+async function isSessionFresh(payload: SessionPayload | null): Promise<SessionPayload | null> {
+  if (!payload) return null;
+  if (typeof payload.tokenVersion !== 'number') return null;
+  const user = await prisma.user.findUnique({
+    where: { id: payload.userId },
+    select: { tokenVersion: true },
+  });
+  if (!user || user.tokenVersion !== payload.tokenVersion) return null;
+  return payload;
+}
 
 /**
  * Extract and verify session from the request cookie or Next.js cookie store.
@@ -11,10 +28,10 @@ export async function getAuthSession(req?: Request): Promise<SessionPayload | nu
     const match = cookieHeader.match(new RegExp(`${SESSION_COOKIE_NAME}=([^;]+)`));
     if (match) {
       const payload = await verifySession(match[1]);
-      if (payload) return payload;
+      if (payload) return isSessionFresh(payload);
     }
   }
-  return getSessionFromCookies();
+  return isSessionFresh(await getSessionFromCookies());
 }
 
 /**

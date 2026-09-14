@@ -73,6 +73,7 @@ export async function POST(req: Request) {
       data: {
         password: hashedPassword,
         mustChangePassword: true,
+        tokenVersion: { increment: 1 }, // cabut semua sesi lama akun target
       },
     });
 

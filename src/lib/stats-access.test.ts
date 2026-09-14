@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { canViewPatientDetail } from './stats-access';
 
 describe('canViewPatientDetail', () => {
-  it('DINKES tidak boleh melihat detail pasien', () => {
-    expect(canViewPatientDetail('DINKES')).toBe(false);
+  it('DINKES boleh melihat detail pasien', () => {
+    expect(canViewPatientDetail('DINKES')).toBe(true);
   });
 
   it('PUSKESMAS dan POSYANDU boleh', () => {

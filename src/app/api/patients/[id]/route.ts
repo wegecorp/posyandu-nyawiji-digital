@@ -23,13 +23,18 @@ async function checkPatientAccess(patientId: string, session: { role: string; po
   if (!patient) return { patient: null, allowed: false, status: 404, error: 'Pasien tidak ditemukan' };
 
   if (session.role === 'POSYANDU') {
-    if (patient.posyanduId !== session.posyanduId) {
+    // Fail-closed: posyanduId kosong tidak boleh lolos.
+    if (!session.posyanduId || patient.posyanduId !== session.posyanduId) {
       return { patient: null, allowed: false, status: 403, error: 'Akses ditolak (bukan wilayah Posyandu Anda)' };
     }
   } else if (session.role === 'PUSKESMAS') {
-    if (patient.posyandu.healthCenterId !== session.healthCenterId) {
+    if (!session.healthCenterId || patient.posyandu.healthCenterId !== session.healthCenterId) {
       return { patient: null, allowed: false, status: 403, error: 'Akses ditolak (bukan wilayah Puskesmas Anda)' };
     }
+  } else if (session.role === 'DINKES') {
+    // DINKES boleh meninjau identitas pasien di seluruh wilayah.
+  } else {
+    return { patient: null, allowed: false, status: 403, error: 'Akses ditolak' };
   }
 
   return { patient, allowed: true, status: 200, error: null };

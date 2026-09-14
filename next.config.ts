@@ -1,11 +1,28 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   async headers() {
     return [
       {
         source: '/:path*',
         headers: [
+          {
+            // Report-Only dulu: memantau pelanggaran tanpa memecah aplikasi.
+            // Naikkan ke 'Content-Security-Policy' setelah bersih di produksi.
+            key: 'Content-Security-Policy-Report-Only',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob:",
+              "font-src 'self' data:",
+              "connect-src 'self'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "frame-ancestors 'self'",
+            ].join('; '),
+          },
           {
             key: 'X-DNS-Prefetch-Control',
             value: 'on',

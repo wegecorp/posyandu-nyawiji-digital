@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
 import { calculateAge, getPatientCategory } from '@/lib/utils';
 import { getAuthSession } from '@/lib/api-auth';
+import { resolvePatientScope } from '@/lib/patient-scope';
 import { validateBirthDate, validatePhone, validateTextLength, isMeasurementComplete } from '@/lib/validation';
 
 export async function GET(req: Request) {
@@ -19,26 +20,26 @@ export async function GET(req: Request) {
 
     const whereClause: Prisma.PatientWhereInput = {};
 
-    if (session.role === 'POSYANDU') {
-      if (session.posyanduId) whereClause.posyanduId = session.posyanduId;
-    } else if (session.role === 'PUSKESMAS') {
-      if (requestedPosyanduId) {
-        // Verify posyandu belongs to this puskesmas
+    // Fail-closed: sesi tanpa cakupan lokasi DITOLAK, bukan dikembalikan tanpa filter.
+    const scope = resolvePatientScope(session, requestedPosyanduId);
+    if (scope.kind === 'deny') {
+      return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 });
+    }
+    if (scope.kind === 'posyandu') {
+      // PUSKESMAS harus memverifikasi posyandu tujuan milik wilayahnya.
+      if (session.role === 'PUSKESMAS') {
         const posyandu = await prisma.posyandu.findUnique({
-          where: { id: requestedPosyanduId },
+          where: { id: scope.posyanduId },
         });
         if (!posyandu || posyandu.healthCenterId !== session.healthCenterId) {
           return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 });
         }
-        whereClause.posyanduId = requestedPosyanduId;
-      } else if (session.healthCenterId) {
-        whereClause.posyandu = { healthCenterId: session.healthCenterId };
       }
-    } else if (session.role === 'DINKES') {
-      if (requestedPosyanduId) {
-        whereClause.posyanduId = requestedPosyanduId;
-      }
+      whereClause.posyanduId = scope.posyanduId;
+    } else if (scope.kind === 'healthCenter') {
+      whereClause.posyandu = { healthCenterId: scope.healthCenterId };
     }
+    // scope.kind === 'all' → DINKES tanpa filter (boleh tinjau seluruh wilayah).
 
     if (query.trim()) {
       whereClause.OR = [

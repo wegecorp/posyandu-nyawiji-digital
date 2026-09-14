@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { hashPassword, verifyPassword, isPasswordHashed } from '@/lib/password';
+import { hashPassword, verifyPassword } from '@/lib/password';
 import { createSession, buildSetCookieHeader, isSecureRequest, type SessionPayload } from '@/lib/session';
 import { isRateLimited, getClientKey } from '@/lib/rate-limit';
 import { getUserBySession, serializeUser } from '@/lib/user-profile';
@@ -68,12 +68,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Password salah.' }, { status: 401 });
     }
 
-    // Migrate plaintext password ke hash bila masih plaintext.
-    if (!isPasswordHashed(user.password)) {
-      const hashed = await hashPassword(password);
-      await prisma.user.update({ where: { id: user.id }, data: { password: hashed } });
-    }
-
     // Akun baru (belum aktivasi): jangan beri sesi — paksa ganti password dulu.
     if (user.mustChangePassword) {
       return NextResponse.json({
@@ -98,6 +92,7 @@ export async function POST(req: Request) {
       username: fresh.username,
       name: fresh.name,
       role: fresh.role as SessionPayload['role'],
+      tokenVersion: fresh.tokenVersion,
     };
     if (fresh.role === 'POSYANDU' && fresh.posyandu) {
       sessionPayload.posyanduId = fresh.posyandu.id;

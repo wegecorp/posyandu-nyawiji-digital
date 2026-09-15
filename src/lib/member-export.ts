@@ -13,6 +13,7 @@ import {
   type StaturePosition,
 } from './growth';
 import type { PatientCategory } from './types';
+import { INDICATORS, checkIndicator, indicatorHasValue, type IndicatorDef } from './clinical';
 
 export interface ExportPatient {
   id: string;
@@ -21,6 +22,9 @@ export interface ExportPatient {
   birthDate: Date | string;
   gender?: string | null;
   isPregnant: boolean;
+  address?: string | null;
+  /** Nama posyandu asal (diisi saat export multi-unit). */
+  unitName?: string | null;
 }
 
 export interface ExportMeasurement {
@@ -52,6 +56,7 @@ export interface ExportMeasurement {
   weightFaltering2T?: boolean;
   visionStatus?: string | null;
   hearingStatus?: string | null;
+  tbScreeningStatus?: string | null;
   exclusiveBreastfeeding?: boolean | null;
   noteSource?: string | null;
   category?: string | null;
@@ -155,13 +160,16 @@ export function buildRoster(
             : BLANK;
 
       const row: ExportRow = {
+        Posyandu: p.unitName ?? BLANK,
         Nama: p.name,
         'Tgl Lahir': formatIndoDate(p.birthDate),
         Umur: age.display,
         'L/P': p.gender ? (GENDER_LABEL[p.gender] ?? p.gender) : BLANK,
+        Alamat: p.address ?? BLANK,
         Bumil: p.isPregnant ? 'Ya' : 'Tidak',
         'Tgl Ukur Terakhir': m ? formatIndoDate(m.sessionDate) : BLANK,
         'ASI Eksklusif': asiSummary(byPatient.get(p.id) ?? []),
+        'Skrining TB': m?.tbScreeningStatus ?? BLANK,
         'BB (kg)': m?.weight ?? BLANK,
         'TB/PB (cm)': m?.height ?? BLANK,
         'LiLA (cm)': m?.armCircumference ?? BLANK,
@@ -202,9 +210,11 @@ export function buildDetails(
     .map((m) => {
       const p = byId.get(m.patientId)!;
       const row: ExportRow = {
+        Posyandu: p.unitName ?? BLANK,
         Tanggal: formatIndoDate(m.sessionDate),
         NoReg: p.regNumber,
         Nama: p.name,
+        Alamat: p.address ?? BLANK,
         'Umur (bln)': m.ageInMonths ?? BLANK,
         'BB (kg)': m.weight ?? BLANK,
         'TB/PB (cm)': m.height ?? BLANK,
@@ -231,10 +241,80 @@ export function buildDetails(
         '2T': m.weightFaltering2T ? 'Ya' : BLANK,
         'Skrining Mata': m.visionStatus ?? BLANK,
         'Skrining Telinga': m.hearingStatus ?? BLANK,
+        'Skrining TB': m.tbScreeningStatus ?? BLANK,
         'Sumber Catatan': m.noteSource ?? BLANK,
         'Dicatat Oleh': m.recordedBy ?? BLANK,
         Catatan: m.notes ?? BLANK,
       };
       return row;
     });
+}
+
+/** Nilai pemicu risiko untuk ditampilkan di daftar berisiko. */
+function riskValue(m: ExportMeasurement, ind: IndicatorDef): string {
+  if (ind.key === 'hypertension') return `${m.systolic ?? '-'}/${m.diastolic ?? '-'} mmHg`;
+  if (ind.key === 'abnormalVision') return m.visionStatus ?? '-';
+  if (ind.key === 'abnormalHearing') return m.hearingStatus ?? '-';
+  if (ind.key === 'tbRisk') return 'Beresiko';
+  if (!ind.field) return '-';
+  const v = (m as unknown as Record<string, unknown>)[ind.field];
+  return v != null ? `${v} ${ind.unit}` : '-';
+}
+
+/**
+ * Daftar Berisiko: 1 baris per (pasien × jenis risiko) dari pengukuran
+ * TERAKHIR dalam periode. Jenis risiko = temuan indikator klinis (TB beresiko,
+ * hipertensi, anemia, dll) + BB 2T. Menyertakan Posyandu & Alamat asal pasien.
+ */
+export function buildRiskList(patients: ExportPatient[], measurements: ExportMeasurement[]): ExportRow[] {
+  const latest = new Map<string, ExportMeasurement>();
+  for (const m of measurements) {
+    const cur = latest.get(m.patientId);
+    if (!cur || new Date(m.sessionDate).getTime() > new Date(cur.sessionDate).getTime()) {
+      latest.set(m.patientId, m);
+    }
+  }
+
+  const byId = new Map(patients.map((p) => [p.id, p]));
+  const rows: ExportRow[] = [];
+
+  for (const [pid, m] of latest) {
+    const p = byId.get(pid);
+    if (!p) continue;
+
+    const session = new Date(m.sessionDate);
+    const category =
+      (m.category as PatientCategory) ??
+      getPatientCategory(p.birthDate, p.isPregnant, p.gender, session);
+
+    const base: ExportRow = {
+      Posyandu: p.unitName ?? BLANK,
+      Nama: p.name,
+      NoReg: p.regNumber,
+      Alamat: p.address ?? BLANK,
+      Umur: calculateAge(p.birthDate, session).display,
+      'L/P': p.gender ? (GENDER_LABEL[p.gender] ?? p.gender) : BLANK,
+      'Tanggal Ukur': formatIndoDate(m.sessionDate),
+      'Jenis Risiko': BLANK,
+      Nilai: BLANK,
+      Catatan: m.notes ?? BLANK,
+    };
+
+    for (const ind of INDICATORS) {
+      if (!ind.appliesTo.includes(category)) continue;
+      if (!indicatorHasValue(m, ind)) continue;
+      if (!checkIndicator(m, ind, p.gender, category)) continue;
+      rows.push({ ...base, 'Jenis Risiko': ind.label, Nilai: riskValue(m, ind) });
+    }
+
+    if (m.weightFaltering2T) {
+      rows.push({
+        ...base,
+        'Jenis Risiko': 'BB 2T (tidak naik 2x)',
+        Nilai: m.weight != null ? `${m.weight} kg` : '-',
+      });
+    }
+  }
+
+  return rows;
 }

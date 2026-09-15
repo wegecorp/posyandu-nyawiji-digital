@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildRoster, buildDetails, type ExportPatient, type ExportMeasurement } from './member-export';
+import { buildRoster, buildDetails, buildRiskList, type ExportPatient, type ExportMeasurement } from './member-export';
 
 const patients: ExportPatient[] = [
   { id: 'p1', regNumber: 'POS-01-2026-0001', name: 'Budi', birthDate: '2020-01-15', gender: 'L', isPregnant: false },
@@ -89,5 +89,35 @@ describe('kolom ASI Eksklusif (roster)', () => {
 
   it('tanpa data ASI → kosong', () => {
     expect(byName('Tanpa Data')['ASI Eksklusif']).toBe('');
+  });
+});
+
+describe('buildRiskList', () => {
+  const riskPatients: ExportPatient[] = [
+    { id: 'r1', regNumber: 'R1', name: 'Ani', birthDate: '2020-01-15', gender: 'P', isPregnant: false, address: 'RT 02', unitName: 'Melati' },
+    { id: 'r2', regNumber: 'R2', name: 'Budi', birthDate: '2020-01-15', gender: 'L', isPregnant: false, address: 'RT 03', unitName: 'Melati' },
+  ];
+  const riskMeasurements: ExportMeasurement[] = [
+    { patientId: 'r1', sessionDate: '2021-01-10', ageInMonths: 12, tbScreeningStatus: 'TIDAK_BERESIKO' },
+    { patientId: 'r1', sessionDate: '2021-03-10', ageInMonths: 14, tbScreeningStatus: 'BERESIKO' },
+    { patientId: 'r2', sessionDate: '2021-02-10', ageInMonths: 13, weight: 8, weightFaltering2T: true },
+  ];
+  const rows = buildRiskList(riskPatients, riskMeasurements);
+
+  it('pakai pengukuran terakhir + sertakan posyandu & alamat', () => {
+    const tb = rows.find((r) => r['Jenis Risiko'] === 'Beresiko Tuberkulosis (TB)');
+    expect(tb).toBeDefined();
+    expect(tb!.Posyandu).toBe('Melati');
+    expect(tb!.Alamat).toBe('RT 02');
+    expect(tb!.Nama).toBe('Ani');
+  });
+
+  it('BB 2T masuk daftar', () => {
+    expect(rows.some((r) => r.Nama === 'Budi' && r['Jenis Risiko'] === 'BB 2T (tidak naik 2x)')).toBe(true);
+  });
+
+  it('pengukuran lama (bukan terakhir) tidak dipakai', () => {
+    // r1 terakhir BERESIKO → hanya 1 baris TB, bukan 2.
+    expect(rows.filter((r) => r.Nama === 'Ani')).toHaveLength(1);
   });
 });

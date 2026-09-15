@@ -135,6 +135,7 @@ model Measurement {
 
   visionStatus      String?   // Skrining mata: Normal / Tidak Normal
   hearingStatus     String?   // Skrining telinga: Normal / Tidak Normal
+  tbScreeningStatus String?   // Skrining TB: BERESIKO / TIDAK_BERESIKO
   exclusiveBreastfeeding Boolean? // ASI eksklusif (bayi 0-5 bln): true=Ya, false=Tidak, null=belum
   noteSource        String?   // Sumber catatan: Kader / Nakes
   category          String?   // Snapshot kategori saat pengukuran

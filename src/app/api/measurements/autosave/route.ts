@@ -47,6 +47,7 @@ export async function POST(req: Request) {
       hemoglobin,
       visionStatus,
       hearingStatus,
+      tbScreeningStatus,
       exclusiveBreastfeeding,
       noteSource,
       notes,
@@ -149,6 +150,7 @@ export async function POST(req: Request) {
     });
 
     const SCREENING_VALUES = ['Normal', 'Tidak Normal'];
+    const TB_VALUES = ['BERESIKO', 'TIDAK_BERESIKO'];
     const NOTE_SOURCES = ['Kader', 'Nakes'];
     const POSITION_VALUES: StaturePosition[] = ['TELENTANG', 'BERDIRI'];
 
@@ -186,6 +188,8 @@ export async function POST(req: Request) {
       fieldData.visionStatus = SCREENING_VALUES.includes(visionStatus) ? visionStatus : null;
     if (hearingStatus !== undefined)
       fieldData.hearingStatus = SCREENING_VALUES.includes(hearingStatus) ? hearingStatus : null;
+    if (tbScreeningStatus !== undefined)
+      fieldData.tbScreeningStatus = TB_VALUES.includes(tbScreeningStatus) ? tbScreeningStatus : null;
     if (exclusiveBreastfeeding !== undefined)
       fieldData.exclusiveBreastfeeding =
         exclusiveBreastfeeding === true || exclusiveBreastfeeding === 'true'

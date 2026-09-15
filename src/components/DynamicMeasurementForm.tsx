@@ -87,6 +87,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   const [waistCircumference, setWaistCircumference] = useState<string>('');
   const [visionStatus, setVisionStatus] = useState<string>('');
   const [hearingStatus, setHearingStatus] = useState<string>('');
+  const [tbScreeningStatus, setTbScreeningStatus] = useState<string>('');
   const [exclusiveBreastfeeding, setExclusiveBreastfeeding] = useState<string>('');
   const [noteSource, setNoteSource] = useState<string>('Kader');
   const [notes, setNotes] = useState<string>('');
@@ -129,6 +130,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
     setHemoglobin(tm?.hemoglobin != null ? String(tm.hemoglobin) : '');
     setVisionStatus(tm?.visionStatus || '');
     setHearingStatus(tm?.hearingStatus || '');
+    setTbScreeningStatus(tm?.tbScreeningStatus || '');
     setExclusiveBreastfeeding(
       tm?.exclusiveBreastfeeding === true ? 'Ya' : tm?.exclusiveBreastfeeding === false ? 'Tidak' : '',
     );
@@ -334,6 +336,9 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
         break;
       case 'hearingStatus':
         setHearingStatus(value);
+        break;
+      case 'tbScreeningStatus':
+        setTbScreeningStatus(value);
         break;
       case 'exclusiveBreastfeeding':
         setExclusiveBreastfeeding(value);
@@ -814,6 +819,42 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
             </div>
           </SectionCard>
 
+          {/* Skrining TB — semua kategori (opsional) */}
+          <SectionCard>
+            <SectionHeader
+              icon={Activity}
+              title="Skrining Tuberkulosis (TB)"
+              hint="Apakah berisiko TB bulan ini?"
+            />
+            <div className="grid grid-cols-2 bg-white p-1 rounded-xl border border-[#e9edef] gap-1">
+              {([
+                { value: 'TIDAK_BERESIKO', label: 'Tidak Beresiko' },
+                { value: 'BERESIKO', label: 'Beresiko' },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  disabled={isReadOnly}
+                  onClick={() =>
+                    handleFieldChange('tbScreeningStatus', tbScreeningStatus === opt.value ? '' : opt.value)
+                  }
+                  className={`py-2.5 rounded-lg text-xs font-extrabold border transition-all disabled:opacity-60 ${
+                    tbScreeningStatus === opt.value
+                      ? opt.value === 'BERESIKO'
+                        ? 'bg-[#dc2626] text-white border-[#dc2626]'
+                        : 'bg-[#075e54] text-white border-[#075e54]'
+                      : 'bg-[#f0f2f5] text-[#54656f] border-[#e9edef]'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-[#8696a0] font-medium">
+              Tekan pilihan yang aktif untuk mengosongkan.
+            </p>
+          </SectionCard>
+
           {/* G. Lab Sederhana */}
           <SectionCard>
             <SectionHeader
@@ -1069,6 +1110,12 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                   )}
                   {hist.hearingStatus && (
                     <MetricChip label="Telinga" value={hist.hearingStatus} />
+                  )}
+                  {hist.tbScreeningStatus && (
+                    <MetricChip
+                      label="TB"
+                      value={hist.tbScreeningStatus === 'BERESIKO' ? 'Beresiko' : 'Tidak Beresiko'}
+                    />
                   )}
                   {hist.exclusiveBreastfeeding != null && (
                     <MetricChip label="ASI Eksklusif" value={hist.exclusiveBreastfeeding ? 'Ya' : 'Tidak'} />

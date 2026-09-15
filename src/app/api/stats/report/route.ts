@@ -21,7 +21,15 @@ import { requireRole } from '@/lib/api-auth';
 import { getPatientCategory } from '@/lib/utils';
 import { INDICATORS, checkIndicator, type IndicatorDef } from '@/lib/clinical';
 import { computeGrowth, type StaturePosition } from '@/lib/growth';
-import { buildRoster, buildDetails, type ExportRow } from '@/lib/member-export';
+import {
+  buildRoster,
+  buildDetails,
+  buildRiskList,
+  type ExportRow,
+  type ExportPatient,
+  type ExportMeasurement,
+} from '@/lib/member-export';
+import { MAX_EXPORT_UNITS, MAX_EXPORT_ROWS } from '@/lib/export-limits';
 import type { PatientCategory } from '@/lib/types';
 
 type Bucket = { abnormal: number; assessed: number };
@@ -51,6 +59,7 @@ function hasData(m: Record<string, unknown>, ind: IndicatorDef): boolean {
   if (ind.key === 'hypertension') return m.systolic != null || m.diastolic != null;
   if (ind.key === 'abnormalVision') return m.visionStatus != null;
   if (ind.key === 'abnormalHearing') return m.hearingStatus != null;
+  if (ind.key === 'tbRisk') return m.tbScreeningStatus != null;
   if (!ind.field) return false;
   const v = m[ind.field];
   return v != null && Number.isFinite(Number(v));
@@ -72,6 +81,15 @@ export async function GET(req: Request) {
     let fromDate = searchParams.get('from') ?? fmt(new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()));
     const toDate = searchParams.get('to') ?? fmt(now);
 
+    // Pilihan isi & unit. include: 'anggota' | 'detail' | 'beresiko'.
+    const includeParam = (searchParams.get('include') ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const wantMembers = includeParam.includes('anggota') || includeParam.includes('detail');
+    const wantRisk = includeParam.includes('beresiko');
+    const unitIdsParam = searchParams.get('unitIds');
+
     // Batas periode: role bawah 12 bulan, DINKES 24 bulan.
     const maxMonths = session.role === 'DINKES' ? 24 : 12;
     const fromObjInit = new Date(`${fromDate}T00:00:00`);
@@ -82,7 +100,7 @@ export async function GET(req: Request) {
     const fromObj = new Date(`${fromDate}T00:00:00`);
     const toExclusive = new Date(toObj.getTime() + 86_400_000);
 
-    // Scope posyandu ids.
+    // Scope posyandu ids (fail-closed per peran).
     let posyanduIds: string[] = [];
     if (session.role === 'POSYANDU' && session.posyanduId) {
       posyanduIds = [session.posyanduId];
@@ -91,10 +109,27 @@ export async function GET(req: Request) {
         where: { healthCenterId: session.healthCenterId },
         select: { id: true },
       });
-      posyanduIds = ps.map((p) => p.id);
+      const own = new Set(ps.map((p) => p.id));
+      if (unitIdsParam) {
+        posyanduIds = unitIdsParam
+          .split(',')
+          .map((s) => s.trim())
+          .filter((id) => own.has(id));
+      } else {
+        posyanduIds = [...own];
+      }
     } else {
       const ps = await prisma.posyandu.findMany({ select: { id: true } });
       posyanduIds = ps.map((p) => p.id);
+    }
+
+    if ((wantMembers || wantRisk) && posyanduIds.length > MAX_EXPORT_UNITS) {
+      return NextResponse.json(
+        {
+          error: `Terlalu banyak posyandu (${posyanduIds.length}). Maksimal ${MAX_EXPORT_UNITS} posyandu untuk export data per pasien — persempit pilihan.`,
+        },
+        { status: 400 },
+      );
     }
 
     const [posyandus, patients, meas] = await Promise.all([
@@ -131,6 +166,7 @@ export async function GET(req: Request) {
           uricAcid: true,
           visionStatus: true,
           hearingStatus: true,
+          tbScreeningStatus: true,
           patient: { select: { gender: true, birthDate: true, isPregnant: true } },
         },
       }),
@@ -235,6 +271,13 @@ export async function GET(req: Request) {
     const global = emptyRow('global', 'Total');
     for (const r of rows) mergeRow(global, r);
 
+    const canDetails = session.role !== 'DINKES';
+    const estimates = {
+      units: posyanduIds.length,
+      patients: patients.filter((p) => p.createdAt.getTime() < toExclusive.getTime()).length,
+      measurements: meas.length,
+    };
+
     const payload = {
       success: true,
       from: fromDate,
@@ -243,15 +286,37 @@ export async function GET(req: Request) {
       unitLabel: session.role === 'DINKES' ? 'Puskesmas' : 'Posyandu',
       global,
       units,
+      estimates: { ...estimates, rows: estimates.patients + estimates.measurements },
+      limits: { units: MAX_EXPORT_UNITS, rows: MAX_EXPORT_ROWS },
+      canDetails,
     };
 
     if (searchParams.get('format') === 'xlsx') {
-      // Data individu HANYA untuk role POSYANDU. PUSKESMAS & DINKES tetap agregat.
-      const members =
-        session.role === 'POSYANDU' && session.posyanduId
-          ? await memberSheets(session.posyanduId, fromObj, toExclusive)
-          : null;
-      return xlsxResponse(payload, members);
+      let members: MemberSheets | null = null;
+      let risks: ExportRow[] | null = null;
+
+      if (canDetails && (wantMembers || wantRisk) && posyanduIds.length > 0) {
+        const data = await memberSheets(posyanduIds, fromObj, toExclusive);
+        const rowCount = data.patients.length + data.measurements.length;
+        if (rowCount > MAX_EXPORT_ROWS) {
+          return NextResponse.json(
+            {
+              error: `Data terlalu besar (±${rowCount} baris). Maksimal ${MAX_EXPORT_ROWS} baris — persempit periode atau pilihan posyandu.`,
+            },
+            { status: 413 },
+          );
+        }
+        const periodEnd = new Date(toExclusive.getTime() - 1);
+        if (wantMembers) {
+          members = {
+            roster: buildRoster(data.patients, data.measurements, periodEnd),
+            details: buildDetails(data.patients, data.measurements),
+          };
+        }
+        if (wantRisk) risks = buildRiskList(data.patients, data.measurements);
+      }
+
+      return xlsxResponse(payload, members, risks);
     }
     return NextResponse.json(payload);
   } catch (error) {
@@ -313,15 +378,22 @@ function flatRow(no: number | string, r: ReportRow) {
 }
 
 type MemberSheets = { roster: ExportRow[]; details: ExportRow[] };
+type MemberData = { patients: ExportPatient[]; measurements: ExportMeasurement[] };
 
-/** Ambil data anggota + pengukuran periode untuk 1 posyandu (khusus export POSYANDU). */
+/** Ambil pasien + pengukuran periode untuk sekumpulan posyandu (export per pasien). */
 async function memberSheets(
-  posyanduId: string,
+  posyanduIds: string[],
   fromObj: Date,
   toExclusive: Date,
-): Promise<MemberSheets> {
+): Promise<MemberData> {
+  const posyandus = await prisma.posyandu.findMany({
+    where: { id: { in: posyanduIds } },
+    select: { id: true, name: true },
+  });
+  const nameById = new Map(posyandus.map((p) => [p.id, p.name]));
+
   const patients = await prisma.patient.findMany({
-    where: { posyanduId, createdAt: { lt: toExclusive } },
+    where: { posyanduId: { in: posyanduIds }, createdAt: { lt: toExclusive } },
     select: {
       id: true,
       regNumber: true,
@@ -329,18 +401,24 @@ async function memberSheets(
       birthDate: true,
       gender: true,
       isPregnant: true,
+      address: true,
+      posyanduId: true,
     },
   });
   const ids = patients.map((p) => p.id);
   const measurements = ids.length
     ? await prisma.measurement.findMany({
-        where: { posyanduId, patientId: { in: ids }, sessionDate: { gte: fromObj, lt: toExclusive } },
+        where: {
+          posyanduId: { in: posyanduIds },
+          patientId: { in: ids },
+          sessionDate: { gte: fromObj, lt: toExclusive },
+        },
       })
     : [];
-  const periodEnd = new Date(toExclusive.getTime() - 1);
+
   return {
-    roster: buildRoster(patients, measurements, periodEnd),
-    details: buildDetails(patients, measurements),
+    patients: patients.map((p) => ({ ...p, unitName: nameById.get(p.posyanduId) ?? '' })),
+    measurements,
   };
 }
 
@@ -351,7 +429,7 @@ function setCols(ws: XLSX.WorkSheet, rows: ExportRow[]) {
   ws['!cols'] = Object.keys(sample).map((k) => ({ wch: Math.max(k.length + 2, 12) }));
 }
 
-function xlsxResponse(p: ReportPayload, members: MemberSheets | null) {
+function xlsxResponse(p: ReportPayload, members: MemberSheets | null, risks: ExportRow[] | null) {
   const wb = XLSX.utils.book_new();
 
   const globalSheet = XLSX.utils.json_to_sheet([flatRow('TOTAL', p.global)]);
@@ -372,10 +450,16 @@ function xlsxResponse(p: ReportPayload, members: MemberSheets | null) {
     XLSX.utils.book_append_sheet(wb, detailSheet, 'Detail Pengukuran');
   }
 
+  if (risks) {
+    const riskSheet = XLSX.utils.json_to_sheet(risks);
+    setCols(riskSheet, risks);
+    XLSX.utils.book_append_sheet(wb, riskSheet, 'Daftar Berisiko');
+  }
+
   const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
-  const filename = members
-    ? `Data_Posyandu_${sanitizeName(p.units[0]?.unitName ?? 'Posyandu')}_${p.from}_${p.to}.xlsx`
-    : `Rekap_${p.unitLabel}_${p.to}.xlsx`;
+  const scopeLabel =
+    members && p.units.length === 1 ? sanitizeName(p.units[0].unitName) : sanitizeName(p.unitLabel);
+  const filename = `Rekap_${scopeLabel}_${p.from}_${p.to}.xlsx`;
   return new NextResponse(buffer, {
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

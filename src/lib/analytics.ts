@@ -259,6 +259,7 @@ interface OutcomeBaseRow {
   uricAcid: number | null;
   visionStatus: string | null;
   hearingStatus: string | null;
+  tbScreeningStatus: string | null;
 }
 
 export interface UnitOutcomeAgg {
@@ -293,7 +294,8 @@ export async function fetchOutcomeBase(from: string, to: string): Promise<Outcom
       m.cholesterol,
       m.uricAcid,
       m.visionStatus,
-      m.hearingStatus
+      m.hearingStatus,
+      m.tbScreeningStatus
     FROM Measurement m
     JOIN Patient p ON p.id = m.patientId
     WHERE m.sessionDate >= ${fromMs}
@@ -306,6 +308,7 @@ function indicatorHasData(r: OutcomeBaseRow, ind: IndicatorDef): boolean {
   if (ind.key === 'hypertension') return r.systolic != null || r.diastolic != null;
   if (ind.key === 'abnormalVision') return r.visionStatus != null;
   if (ind.key === 'abnormalHearing') return r.hearingStatus != null;
+  if (ind.key === 'tbRisk') return r.tbScreeningStatus != null;
   if (!ind.field) return false;
   const v = (r as unknown as Record<string, unknown>)[ind.field];
   return v != null && Number.isFinite(Number(v));

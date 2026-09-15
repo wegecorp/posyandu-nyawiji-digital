@@ -26,7 +26,8 @@ export type IndicatorKey =
   | 'highCholesterol'
   | 'highUricAcid'
   | 'abnormalVision'
-  | 'abnormalHearing';
+  | 'abnormalHearing'
+  | 'tbRisk';
 
 export interface IndicatorDef {
   key: IndicatorKey;
@@ -126,6 +127,17 @@ export const INDICATORS: IndicatorDef[] = [
     isAbnormal: () => false,
     source: 'Skrining standar posyandu',
   },
+  {
+    key: 'tbRisk',
+    label: 'Beresiko Tuberkulosis (TB)',
+    field: null,
+    unit: '-',
+    // ponytail: sasaran TB = semua kategori untuk sekarang. Persempit cukup
+    // dengan mengedit appliesTo di sini bila kebijakan TB berubah.
+    appliesTo: ['BAYI', 'BALITA_APRAS', 'REMAJA', 'DEWASA', 'LANSIA', 'BUMIL'],
+    isAbnormal: () => false, // ditangani khusus di checkIndicator
+    source: 'Skrining TB posyandu (Kemenkes)',
+  },
 ];
 
 /**
@@ -154,6 +166,7 @@ export function checkIndicator(
     uricAcid?: number | null;
     visionStatus?: string | null;
     hearingStatus?: string | null;
+    tbScreeningStatus?: string | null;
   },
   indicator: IndicatorDef,
   gender?: string | null,
@@ -167,6 +180,9 @@ export function checkIndicator(
   }
   if (indicator.key === 'abnormalHearing') {
     return m.hearingStatus === 'Tidak Normal';
+  }
+  if (indicator.key === 'tbRisk') {
+    return m.tbScreeningStatus === 'BERESIKO';
   }
   // Field-based indicators
   if (!indicator.field) return false;
@@ -182,4 +198,28 @@ export function checkIndicator(
  */
 export function indicatorsForCategory(category: PatientCategory): IndicatorDef[] {
   return INDICATORS.filter((ind) => ind.appliesTo.includes(category));
+}
+
+/** Apakah baris ini punya nilai untuk indikator tsb (bisa dinilai). */
+export function indicatorHasValue(
+  m: {
+    systolic?: number | null;
+    diastolic?: number | null;
+    hemoglobin?: number | null;
+    bloodSugar?: number | null;
+    cholesterol?: number | null;
+    uricAcid?: number | null;
+    visionStatus?: string | null;
+    hearingStatus?: string | null;
+    tbScreeningStatus?: string | null;
+  },
+  indicator: IndicatorDef,
+): boolean {
+  if (indicator.key === 'hypertension') return m.systolic != null || m.diastolic != null;
+  if (indicator.key === 'abnormalVision') return m.visionStatus != null;
+  if (indicator.key === 'abnormalHearing') return m.hearingStatus != null;
+  if (indicator.key === 'tbRisk') return m.tbScreeningStatus != null;
+  if (!indicator.field) return false;
+  const v = (m as Record<string, unknown>)[indicator.field];
+  return v != null && Number.isFinite(Number(v));
 }

@@ -17,6 +17,7 @@ function row(over: Record<string, unknown> = {}) {
     uricAcid: null,
     visionStatus: null,
     hearingStatus: null,
+    tbScreeningStatus: null,
     ...over,
   } as Parameters<typeof classifyOutcomes>[0][number];
 }
@@ -43,6 +44,18 @@ describe('classifyOutcomes', () => {
     const { totals } = classifyOutcomes([row({ bloodSugar: 200 })]);
     expect(totals[0].abnormal).toBe(0);
     expect(totals[0].notAssessed).toBe(1);
+  });
+
+  it('skrining TB beresiko → Tidak Normal', () => {
+    const { totals } = classifyOutcomes([row({ tbScreeningStatus: 'BERESIKO' })]);
+    expect(totals[0].abnormal).toBe(1);
+    expect(totals[0].abnormalByIndicator.tbRisk).toBe(1);
+  });
+
+  it('skrining TB tidak beresiko → Normal', () => {
+    const { totals } = classifyOutcomes([row({ tbScreeningStatus: 'TIDAK_BERESIKO' })]);
+    expect(totals[0].abnormal).toBe(0);
+    expect(totals[0].normal).toBe(1);
   });
 
   it('dedupe per pasien per bulan (ambil pengukuran terakhir)', () => {

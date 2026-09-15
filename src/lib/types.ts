@@ -70,6 +70,8 @@ export interface MeasurementData {
   weightFaltering2T?: boolean;
   visionStatus?: string | null;
   hearingStatus?: string | null;
+  /** Skrining TB: 'BERESIKO' | 'TIDAK_BERESIKO' | null. */
+  tbScreeningStatus?: string | null;
   /** ASI eksklusif (bayi 0-5 bln): true=Ya, false=Tidak, null=belum. */
   exclusiveBreastfeeding?: boolean | null;
   noteSource?: string | null;

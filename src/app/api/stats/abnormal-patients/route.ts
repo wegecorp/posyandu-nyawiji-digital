@@ -127,12 +127,14 @@ export async function GET(req: Request) {
           uricAcid: row.uricAcid,
           visionStatus: row.visionStatus,
           hearingStatus: row.hearingStatus,
+          tbScreeningStatus: row.tbScreeningStatus,
         };
 
         if (checkIndicator(measurementData, ind, gender, category)) {
           let value: number | string = '-';
           if (ind.key === 'abnormalVision') value = String(row.visionStatus ?? '-');
           else if (ind.key === 'abnormalHearing') value = String(row.hearingStatus ?? '-');
+          else if (ind.key === 'tbRisk') value = 'Beresiko';
           else if (ind.field) {
             const raw = (row as Record<string, unknown>)[ind.field];
             value = raw != null ? Number(raw) : '-';

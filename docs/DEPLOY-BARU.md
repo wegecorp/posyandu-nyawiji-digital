@@ -230,9 +230,9 @@ git pull
 npm ci
 pm2 stop posyandu-nyawiji
 rm -rf .next
-npx prisma db push
+npx prisma db push       # kolom baru + REGENERATE Prisma Client (WAJIB sebelum build)
 npm run db:backfill
-npm run build            # HARUS sukses sebelum start
+npm run build            # prisma generate otomatis; HARUS sukses sebelum start
 pm2 start posyandu-nyawiji
 pm2 save
 ```

@@ -17,9 +17,9 @@ Non-blocker yang sengaja dibiarkan: F10, F20, F21, dan D (perf `recompute`) — 
 cd /opt/nyawiji
 git pull
 npm ci
-npx prisma db push        # kolom weightGain/weightStatus/weightFaltering2T (aditif, aman)
+npx prisma db push        # kolom baru + REGENERATE Prisma Client (WAJIB sebelum build)
 npm run db:backfill       # isi N/T & 2T untuk data lama (idempoten, bisa diulang)
-npm run build
+npm run build             # prisma generate otomatis
 pm2 restart posyandu-nyawiji
 pm2 logs posyandu-nyawiji --lines 50   # pastikan tidak ada error
 ```

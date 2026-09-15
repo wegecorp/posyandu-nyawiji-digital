@@ -18,6 +18,8 @@ export interface PatientData {
   ageDisplay?: string;
   todayMeasurement?: MeasurementData | null;
   measurementComplete?: boolean;
+  /** Persen field terisi untuk pengukuran bulan berjalan (0-100). */
+  dataCompletionPercent?: number;
   /** Pengukuran terbaru pasien menandai 2T (2x tidak naik) → perlu rujuk. */
   faltering2T?: boolean;
   /** Tanggal pengukuran terakhir (ISO) — null bila belum pernah diukur. */

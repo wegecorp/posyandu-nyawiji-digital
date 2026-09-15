@@ -60,13 +60,13 @@ export async function GET(
     const age = calculateAge(patient.birthDate);
     const category = getPatientCategory(patient.birthDate, patient.isPregnant);
 
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const endOfToday = new Date();
-    endOfToday.setHours(23, 59, 59, 999);
+    // Sesi = bulan berjalan.
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
     const todayMeasurement = patient.measurements.find(
-      (m) => new Date(m.sessionDate) >= startOfToday && new Date(m.sessionDate) <= endOfToday
+      (m) => new Date(m.sessionDate) >= startOfMonth && new Date(m.sessionDate) <= endOfMonth
     ) || null;
 
     return NextResponse.json({
@@ -209,13 +209,13 @@ export async function PUT(
       });
     }
 
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const endOfToday = new Date();
-    endOfToday.setHours(23, 59, 59, 999);
+    // Sesi = bulan berjalan.
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
     const todayMeasurement = updatedPatient.measurements.find(
-      (m) => new Date(m.sessionDate) >= startOfToday && new Date(m.sessionDate) <= endOfToday
+      (m) => new Date(m.sessionDate) >= startOfMonth && new Date(m.sessionDate) <= endOfMonth
     ) || null;
 
     return NextResponse.json({

@@ -7,6 +7,7 @@ import {
   validatePhone,
   validateTextLength,
   isMeasurementComplete,
+  measurementCompletion,
 } from './validation';
 
 describe('validateMeasurementValue', () => {
@@ -90,5 +91,23 @@ describe('isMeasurementComplete', () => {
     expect(isMeasurementComplete(null)).toBe(false);
     expect(isMeasurementComplete({ weight: 10, height: null })).toBe(false);
     expect(isMeasurementComplete({ weight: 10, height: 80 })).toBe(true);
+  });
+});
+
+describe('measurementCompletion', () => {
+  it('0% saat belum ada data', () => {
+    expect(measurementCompletion(null, 'BALITA')).toEqual({ filled: 0, total: 2, percent: 0 });
+  });
+
+  it('50% saat baru 1 dari 2 field terisi', () => {
+    expect(measurementCompletion({ weight: 10 }, 'BALITA').percent).toBe(50);
+  });
+
+  it('100% saat semua field terisi', () => {
+    expect(measurementCompletion({ weight: 10, height: 80 }, 'BALITA').percent).toBe(100);
+  });
+
+  it('string kosong dihitung belum terisi', () => {
+    expect(measurementCompletion({ weight: '', height: 80 }, 'BALITA').percent).toBe(50);
   });
 });

@@ -4,7 +4,7 @@ import type { Prisma } from '@prisma/client';
 import { calculateAge, getPatientCategory } from '@/lib/utils';
 import { getAuthSession } from '@/lib/api-auth';
 import { resolvePatientScope } from '@/lib/patient-scope';
-import { validateBirthDate, validatePhone, validateTextLength, isMeasurementComplete } from '@/lib/validation';
+import { validateBirthDate, validatePhone, validateTextLength, measurementCompletion } from '@/lib/validation';
 
 export async function GET(req: Request) {
   try {
@@ -49,11 +49,10 @@ export async function GET(req: Request) {
       ];
     }
 
-    // Get today's start and end for measurement check
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const endOfToday = new Date();
-    endOfToday.setHours(23, 59, 59, 999);
+    // Sesi = BULAN: status daftar pasien mengikuti pengukuran bulan berjalan.
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
     const patients = await prisma.patient.findMany({
       where: whereClause,
@@ -63,7 +62,7 @@ export async function GET(req: Request) {
       orderBy: { name: 'asc' },
     });
 
-    // Ambil pengukuran hari ini sekali (tanpa N+1), lalu tempel per pasien.
+    // Ambil pengukuran bulan ini sekali (tanpa N+1), lalu tempel per pasien.
     type MeasurementRow = Awaited<ReturnType<typeof prisma.measurement.findFirst>>;
     const todayByPatient = new Map<string, NonNullable<MeasurementRow>>();
     const faltering2TPatients = new Set<string>();
@@ -74,7 +73,7 @@ export async function GET(req: Request) {
         prisma.measurement.findMany({
           where: {
             patientId: { in: ids },
-            sessionDate: { gte: startOfToday, lte: endOfToday },
+            sessionDate: { gte: startOfMonth, lte: endOfMonth },
           },
           orderBy: { sessionDate: 'desc' },
         }),
@@ -102,16 +101,12 @@ export async function GET(req: Request) {
       }
     }
 
-    const nowMonth = new Date();
     const enrichedPatients = patients.map((p) => {
       const age = calculateAge(p.birthDate);
       const category = getPatientCategory(p.birthDate, p.isPregnant);
       const todayMeasurement = todayByPatient.get(p.id) || null;
       const latestDate = latestByPatient.get(p.id) ?? null;
-      const measuredThisMonth = latestDate
-        ? latestDate.getFullYear() === nowMonth.getFullYear() &&
-          latestDate.getMonth() === nowMonth.getMonth()
-        : false;
+      const completion = measurementCompletion(todayMeasurement, category);
       return {
         ...p,
         category,
@@ -119,10 +114,11 @@ export async function GET(req: Request) {
         ageMonths: age.totalMonths,
         ageDisplay: age.display,
         todayMeasurement,
-        measurementComplete: isMeasurementComplete(todayMeasurement),
+        measurementComplete: completion.percent === 100,
+        dataCompletionPercent: completion.percent,
         faltering2T: faltering2TPatients.has(p.id),
         lastMeasuredAt: latestDate ? latestDate.toISOString() : null,
-        measuredThisMonth,
+        measuredThisMonth: Boolean(todayMeasurement),
       };
     });
 

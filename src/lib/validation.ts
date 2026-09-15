@@ -1,3 +1,5 @@
+import type { PatientCategory } from './types';
+
 export interface RangeRule {
   min: number;
   max: number;
@@ -115,4 +117,40 @@ export function isMeasurementComplete(m: {
 } | null | undefined): boolean {
   if (!m) return false;
   return m.weight != null && m.height != null;
+}
+
+/**
+ * Field yang dihitung untuk progres kelengkapan data, per kategori umur.
+ * ponytail: definisi per kategori masih draf (BB & TB untuk semua). Revisi
+ * lanjutan cukup mengubah map ini — persen & filter ikut otomatis.
+ */
+const COMPLETION_FIELDS: Record<PatientCategory, string[]> = {
+  BALITA: ['weight', 'height'],
+  ANAK: ['weight', 'height'],
+  REMAJA: ['weight', 'height'],
+  DEWASA_LANSIA: ['weight', 'height'],
+  BUMIL: ['weight', 'height'],
+};
+
+export function completionFieldsFor(category: PatientCategory): string[] {
+  return COMPLETION_FIELDS[category] ?? ['weight', 'height'];
+}
+
+/** Persen field terisi (0-100) untuk satu pengukuran + kategori. */
+export function measurementCompletion(
+  m: Record<string, unknown> | null | undefined,
+  category: PatientCategory,
+): { filled: number; total: number; percent: number } {
+  const fields = completionFieldsFor(category);
+  if (!m) return { filled: 0, total: fields.length, percent: 0 };
+  let filled = 0;
+  for (const f of fields) {
+    const v = m[f];
+    if (v != null && v !== '') filled++;
+  }
+  return {
+    filled,
+    total: fields.length,
+    percent: fields.length > 0 ? Math.round((filled / fields.length) * 100) : 0,
+  };
 }

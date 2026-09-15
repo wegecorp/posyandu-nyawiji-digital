@@ -30,8 +30,9 @@ export const PatientCard: React.FC<PatientCardProps> = ({
 }) => {
   const category = patient.category || 'BALITA';
   const badge = getCategoryBadge(category);
-  const isMeasuredToday = Boolean(patient.todayMeasurement);
-  const isComplete = Boolean(patient.measurementComplete);
+  const percent = patient.dataCompletionPercent ?? (patient.measurementComplete ? 100 : 0);
+  const hasData = percent > 0;
+  const isComplete = percent === 100;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -93,39 +94,42 @@ export const PatientCard: React.FC<PatientCardProps> = ({
             <span className="text-xs font-normal">• {patient.ageDisplay}</span>
           </div>
 
-          {/* Status Ukur Hari Ini */}
-          <div className="mt-1 flex items-center gap-2">
-            {isComplete ? (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-[#0f766e] bg-[#f0fdf4] px-2.5 py-0.5 rounded-full border border-[#bbf7d0]">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#16a34a]" />
-                <span>
-                  Sudah diukur
-                  {patient.todayMeasurement?.weight
-                    ? ` (${patient.todayMeasurement.weight} kg)`
-                    : ''}
+          {/* Status Ukur Bulan Ini */}
+          <div className="mt-1 space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              {isComplete ? (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-[#0f766e] bg-[#f0fdf4] px-2.5 py-0.5 rounded-full border border-[#bbf7d0]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#16a34a]" />
+                  <span>
+                    Data lengkap · {percent}%
+                    {patient.todayMeasurement?.weight ? ` · ${patient.todayMeasurement.weight} kg` : ''}
+                  </span>
                 </span>
-              </span>
-            ) : isMeasuredToday ? (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-[#b45309] bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300">
-                <CircleDashed className="w-3.5 h-3.5 text-[#d97706]" />
-                <span>Diukur sebagian (BB/TB belum lengkap)</span>
-              </span>
-            ) : patient.category === 'BALITA' && patient.measuredThisMonth === false ? (
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-red-700 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
-                <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
-                <span>Belum ditimbang bulan ini</span>
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-[#c2410c] bg-[#fff7ed] px-2.5 py-0.5 rounded-full border border-[#ffedd5]">
-                <CircleDashed className="w-3.5 h-3.5 text-[#ea580c]" />
-                <span>Belum diukur hari ini</span>
-              </span>
-            )}
-            {patient.faltering2T && (
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-red-700 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
-                <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
-                <span>2T — perlu rujuk</span>
-              </span>
+              ) : hasData ? (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-[#b45309] bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300">
+                  <CircleDashed className="w-3.5 h-3.5 text-[#d97706]" />
+                  <span>
+                    Data sebagian · {percent}%
+                    {patient.todayMeasurement?.weight ? ` · ${patient.todayMeasurement.weight} kg` : ''}
+                  </span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-red-700 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
+                  <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+                  <span>Belum diukur bulan ini</span>
+                </span>
+              )}
+              {patient.faltering2T && (
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-red-700 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
+                  <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+                  <span>2T — perlu rujuk</span>
+                </span>
+              )}
+            </div>
+            {hasData && !isComplete && (
+              <div className="h-1 w-full max-w-[140px] bg-[#f0f2f5] rounded-full overflow-hidden">
+                <div className="h-full bg-[#d97706] rounded-full" style={{ width: `${percent}%` }} />
+              </div>
             )}
           </div>
         </div>

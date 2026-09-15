@@ -25,8 +25,6 @@ import {
   Search,
   UserPlus,
   Users,
-  CheckCircle2,
-  CircleDashed,
   ArrowLeft,
   QrCode,
   RefreshCw,
@@ -44,7 +42,7 @@ export default function PosyanduApp() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'UNMEASURED' | 'MEASURED'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'NONE' | 'PARTIAL' | 'FULL'>('ALL');
 
   // Currently open / active patient for measurement
   const [selectedPatient, setSelectedPatient] = useState<PatientData | null>(null);
@@ -150,13 +148,37 @@ export default function PosyanduApp() {
       if (selectedCategory !== 'ALL' && p.category !== selectedCategory) {
         return false;
       }
-      // Status filter
-      if (statusFilter === 'MEASURED' && !p.measurementComplete) return false;
-      if (statusFilter === 'UNMEASURED' && p.measurementComplete) return false;
+      // Status filter (berbasis persen kelengkapan data bulan ini)
+      const pct = p.dataCompletionPercent ?? (p.measurementComplete ? 100 : 0);
+      if (statusFilter === 'FULL' && pct !== 100) return false;
+      if (statusFilter === 'PARTIAL' && (pct <= 0 || pct >= 100)) return false;
+      if (statusFilter === 'NONE' && pct > 0) return false;
 
       return true;
     });
   }, [patients, selectedCategory, statusFilter]);
+
+  // Ringkasan partisipasi bulan ini (transparan).
+  const statusCounts = useMemo(() => {
+    let none = 0;
+    let partial = 0;
+    let full = 0;
+    for (const p of patients) {
+      const pct = p.dataCompletionPercent ?? (p.measurementComplete ? 100 : 0);
+      if (pct <= 0) none++;
+      else if (pct >= 100) full++;
+      else partial++;
+    }
+    const measured = partial + full;
+    return {
+      none,
+      partial,
+      full,
+      measured,
+      total: patients.length,
+      percent: patients.length > 0 ? Math.round((measured / patients.length) * 100) : 0,
+    };
+  }, [patients]);
 
   // Handle Quick Register Success
   const handleRegisterSuccess = (newPatient: PatientData) => {
@@ -337,40 +359,42 @@ export default function PosyanduApp() {
               </button>
             </div>
 
-            {/* Status Filter Tabs (Semua / Belum Diukur / Sudah Diukur) */}
-            <div className="flex bg-white p-1 rounded-lg border border-[#e9edef] text-xs font-semibold text-[#54656f] shadow-xs">
-              <button
-                onClick={() => setStatusFilter('ALL')}
-                className={`flex-1 py-1.5 rounded transition-all ${
-                  statusFilter === 'ALL'
-                    ? 'bg-[#075e54] text-white shadow-xs'
-                    : 'hover:text-[#111b21]'
-                }`}
-              >
-                Semua ({patients.length})
-              </button>
-              <button
-                onClick={() => setStatusFilter('UNMEASURED')}
-                className={`flex-1 py-1.5 rounded transition-all flex items-center justify-center gap-1 ${
-                  statusFilter === 'UNMEASURED'
-                    ? 'bg-[#ea580c] text-white shadow-xs'
-                    : 'hover:text-[#111b21]'
-                }`}
-              >
-                <CircleDashed className="w-3.5 h-3.5" />
-                <span>Belum ({patients.filter((p) => !p.measurementComplete).length})</span>
-              </button>
-              <button
-                onClick={() => setStatusFilter('MEASURED')}
-                className={`flex-1 py-1.5 rounded transition-all flex items-center justify-center gap-1 ${
-                  statusFilter === 'MEASURED'
-                    ? 'bg-[#128c7e] text-white shadow-xs'
-                    : 'hover:text-[#111b21]'
-                }`}
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Selesai ({patients.filter((p) => p.measurementComplete).length})</span>
-              </button>
+            {/* Ringkasan partisipasi bulan ini */}
+            <div className="bg-white rounded-lg border border-[#e9edef] p-2.5 shadow-xs space-y-1.5">
+              <div className="flex items-center justify-between text-[11px] font-bold">
+                <span className="text-[#54656f]">
+                  Terisi bulan ini:{' '}
+                  <strong className="text-[#075e54]">
+                    {statusCounts.measured}/{statusCounts.total}
+                  </strong>
+                </span>
+                <span className="text-[#075e54]">{statusCounts.percent}%</span>
+              </div>
+              <div className="h-1.5 w-full bg-[#f0f2f5] rounded-full overflow-hidden">
+                <div className="h-full bg-[#25d366] rounded-full" style={{ width: `${statusCounts.percent}%` }} />
+              </div>
+            </div>
+
+            {/* Status Filter Tabs (scroll horizontal) */}
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar text-xs font-semibold text-[#54656f]">
+              {[
+                { id: 'ALL', label: `Semua (${statusCounts.total})`, active: 'bg-[#075e54] text-white shadow-xs' },
+                { id: 'NONE', label: `Belum (${statusCounts.none})`, active: 'bg-[#dc2626] text-white shadow-xs' },
+                { id: 'PARTIAL', label: `Sebagian (${statusCounts.partial})`, active: 'bg-[#ea580c] text-white shadow-xs' },
+                { id: 'FULL', label: `Lengkap (${statusCounts.full})`, active: 'bg-[#128c7e] text-white shadow-xs' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setStatusFilter(tab.id as typeof statusFilter)}
+                  className={`px-3.5 py-2 rounded-lg border whitespace-nowrap transition-all shrink-0 touch-press ${
+                    statusFilter === tab.id
+                      ? `${tab.active} border-transparent`
+                      : 'bg-white border-[#e9edef] hover:bg-[#f0f2f5]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
             {/* Category Filter Chips */}

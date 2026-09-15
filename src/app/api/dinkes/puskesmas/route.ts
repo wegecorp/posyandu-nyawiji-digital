@@ -20,13 +20,13 @@ export async function GET() {
         posyandus: {
           include: {
             kalurahan: { select: { name: true } },
-            users: { select: { id: true, username: true, mustChangePassword: true } },
+            users: { select: { id: true, username: true, mustChangePassword: true, disabledAt: true } },
             _count: { select: { patients: true, measurements: true } },
           },
           orderBy: { name: 'asc' },
         },
         users: {
-          select: { id: true, username: true, mustChangePassword: true },
+          select: { id: true, username: true, mustChangePassword: true, disabledAt: true },
         },
         _count: {
           select: { posyandus: true },

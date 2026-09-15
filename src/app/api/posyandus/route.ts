@@ -66,7 +66,7 @@ export async function GET(req: Request) {
         posyandus: {
           include: {
             kalurahan: { select: { name: true, code: true } },
-            users: { select: { id: true, username: true, mustChangePassword: true } },
+            users: { select: { id: true, username: true, mustChangePassword: true, disabledAt: true } },
             _count: { select: { patients: true, measurements: true } },
           },
         },

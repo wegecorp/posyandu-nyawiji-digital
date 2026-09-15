@@ -63,3 +63,31 @@ export function puskesmasUsernameBase(name: string): string {
   const core = tail.join('').toLowerCase().replace(/[^a-z0-9]/g, '');
   return `${core}${seq}`;
 }
+
+/** Normalisasi nama puskesmas: buang kata "PUSKESMAS" & semua non-alfanumerik. */
+export function normPuskesmasName(s: string): string {
+  return String(s).toUpperCase().replace(/PUSKESMAS/g, '').replace(/[^A-Z0-9]/g, '');
+}
+
+/**
+ * Simpulkan kapanewon dari nama puskesmas memakai prefix terpanjang.
+ * 'NGLIPAR I' → kapanewon Nglipar ; 'WONOSARI II' → Wonosari.
+ * Kembalikan null bila tak ada yang cocok (jangan menebak).
+ */
+export function deriveKapanewon<T extends { name: string }>(
+  puskesmasName: string,
+  kapanewons: T[],
+): T | null {
+  const target = normPuskesmasName(puskesmasName);
+  let best: T | null = null;
+  let bestLen = -1;
+  for (const k of kapanewons) {
+    const n = normPuskesmasName(k.name);
+    if (!n) continue;
+    if ((target === n || target.startsWith(n)) && n.length > bestLen) {
+      best = k;
+      bestLen = n.length;
+    }
+  }
+  return best;
+}

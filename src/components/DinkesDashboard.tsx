@@ -30,7 +30,8 @@ interface DinkesDashboardProps {
 interface KapanewonRef { id: string; code: string; name: string }
 interface ImportReportShape {
   rowsTotal: number;
-  puskesmasNotFound: number;
+  puskesmasCreated: number;
+  puskesmasUnknown: number;
   kalurahanCreated: number;
   posyanduCreated: number;
   posyanduSkipped: number;
@@ -582,9 +583,10 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
             <div className="p-3 bg-[#f0f2f5] rounded-2xl border border-[#e9edef] text-[11px] text-[#111b21] font-medium flex gap-2">
               <Info className="w-4 h-4 shrink-0 text-[#128c7e]" />
               <p>
-                Format: kolom <strong>NAMA PUSKESMAS · NAMA KALURAHAN · NAMA PADUKUHAN · NAMA POSYANDU</strong>.
-                Puskesmas harus sudah didaftarkan lebih dulu (cocok berdasarkan nama). Import membuat akun posyandu
-                dengan password default (wajib aktivasi saat login pertama).
+                 Format: kolom <strong>NAMA PUSKESMAS · NAMA KALURAHAN · NAMA PADUKUHAN · NAMA POSYANDU</strong>.
+                 Puskesmas yang belum terdaftar akan <strong>dibuat otomatis</strong> (kapanewon disimpulkan dari
+                 namanya) beserta akun stafnya. Import juga membuat akun posyandu dengan password default
+                 (keduanya wajib aktivasi saat login pertama).
               </p>
             </div>
 
@@ -616,7 +618,8 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
                 </p>
                 <div className="grid grid-cols-2 gap-2 text-center">
                   <SummaryCell label="Baris terbaca" value={importReport.report.rowsTotal} />
-                  <SummaryCell label="Puskesmas tak ditemukan" value={importReport.report.puskesmasNotFound} tone={importReport.report.puskesmasNotFound > 0 ? 'warn' : 'ok'} />
+                  <SummaryCell label="Puskesmas dibuat" value={importReport.report.puskesmasCreated} tone="ok" />
+                  <SummaryCell label="Kapanewon tak dikenali" value={importReport.report.puskesmasUnknown} tone={importReport.report.puskesmasUnknown > 0 ? 'warn' : 'ok'} />
                   <SummaryCell label="Kalurahan baru" value={importReport.report.kalurahanCreated} />
                   <SummaryCell label="Posyandu dibuat" value={importReport.report.posyanduCreated} tone="ok" />
                   <SummaryCell label="Duplikat (dilewati)" value={importReport.report.posyanduSkipped} />

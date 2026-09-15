@@ -70,3 +70,49 @@ export async function PATCH(
     return NextResponse.json({ error: 'Gagal memperbarui Posyandu' }, { status: 500 });
   }
 }
+
+// DELETE /api/posyandus/[posyanduId]
+// Hapus permanen posyandu — HANYA bila belum punya data (0 pasien & 0 pengukuran),
+// supaya kesalahan/duplikat posyandu kosong bisa dibersihkan tanpa kehilangan data.
+// Diizinkan: PUSKESMAS untuk posyandu binaannya, DINKES untuk semua.
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ posyanduId: string }> }
+) {
+  try {
+    const session = await requireRole(req, ['PUSKESMAS', 'DINKES']);
+    if (session instanceof NextResponse) return session;
+
+    const { posyanduId } = await params;
+    const posyandu = await prisma.posyandu.findUnique({
+      where: { id: posyanduId },
+      select: { id: true, name: true, healthCenterId: true },
+    });
+    if (!posyandu) {
+      return NextResponse.json({ error: 'Posyandu tidak ditemukan.' }, { status: 404 });
+    }
+    if (session.role === 'PUSKESMAS' && posyandu.healthCenterId !== session.healthCenterId) {
+      return NextResponse.json({ error: 'Bukan posyandu binaan Anda.' }, { status: 403 });
+    }
+
+    const [patients, measurements] = await Promise.all([
+      prisma.patient.count({ where: { posyanduId } }),
+      prisma.measurement.count({ where: { posyanduId } }),
+    ]);
+    if (patients > 0 || measurements > 0) {
+      return NextResponse.json(
+        {
+          error:
+            'Posyandu masih memiliki data (pasien/pengukuran). Ekspor atau pindahkan datanya dulu sebelum menghapus.',
+        },
+        { status: 409 }
+      );
+    }
+
+    await prisma.posyandu.delete({ where: { id: posyanduId } });
+    return NextResponse.json({ success: true, message: 'Posyandu dihapus.' });
+  } catch (error) {
+    console.error('Error deleting posyandu:', error);
+    return NextResponse.json({ error: 'Gagal menghapus Posyandu' }, { status: 500 });
+  }
+}

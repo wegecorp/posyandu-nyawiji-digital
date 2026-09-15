@@ -3,11 +3,14 @@ import { prisma } from '@/lib/prisma';
 import { requireRole } from '@/lib/api-auth';
 import { hashPassword } from '@/lib/password';
 import * as XLSX from 'xlsx';
-import { smartTitle } from '@/lib/names';
+import { smartTitle, deriveKapanewon, normPuskesmasName } from '@/lib/names';
 import {
   generatePosyanduCode,
+  generateHealthCenterCode,
+  generateUniquePuskesmasUsername,
   buildPosyanduUsername,
   getPosyanduDefaultPassword,
+  getPuskesmasDefaultPassword,
 } from '@/lib/accounts';
 
 interface ImportRow {
@@ -20,7 +23,8 @@ interface ImportRow {
 
 interface Report {
   rowsTotal: number;
-  puskesmasNotFound: number;
+  puskesmasCreated: number;
+  puskesmasUnknown: number;
   kalurahanCreated: number;
   posyanduCreated: number;
   posyanduSkipped: number;
@@ -29,10 +33,6 @@ interface Report {
 
 function norm(s: string): string {
   return s.toUpperCase().replace(/[^A-Z0-9]/g, '');
-}
-
-function normNoPuskesma(s: string): string {
-  return s.toUpperCase().replace(/PUSKESMAS/g, '').replace(/[^A-Z0-9]/g, '');
 }
 
 function parseRows(buffer: Buffer): { rows: ImportRow[]; error: string | null } {
@@ -98,17 +98,25 @@ interface KalRef {
 async function runImport(rows: ImportRow[], dryRun: boolean): Promise<Report> {
   const report: Report = {
     rowsTotal: rows.length,
-    puskesmasNotFound: 0,
+    puskesmasCreated: 0,
+    puskesmasUnknown: 0,
     kalurahanCreated: 0,
     posyanduCreated: 0,
     posyanduSkipped: 0,
     errors: [],
   };
 
+  // Referensi kapanewon (untuk menyimpulkan wilayah dari nama Puskesmas).
+  const kapanewonAll = await prisma.kapanewon.findMany();
+  if (kapanewonAll.length === 0) {
+    report.errors.push({ rowNo: 0, message: 'Referensi Kapanewon kosong. Jalankan seed wilayah lebih dulu.' });
+    return report;
+  }
+
   // Preload semua HealthCenter beserta kapanewon-nya utk pencocokan nama.
   const hcs = await prisma.healthCenter.findMany({ include: { kapanewon: true } });
   const hcByNorm = new Map<string, (typeof hcs)[number]>();
-  for (const hc of hcs) hcByNorm.set(normNoPuskesma(hc.name), hc);
+  for (const hc of hcs) hcByNorm.set(normPuskesmasName(hc.name), hc);
 
   // Preload kalurahan yang sudah ada utk menghindari duplikasi.
   const existingKalurahan = await prisma.kalurahan.findMany();
@@ -138,16 +146,56 @@ async function runImport(rows: ImportRow[], dryRun: boolean): Promise<Report> {
 
   const defaultPassword = getPosyanduDefaultPassword();
   const defaultHash = await hashPassword(defaultPassword);
+  const puskesmasHash = await hashPassword(getPuskesmasDefaultPassword());
 
   for (const row of rows) {
-    const hc = hcByNorm.get(normNoPuskesma(row.puskesmas));
+    let hc = hcByNorm.get(normPuskesmasName(row.puskesmas));
+
+    // Puskesmas belum ada → simpulkan kapanewon dari nama, lalu buat + akun staf.
     if (!hc) {
-      report.puskesmasNotFound++;
-      report.errors.push({
-        rowNo: row.rowNo,
-        message: `Puskesmas "${row.puskesmas}" belum terdaftar. Daftarkan dulu via Dinas Kesehatan.`,
-      });
-      continue;
+      const kn = deriveKapanewon(row.puskesmas, kapanewonAll);
+      if (!kn) {
+        report.puskesmasUnknown++;
+        report.errors.push({
+          rowNo: row.rowNo,
+          message: `Kapanewon tidak dikenali untuk Puskesmas "${row.puskesmas}". Periksa nama Puskesmas.`,
+        });
+        continue;
+      }
+
+      const cleanName = smartTitle(row.puskesmas);
+      const code = await generateHealthCenterCode(kn.code);
+      const username = await generateUniquePuskesmasUsername(cleanName);
+
+      if (dryRun) {
+        hc = {
+          id: `hc-${code}`,
+          code,
+          name: cleanName,
+          kapanewonId: kn.id,
+          kapanewon: kn,
+        } as unknown as (typeof hcs)[number];
+      } else {
+        hc = await prisma.$transaction(async (tx) => {
+          const created = await tx.healthCenter.create({
+            data: { code, name: cleanName, kapanewonId: kn.id },
+            include: { kapanewon: true },
+          });
+          await tx.user.create({
+            data: {
+              username,
+              password: puskesmasHash,
+              name: cleanName,
+              role: 'PUSKESMAS',
+              healthCenterId: created.id,
+              mustChangePassword: true,
+            },
+          });
+          return created;
+        });
+      }
+      hcByNorm.set(normPuskesmasName(hc.name), hc);
+      report.puskesmasCreated++;
     }
 
     // Kalurahan (referensi) upsert

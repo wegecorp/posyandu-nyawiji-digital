@@ -15,6 +15,8 @@ import {
   Check,
   MapPin,
   Pencil,
+  Power,
+  Trash2,
   RefreshCw,
   ShieldCheck,
   Info,
@@ -41,7 +43,7 @@ interface PosyanduRow {
   kalurahan: string;
   kalurahanCode?: string;
   padukuhan: string;
-  users?: { id: string; username: string; mustChangePassword: boolean }[];
+  users?: { id: string; username: string; mustChangePassword: boolean; disabledAt?: string | null }[];
   _count?: { patients: number; measurements: number };
 }
 
@@ -74,10 +76,18 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
   const [resetMsg, setResetMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [resetSubmitting, setResetSubmitting] = useState(false);
 
+  // Nonaktif / hapus posyandu
+  const [statusBusyId, setStatusBusyId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<PosyanduRow | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [actionNote, setActionNote] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+
   // Navigasi tombol back OS/hardware untuk modal dashboard.
   useBackLayer(isCreateOpen, () => setIsCreateOpen(false));
   useBackLayer(Boolean(editTarget), () => setEditTarget(null));
   useBackLayer(Boolean(resetTarget), () => setResetTarget(null));
+  useBackLayer(Boolean(deleteTarget), () => setDeleteTarget(null));
 
   // Kalurahan pilihan puskesmas ini (dalam kapanewon-nya)
   const myKalurahan: KalurahanRef[] =
@@ -213,6 +223,50 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
     }
   };
 
+  const handleToggleStatus = async (pos: PosyanduRow) => {
+    const userRow = pos.users?.[0];
+    if (!userRow) return;
+    const nextDisabled = !userRow.disabledAt;
+    setStatusBusyId(pos.id);
+    setActionNote(null);
+    try {
+      const res = await fetch(`/api/posyandus/${pos.id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ disabled: nextDisabled }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal mengubah status akun');
+      setActionNote({
+        type: 'ok',
+        text: nextDisabled ? `Akun ${pos.name} dinonaktifkan.` : `Akun ${pos.name} diaktifkan kembali.`,
+      });
+      refreshList();
+    } catch (err: unknown) {
+      setActionNote({ type: 'err', text: err instanceof Error ? err.message : 'Terjadi kesalahan' });
+    } finally {
+      setStatusBusyId(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteBusy(true);
+    setDeleteError('');
+    try {
+      const res = await fetch(`/api/posyandus/${deleteTarget.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal menghapus posyandu');
+      setActionNote({ type: 'ok', text: `${deleteTarget.name} dihapus.` });
+      setDeleteTarget(null);
+      refreshList();
+    } catch (err: unknown) {
+      setDeleteError(err instanceof Error ? err.message : 'Terjadi kesalahan');
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
+
   const renderFormNotice = () => (
     <div className="p-3 bg-[#f0f2f5] rounded-2xl border border-[#e9edef] text-[11px] text-[#111b21] font-medium flex gap-2">
       <Info className="w-4 h-4 shrink-0 text-[#128c7e]" />
@@ -284,6 +338,19 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
           </button>
         </div>
       </div>
+
+      {actionNote && (
+        <div
+          className={`p-3 rounded-2xl border text-xs font-bold flex items-center gap-2 ${
+            actionNote.type === 'ok'
+              ? 'bg-[#f0fdf4] border-[#bbf7d0] text-[#16a34a]'
+              : 'bg-[#ef4444]/10 border-[#ef4444]/30 text-[#ef4444]'
+          }`}
+        >
+          <Info className="w-4 h-4 shrink-0" />
+          <span>{actionNote.text}</span>
+        </div>
+      )}
 
       {/* Action header */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -359,8 +426,9 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
                 </div>
                 <div className="space-y-2.5">
                   {rows.map((pos) => {
-                    const userRow = pos.users?.[0];
-                    const pending = !!userRow?.mustChangePassword;
+                     const userRow = pos.users?.[0];
+                     const pending = !!userRow?.mustChangePassword;
+                     const disabled = !!userRow?.disabledAt;
                     return (
                       <div key={pos.id} className="bg-white rounded-[16px] p-4 border border-[#e9edef] shadow-xs space-y-2.5">
                         <div className="flex items-center justify-between gap-3">
@@ -370,15 +438,19 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
                               <span className="font-mono text-[10px] bg-[#f0f2f5] text-[#54656f] px-2 py-0.5 rounded-md font-bold border border-[#e9edef]">
                                 {pos.code}
                               </span>
-                              {pending ? (
-                                <span className="text-[10px] font-bold bg-[#fef3c7] text-[#b45309] border border-[#fde68a] px-2 py-0.5 rounded-full flex items-center gap-1">
-                                  <AlertTriangle className="w-3 h-3" /> Menunggu aktivasi
-                                </span>
-                              ) : (
-                                <span className="text-[10px] font-bold bg-[#f0fdf4] text-[#16a34a] border border-[#bbf7d0] px-2 py-0.5 rounded-full flex items-center gap-1">
-                                  <Check className="w-3 h-3" /> Aktif
-                                </span>
-                              )}
+                               {disabled ? (
+                                 <span className="text-[10px] font-bold bg-[#f0f2f5] text-[#54656f] border border-[#e9edef] px-2 py-0.5 rounded-full flex items-center gap-1">
+                                   <Power className="w-3 h-3" /> Nonaktif
+                                 </span>
+                               ) : pending ? (
+                                 <span className="text-[10px] font-bold bg-[#fef3c7] text-[#b45309] border border-[#fde68a] px-2 py-0.5 rounded-full flex items-center gap-1">
+                                   <AlertTriangle className="w-3 h-3" /> Menunggu aktivasi
+                                 </span>
+                               ) : (
+                                 <span className="text-[10px] font-bold bg-[#f0fdf4] text-[#16a34a] border border-[#bbf7d0] px-2 py-0.5 rounded-full flex items-center gap-1">
+                                   <Check className="w-3 h-3" /> Aktif
+                                 </span>
+                               )}
                             </div>
                             <div className="text-xs text-[#54656f] mt-1 font-medium flex items-center gap-1">
                               <MapPin className="w-3.5 h-3.5 text-[#128c7e]" />
@@ -393,20 +465,40 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
                             >
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
-                            {userRow && (
-                              <button
-                                onClick={() => {
-                                  setResetTarget({ id: userRow.id, name: pos.name });
-                                  setResetMsg(null);
-                                }}
-                                className="w-8 h-8 bg-[#f0f2f5] hover:bg-[#e9edef] text-[#128c7e] border border-[#e9edef] rounded-full flex items-center justify-center transition-all touch-press"
-                                title="Reset password akun posyandu"
-                              >
-                                <Key className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                            <button
-                              onClick={() => onEnterPosyandu(pos.id, pos.name, pos.code)}
+                             {userRow && (
+                               <button
+                                 onClick={() => {
+                                   setResetTarget({ id: userRow.id, name: pos.name });
+                                   setResetMsg(null);
+                                 }}
+                                 className="w-8 h-8 bg-[#f0f2f5] hover:bg-[#e9edef] text-[#128c7e] border border-[#e9edef] rounded-full flex items-center justify-center transition-all touch-press"
+                                 title="Reset password akun posyandu"
+                               >
+                                 <Key className="w-3.5 h-3.5" />
+                               </button>
+                             )}
+                             {userRow && (
+                               <button
+                                 onClick={() => handleToggleStatus(pos)}
+                                 disabled={statusBusyId === pos.id}
+                                 className={`w-8 h-8 bg-[#f0f2f5] hover:bg-[#e9edef] border border-[#e9edef] rounded-full flex items-center justify-center transition-all touch-press disabled:opacity-50 ${disabled ? 'text-[#16a34a]' : 'text-[#b45309]'}`}
+                                 title={disabled ? 'Aktifkan akun' : 'Nonaktifkan akun'}
+                               >
+                                 <Power className="w-3.5 h-3.5" />
+                               </button>
+                             )}
+                             <button
+                               onClick={() => {
+                                 setDeleteTarget(pos);
+                                 setDeleteError('');
+                               }}
+                               className="w-8 h-8 bg-white hover:bg-[#fef2f2] text-[#ef4444] border border-[#fecaca] rounded-full flex items-center justify-center transition-all touch-press"
+                               title="Hapus posyandu (hanya bila belum ada data)"
+                             >
+                               <Trash2 className="w-3.5 h-3.5" />
+                             </button>
+                             <button
+                               onClick={() => onEnterPosyandu(pos.id, pos.name, pos.code)}
                               className="py-2 px-3.5 bg-[#128c7e] hover:bg-[#075e54] text-white rounded-full text-xs font-bold transition-all flex items-center gap-1.5 touch-press"
                             >
                               <span>Buka Meja</span>
@@ -454,6 +546,44 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
             </div>
           )}
         </div>
+      )}
+
+      {/* Modal: Hapus Posyandu */}
+      {deleteTarget && (
+        <ModalShell
+          title="Hapus Posyandu"
+          subtitle={`${deleteTarget.name} · ${deleteTarget.code}`}
+          onClose={() => setDeleteTarget(null)}
+        >
+          <div className="p-5 space-y-4">
+            {deleteError && <BannerError msg={deleteError} />}
+            <div className="p-3 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl text-xs text-[#111b21] font-medium flex gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 text-[#ef4444]" />
+              <p>
+                Hapus <strong>permanen</strong> posyandu ini beserta akunnya. Hanya boleh bila posyandu
+                <strong> belum punya pasien &amp; pengukuran</strong>. Bila sudah ada data, sistem menolak —
+                gunakan <strong>Nonaktifkan</strong> sebagai gantinya.
+              </p>
+            </div>
+            <div className="pt-2 flex gap-2.5">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="flex-1 py-3 bg-[#f0f2f5] hover:bg-[#e9edef] text-[#111b21] font-bold rounded-full text-xs border border-[#e9edef]"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleteBusy}
+                className="flex-[2] py-3 bg-[#ef4444] hover:bg-[#dc2626] text-white font-extrabold rounded-full text-xs shadow-xs transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>{deleteBusy ? 'Menghapus...' : 'Ya, Hapus Posyandu'}</span>
+              </button>
+            </div>
+          </div>
+        </ModalShell>
       )}
 
       {/* Modal: Daftarkan Posyandu */}

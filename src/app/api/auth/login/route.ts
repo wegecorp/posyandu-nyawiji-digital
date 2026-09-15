@@ -68,6 +68,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Password salah.' }, { status: 401 });
     }
 
+    // Akun dinonaktifkan: tolak walau password benar.
+    if (user.disabledAt) {
+      return NextResponse.json(
+        { error: 'Akun ini dinonaktifkan. Hubungi Puskesmas/Dinas Kesehatan.' },
+        { status: 403 }
+      );
+    }
+
     // Akun baru (belum aktivasi): jangan beri sesi — paksa ganti password dulu.
     if (user.mustChangePassword) {
       return NextResponse.json({

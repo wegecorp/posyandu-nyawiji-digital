@@ -12,9 +12,10 @@ async function isSessionFresh(payload: SessionPayload | null): Promise<SessionPa
   if (typeof payload.tokenVersion !== 'number') return null;
   const user = await prisma.user.findUnique({
     where: { id: payload.userId },
-    select: { tokenVersion: true },
+    select: { tokenVersion: true, disabledAt: true },
   });
   if (!user || user.tokenVersion !== payload.tokenVersion) return null;
+  if (user.disabledAt) return null; // akun dinonaktifkan
   return payload;
 }
 

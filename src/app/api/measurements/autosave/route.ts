@@ -47,6 +47,7 @@ export async function POST(req: Request) {
       hemoglobin,
       visionStatus,
       hearingStatus,
+      exclusiveBreastfeeding,
       noteSource,
       notes,
     } = body;
@@ -152,7 +153,7 @@ export async function POST(req: Request) {
     const POSITION_VALUES: StaturePosition[] = ['TELENTANG', 'BERDIRI'];
 
     // Build update object only for provided fields
-    const fieldData: Record<string, string | number | null> = {};
+    const fieldData: Record<string, string | number | boolean | null> = {};
     if (weight !== undefined) fieldData.weight = weight === '' || weight === null ? null : parseFloat(weight);
     if (height !== undefined) fieldData.height = height === '' || height === null ? null : parseFloat(height);
     if (position !== undefined)
@@ -185,6 +186,13 @@ export async function POST(req: Request) {
       fieldData.visionStatus = SCREENING_VALUES.includes(visionStatus) ? visionStatus : null;
     if (hearingStatus !== undefined)
       fieldData.hearingStatus = SCREENING_VALUES.includes(hearingStatus) ? hearingStatus : null;
+    if (exclusiveBreastfeeding !== undefined)
+      fieldData.exclusiveBreastfeeding =
+        exclusiveBreastfeeding === true || exclusiveBreastfeeding === 'true'
+          ? true
+          : exclusiveBreastfeeding === false || exclusiveBreastfeeding === 'false'
+            ? false
+            : null;
     if (noteSource !== undefined)
       fieldData.noteSource = NOTE_SOURCES.includes(noteSource) ? noteSource : null;
     if (notes !== undefined) fieldData.notes = notes === '' ? null : notes;

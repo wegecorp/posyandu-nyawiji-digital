@@ -62,3 +62,32 @@ describe('buildDetails', () => {
     expect(rows[1]['Berat Naik/Tidak']).toBe('T');
   });
 });
+
+describe('kolom ASI Eksklusif (roster)', () => {
+  const asiPatients: ExportPatient[] = [
+    { id: 'b1', regNumber: 'R1', name: 'Bayi Stop', birthDate: '2025-01-01', gender: 'L', isPregnant: false },
+    { id: 'b2', regNumber: 'R2', name: 'Bayi Penuh', birthDate: '2025-01-01', gender: 'P', isPregnant: false },
+    { id: 'b3', regNumber: 'R3', name: 'Tanpa Data', birthDate: '2025-01-01', gender: 'L', isPregnant: false },
+  ];
+  const asiMeasurements: ExportMeasurement[] = [
+    { patientId: 'b1', sessionDate: '2025-01-15', ageInMonths: 0, exclusiveBreastfeeding: true },
+    { patientId: 'b1', sessionDate: '2025-04-15', ageInMonths: 3, exclusiveBreastfeeding: false },
+    { patientId: 'b2', sessionDate: '2025-01-15', ageInMonths: 0, exclusiveBreastfeeding: true },
+    { patientId: 'b2', sessionDate: '2025-06-15', ageInMonths: 5, exclusiveBreastfeeding: true },
+    { patientId: 'b3', sessionDate: '2025-01-15', ageInMonths: 0 },
+  ];
+  const rows = buildRoster(asiPatients, asiMeasurements, new Date('2025-07-01T00:00:00'));
+  const byName = (n: string) => rows.find((r) => r.Nama === n)!;
+
+  it('berhenti di bulan ke-m', () => {
+    expect(byName('Bayi Stop')['ASI Eksklusif']).toBe('Berhenti bulan 3');
+  });
+
+  it('ASI eksklusif penuh 6 bulan', () => {
+    expect(byName('Bayi Penuh')['ASI Eksklusif']).toBe('Eksklusif 6 bln');
+  });
+
+  it('tanpa data ASI → kosong', () => {
+    expect(byName('Tanpa Data')['ASI Eksklusif']).toBe('');
+  });
+});

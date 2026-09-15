@@ -49,7 +49,7 @@ export const INDICATORS: IndicatorDef[] = [
     label: 'Tensi Tinggi (Hipertensi)',
     field: 'systolic',
     unit: 'mmHg',
-    appliesTo: ['REMAJA', 'DEWASA_LANSIA', 'BUMIL'],
+    appliesTo: ['REMAJA', 'DEWASA', 'LANSIA', 'BUMIL'],
     // WHO/ISH + Kemenkes: Sistolik ≥140 ATAU Diastolik ≥90
     // Cutoff diperiksa via kombinasi field — di sini hanya systolic.
     // Client-side caller harus cek juga diastolic.
@@ -61,19 +61,17 @@ export const INDICATORS: IndicatorDef[] = [
     label: 'Anemia (HB Rendah)',
     field: 'hemoglobin',
     unit: 'g/dL',
-    appliesTo: ['BALITA', 'ANAK', 'REMAJA', 'DEWASA_LANSIA', 'BUMIL'],
+    appliesTo: ['BAYI', 'BALITA_APRAS', 'REMAJA', 'DEWASA', 'LANSIA', 'BUMIL'],
     // WHO (2021) thresholds:
-    //   Balita (6–59 bulan): <11.0
-    //   Anak (5–11 tahun):   <11.5
-    //   Remaja (12–14):      <12.0
-    //   Remaja (15–17) / Dewasa: wanita <12.0, pria <13.0
-    //   Bumil:               <11.0
+    //   Bayi & Balita/Apras (<5 th): <11.0  (ponytail: 5-6 th idealnya <11.5; revisi bila perlu)
+    //   Remaja (12-14 & 15-17):      <12.0
+    //   Dewasa/Lansia:               wanita <12.0, pria <13.0
+    //   Bumil:                       <11.0
     isAbnormal: (val, gender, category) => {
-      if (category === 'BALITA') return val < 11.0;
-      if (category === 'ANAK') return val < 11.5;
-      if (category === 'REMAJA') return val < 12.0;
       if (category === 'BUMIL') return val < 11.0;
-      // DEWASA_LANSIA
+      if (category === 'BAYI' || category === 'BALITA_APRAS') return val < 11.0;
+      if (category === 'REMAJA') return val < 12.0;
+      // DEWASA & LANSIA
       return gender === 'L' ? val < 13.0 : val < 12.0;
     },
     source: 'WHO (2021) Haemoglobin concentrations for the diagnosis of anaemia.',
@@ -83,7 +81,7 @@ export const INDICATORS: IndicatorDef[] = [
     label: 'Gula Darah Tinggi',
     field: 'bloodSugar',
     unit: 'mg/dL',
-    appliesTo: ['REMAJA', 'DEWASA_LANSIA'],
+    appliesTo: ['REMAJA', 'DEWASA', 'LANSIA'],
     // Kemenkes RI / PERKENI (2019): GD puasa ≥126 mg/dL
     isAbnormal: (val) => val >= 126,
     source: 'PERKENI (2019); Permenkes RI',
@@ -93,7 +91,7 @@ export const INDICATORS: IndicatorDef[] = [
     label: 'Kolesterol Tinggi',
     field: 'cholesterol',
     unit: 'mg/dL',
-    appliesTo: ['REMAJA', 'DEWASA_LANSIA'],
+    appliesTo: ['REMAJA', 'DEWASA', 'LANSIA'],
     // ATP III / Kemenkes RI: total cholesterol ≥200 mg/dL
     isAbnormal: (val) => val >= 200,
     source: 'ATP III; Kemenkes RI Pedoman Pengelolaan Dislipidemia',
@@ -103,7 +101,7 @@ export const INDICATORS: IndicatorDef[] = [
     label: 'Asam Urat Tinggi',
     field: 'uricAcid',
     unit: 'mg/dL',
-    appliesTo: ['REMAJA', 'DEWASA_LANSIA'],
+    appliesTo: ['REMAJA', 'DEWASA', 'LANSIA'],
     // EULAR/ACR: L >7.0, P >6.0 mg/dL
     isAbnormal: (val, gender) => {
       return gender === 'L' ? val > 7.0 : val > 6.0;
@@ -115,7 +113,7 @@ export const INDICATORS: IndicatorDef[] = [
     label: 'Skrining Mata Tidak Normal',
     field: null,   // skrining label, bukan field numerik
     unit: '-',
-    appliesTo: ['BALITA', 'ANAK', 'REMAJA', 'DEWASA_LANSIA', 'BUMIL'],
+    appliesTo: ['BAYI', 'BALITA_APRAS', 'REMAJA', 'DEWASA', 'LANSIA', 'BUMIL'],
     isAbnormal: () => false, // handled khusus di checkIndicator
     source: 'Skrining standar posyandu',
   },
@@ -124,7 +122,7 @@ export const INDICATORS: IndicatorDef[] = [
     label: 'Skrining Telinga Tidak Normal',
     field: null,
     unit: '-',
-    appliesTo: ['BALITA', 'ANAK', 'REMAJA', 'DEWASA_LANSIA', 'BUMIL'],
+    appliesTo: ['BAYI', 'BALITA_APRAS', 'REMAJA', 'DEWASA', 'LANSIA', 'BUMIL'],
     isAbnormal: () => false,
     source: 'Skrining standar posyandu',
   },

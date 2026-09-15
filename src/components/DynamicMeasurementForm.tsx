@@ -9,6 +9,7 @@ import {
   Ruler,
   CircleDot,
   HeartPulse,
+  Heart,
   Activity,
   Calendar,
   CheckCircle2,
@@ -65,8 +66,10 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   onShowQR,
 }) => {
   const { user } = useAuth();
-  const category = patient.category || 'BALITA';
+  const category = patient.category || 'BALITA_APRAS';
   const badge = getCategoryBadge(category);
+  // Engine antropometri hanya 0-60 bln → status gizi/LK/posisi untuk Bayi & Balita/Apras.
+  const isUnderFive = category === 'BAYI' || category === 'BALITA_APRAS';
 
   // Form Fields State
   const [weight, setWeight] = useState<string>('');
@@ -84,6 +87,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   const [waistCircumference, setWaistCircumference] = useState<string>('');
   const [visionStatus, setVisionStatus] = useState<string>('');
   const [hearingStatus, setHearingStatus] = useState<string>('');
+  const [exclusiveBreastfeeding, setExclusiveBreastfeeding] = useState<string>('');
   const [noteSource, setNoteSource] = useState<string>('Kader');
   const [notes, setNotes] = useState<string>('');
   const [sessionDate, setSessionDate] = useState<string>(
@@ -125,6 +129,9 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
     setHemoglobin(tm?.hemoglobin != null ? String(tm.hemoglobin) : '');
     setVisionStatus(tm?.visionStatus || '');
     setHearingStatus(tm?.hearingStatus || '');
+    setExclusiveBreastfeeding(
+      tm?.exclusiveBreastfeeding === true ? 'Ya' : tm?.exclusiveBreastfeeding === false ? 'Tidak' : '',
+    );
     setNoteSource(tm?.noteSource || 'Kader');
     setNotes(tm?.notes || '');
     setErrors({});
@@ -186,6 +193,16 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
     return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
   }, [historyList]);
 
+  // ASI eksklusif: hanya Bayi, dan berhenti setelah pernah dijawab "Tidak" pada
+  // bulan SEBELUM sesi yang sedang dibuka (bulan itu sendiri tetap bisa dikoreksi).
+  const showAsi = React.useMemo(() => {
+    if (category !== 'BAYI') return false;
+    const targetYm = sessionDate.slice(0, 7);
+    return !historyList.some(
+      (m) => m.exclusiveBreastfeeding === false && localYearMonth(m.sessionDate) < targetYm,
+    );
+  }, [category, historyList, sessionDate]);
+
   // Buka bulan tertentu untuk diedit.
   const handleEditMonth = (isoDate: string) => {
     const ym = localYearMonth(isoDate);
@@ -232,7 +249,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   // Status gizi live (Permenkes 2/2020) — default BB/U, semua indeks dihitung.
   const liveGrowth = React.useMemo(
     () =>
-      category === 'BALITA'
+      isUnderFive
         ? computeGrowth({
             gender: patient.gender,
             birthDate: patient.birthDate,
@@ -242,7 +259,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
             position: effectivePosition,
           })
         : null,
-    [category, patient.gender, patient.birthDate, sessionDate, weight, height, effectivePosition],
+    [isUnderFive, patient.gender, patient.birthDate, sessionDate, weight, height, effectivePosition],
   );
 
   // Handle live field change with instant auto-save
@@ -318,6 +335,9 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
       case 'hearingStatus':
         setHearingStatus(value);
         break;
+      case 'exclusiveBreastfeeding':
+        setExclusiveBreastfeeding(value);
+        break;
       case 'noteSource':
         setNoteSource(value);
         break;
@@ -337,9 +357,14 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
 
     if (!validateFieldChange(fieldName, value)) return;
 
-    // Sertakan tanggal sesi supaya nilai tersimpan ke tanggal yang dipilih, bukan default hari ini.
-    const payload: Record<string, string> = { [fieldName]: value };
-    if (fieldName !== 'sessionDate') payload.sessionDate = sessionDate;
+    // Sertakan tanggal sesi supaya nilai tersimpan ke bulan yang dipilih, bukan bulan berjalan.
+    const payload: Record<string, string> = {};
+    if (fieldName === 'exclusiveBreastfeeding') {
+      payload.exclusiveBreastfeeding = value === 'Ya' ? 'true' : value === 'Tidak' ? 'false' : '';
+    } else {
+      payload[fieldName] = value;
+    }
+    payload.sessionDate = sessionDate;
 
     // Trigger debounced autosave
     triggerAutoSave(payload);
@@ -523,7 +548,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 onClear={isReadOnly ? undefined : () => handleFieldChange('weight', '')}
               />
               <MetricField
-                label={category === 'BALITA' ? 'Panjang / TB' : 'Tinggi Badan (TB)'}
+                label={isUnderFive ? 'Panjang / TB' : 'Tinggi Badan (TB)'}
                 unit="cm"
                 value={height}
                 onChange={(v) => handleFieldChange('height', v)}
@@ -540,8 +565,8 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
               </span>
             </div>
 
-            {/* Posisi ukur — hanya balita (menentukan koreksi ±0,7 cm) */}
-            {category === 'BALITA' && (
+            {/* Posisi ukur — hanya Bayi/Balita/Apras (menentukan koreksi ±0,7 cm) */}
+            {isUnderFive && (
               <div className="pt-1">
                 <p className="text-[11px] font-bold text-[#54656f] mb-1.5">Posisi saat diukur</p>
                 <div className="grid grid-cols-2 gap-2">
@@ -568,7 +593,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
             )}
 
             {/* Status gizi live (Permenkes 2/2020) */}
-            {category === 'BALITA' && liveGrowth && (
+            {isUnderFive && liveGrowth && (
               <div className="pt-2 border-t border-[#e9edef]">
                 <p className="text-[11px] font-bold text-[#54656f] mb-1.5">
                   Status Gizi (Permenkes 2/2020)
@@ -593,12 +618,12 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
             )}
           </SectionCard>
 
-          {/* B. Ukur Khusus Balita */}
-          {category === 'BALITA' && (
+          {/* B. Ukur Khusus Bayi/Balita/Apras */}
+          {isUnderFive && (
             <SectionCard>
               <SectionHeader
                 icon={CircleDot}
-                title="Ukur Khusus Balita"
+                title="Ukur Khusus Bayi / Balita / Apras"
                 hint="Lingkar kepala (LK) memantau pertumbuhan otak"
               />
               <MetricField
@@ -610,6 +635,37 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 error={errors.headCircumference}
                 onClear={isReadOnly ? undefined : () => handleFieldChange('headCircumference', '')}
               />
+            </SectionCard>
+          )}
+
+          {/* ASI Eksklusif — hanya Bayi (0-5 bln), berhenti setelah dijawab Tidak */}
+          {showAsi && (
+            <SectionCard>
+              <SectionHeader
+                icon={Heart}
+                title="ASI Eksklusif"
+                hint="Apakah bayi bulan ini masih hanya mendapat ASI?"
+              />
+              <div className="grid grid-cols-2 bg-white p-1 rounded-xl border border-[#e9edef] gap-1">
+                {(['Ya', 'Tidak'] as const).map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    disabled={isReadOnly}
+                    onClick={() => handleFieldChange('exclusiveBreastfeeding', opt)}
+                    className={`py-2.5 rounded-lg text-xs font-extrabold border transition-all disabled:opacity-60 ${
+                      exclusiveBreastfeeding === opt
+                        ? 'bg-[#075e54] text-white border-[#075e54]'
+                        : 'bg-[#f0f2f5] text-[#54656f] border-[#e9edef]'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-[#8696a0] font-medium">
+                Setelah dijawab <strong>Tidak</strong>, pertanyaan ini tak muncul lagi di bulan berikutnya.
+              </p>
             </SectionCard>
           )}
 
@@ -669,7 +725,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
           )}
 
           {/* E. Ukur Khusus Dewasa / Lansia */}
-          {category === 'DEWASA_LANSIA' && (
+          {(category === 'DEWASA' || category === 'LANSIA') && (
             <SectionCard>
               <SectionHeader
                 icon={HeartPulse}
@@ -871,7 +927,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
               <span>{deleteError}</span>
             </div>
           )}
-          {category === 'BALITA' && historyList.length > 0 && (
+          {isUnderFive && historyList.length > 0 && (
             <KmsChart measurements={historyList} gender={patient.gender} />
           )}
           {historyByMonth.length === 0 ? (
@@ -1013,6 +1069,9 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                   )}
                   {hist.hearingStatus && (
                     <MetricChip label="Telinga" value={hist.hearingStatus} />
+                  )}
+                  {hist.exclusiveBreastfeeding != null && (
+                    <MetricChip label="ASI Eksklusif" value={hist.exclusiveBreastfeeding ? 'Ya' : 'Tidak'} />
                   )}
                 </div>
 

@@ -32,6 +32,7 @@ import {
   Smile,
   User,
   Heart,
+  Activity,
   LayoutGrid,
   ShieldAlert,
 } from 'lucide-react';
@@ -401,10 +402,11 @@ export default function PosyanduApp() {
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs font-medium">
               {[
                 { id: 'ALL', label: 'Semua Usia', icon: LayoutGrid },
-                { id: 'BALITA', label: 'Balita (<5th)', icon: Baby },
-                { id: 'ANAK', label: 'Anak (5-9th)', icon: Smile },
-                { id: 'REMAJA', label: 'Remaja (10-17th)', icon: User },
-                { id: 'DEWASA_LANSIA', label: 'Dewasa/Lansia', icon: Users },
+                { id: 'BAYI', label: 'Bayi (0-5 bln)', icon: Baby },
+                { id: 'BALITA_APRAS', label: 'Balita & Apras (6 bln-6 th)', icon: Smile },
+                { id: 'REMAJA', label: 'Remaja (7-17 th)', icon: User },
+                { id: 'DEWASA', label: 'Dewasa (18-59 th)', icon: Users },
+                { id: 'LANSIA', label: 'Lansia (60+ th)', icon: Activity },
                 { id: 'BUMIL', label: 'Ibu Hamil', icon: Heart },
               ].map((cat) => {
                 const IconComponent = cat.icon;

@@ -69,7 +69,7 @@ async function addMeasurement(
       posyanduId,
       sessionDate: new Date(`${sessionDate}T08:00:00`),
       ageInMonths: 12,
-      category: 'BALITA',
+      category: 'BALITA_APRAS',
       ...data,
     },
   });
@@ -111,15 +111,15 @@ describe('fetchOutcomeBase + classifyOutcomes (DB nyata)', () => {
     const f = await makePatient(pos, 'OUT-F', '2020-01-15', '2025-12-01');
     await addMeasurement(f, pos, '2026-01-10', { weight: 9, height: 70 });
 
-    // B: anemia (BALITA, HB < 11) → Tidak Normal.
+    // B: anemia (BALITA_APRAS, HB < 11) → Tidak Normal.
     const b = await makePatient(pos, 'OUT-B', '2020-01-15', '2025-12-01');
     await addMeasurement(b, pos, '2026-01-12', { hemoglobin: 8 });
 
-    // C: hipertensi (DEWASA_LANSIA) → Tidak Normal.
+    // C: hipertensi (DEWASA) → Tidak Normal.
     const c = await makePatient(pos, 'OUT-C', '1980-01-15', '2025-12-01');
-    await addMeasurement(c, pos, '2026-01-12', { category: 'DEWASA_LANSIA', systolic: 160, diastolic: 100 });
+    await addMeasurement(c, pos, '2026-01-12', { category: 'DEWASA', systolic: 160, diastolic: 100 });
 
-    // D: gula darah tinggi pada BALITA → di luar appliesTo → Belum Dinilai.
+    // D: gula darah tinggi pada BALITA_APRAS → di luar appliesTo → Belum Dinilai.
     const d = await makePatient(pos, 'OUT-D', '2020-01-15', '2025-12-01');
     await addMeasurement(d, pos, '2026-01-13', { bloodSugar: 200 });
 

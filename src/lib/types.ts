@@ -1,4 +1,10 @@
-export type PatientCategory = 'BALITA' | 'ANAK' | 'REMAJA' | 'DEWASA_LANSIA' | 'BUMIL';
+export type PatientCategory =
+  | 'BAYI'
+  | 'BALITA_APRAS'
+  | 'REMAJA'
+  | 'DEWASA'
+  | 'LANSIA'
+  | 'BUMIL';
 
 export interface PatientData {
   id: string;
@@ -64,6 +70,8 @@ export interface MeasurementData {
   weightFaltering2T?: boolean;
   visionStatus?: string | null;
   hearingStatus?: string | null;
+  /** ASI eksklusif (bayi 0-5 bln): true=Ya, false=Tidak, null=belum. */
+  exclusiveBreastfeeding?: boolean | null;
   noteSource?: string | null;
   category?: string | null;
   notes?: string | null;

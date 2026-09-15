@@ -7,8 +7,10 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 import { requireRole } from '@/lib/api-auth';
 import { computeGrowth, type StaturePosition } from '@/lib/growth';
+import { getPatientCategory } from '@/lib/utils';
 import { recomputePatientWeightProgression } from '@/lib/weight-progression-db';
 
 const BATCH = 500;
@@ -33,13 +35,19 @@ export async function POST(req: Request) {
           height: true,
           position: true,
           sessionDate: true,
-          patient: { select: { gender: true, birthDate: true } },
+          patient: { select: { gender: true, birthDate: true, isPregnant: true } },
         },
       });
       if (rows.length === 0) break;
       cursor = rows[rows.length - 1].id;
 
       for (const m of rows) {
+        const category = getPatientCategory(
+          m.patient.birthDate,
+          m.patient.isPregnant,
+          m.patient.gender,
+          m.sessionDate,
+        );
         const g = computeGrowth({
           gender: m.patient.gender,
           birthDate: m.patient.birthDate,
@@ -48,25 +56,23 @@ export async function POST(req: Request) {
           height: m.height,
           position: (m.position as StaturePosition | null) ?? undefined,
         });
-        if (!g.ok) {
-          skipped++;
-          continue;
+
+        // Kategori umur selalu dihitung ulang; status gizi hanya bila 0-60 bln.
+        const data: Prisma.MeasurementUpdateInput = { category };
+        if (g.ok) {
+          data.position = g.position ?? m.position;
+          data.zWeightAge = g.BB_U?.z ?? null;
+          data.zHeightAge = g.TB_U?.z ?? null;
+          data.zWeightHeight = g.BB_TB?.z ?? null;
+          data.zBmiAge = g.IMT_U?.z ?? null;
+          data.underweightStatus = g.BB_U?.categoryKey ?? null;
+          data.stuntingStatus = g.TB_U?.categoryKey ?? null;
+          data.wastingStatus = g.BB_TB?.categoryKey ?? null;
+          data.growthRefVersion = g.refVersion;
         }
-        await prisma.measurement.update({
-          where: { id: m.id },
-          data: {
-            position: g.position ?? m.position,
-            zWeightAge: g.BB_U?.z ?? null,
-            zHeightAge: g.TB_U?.z ?? null,
-            zWeightHeight: g.BB_TB?.z ?? null,
-            zBmiAge: g.IMT_U?.z ?? null,
-            underweightStatus: g.BB_U?.categoryKey ?? null,
-            stuntingStatus: g.TB_U?.categoryKey ?? null,
-            wastingStatus: g.BB_TB?.categoryKey ?? null,
-            growthRefVersion: g.refVersion,
-          },
-        });
-        updated++;
+        await prisma.measurement.update({ where: { id: m.id }, data });
+        if (g.ok) updated++;
+        else skipped++;
       }
 
       if (rows.length < BATCH) break;

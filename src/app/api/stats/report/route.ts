@@ -167,7 +167,7 @@ export async function GET(req: Request) {
       const category = (m.category as PatientCategory) ??
         getPatientCategory(m.patient.birthDate, m.patient.isPregnant);
 
-      if (category === 'BALITA') {
+      if (category === 'BAYI' || category === 'BALITA_APRAS') {
         row.balita.total++;
         const res = computeGrowth({
           gender: m.patient.gender,

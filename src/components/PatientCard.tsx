@@ -28,7 +28,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
   onShowQR,
   onEdit,
 }) => {
-  const category = patient.category || 'BALITA';
+  const category = patient.category || 'BALITA_APRAS';
   const badge = getCategoryBadge(category);
   const percent = patient.dataCompletionPercent ?? (patient.measurementComplete ? 100 : 0);
   const hasData = percent > 0;

@@ -27,10 +27,15 @@ describe('getPatientCategory', () => {
     expect(getPatientCategory(birth('2000-01-01'), true, 'P')).toBe('BUMIL');
   });
 
-  it('kategori berdasarkan usia', () => {
-    expect(getPatientCategory(birth('2024-01-01'), false, 'L')).toBe('BALITA'); // 2 th
-    expect(getPatientCategory(birth('2019-01-01'), false, 'L')).toBe('ANAK'); // 7 th
-    expect(getPatientCategory(birth('2012-01-01'), false, 'L')).toBe('REMAJA'); // 14 th
-    expect(getPatientCategory(birth('1990-01-01'), false, 'L')).toBe('DEWASA_LANSIA');
+  it('kategori berdasarkan usia (batas bulan penuh)', () => {
+    const t = new Date('2026-09-15T12:00:00');
+    expect(getPatientCategory(birth('2026-08-15'), false, 'L', t)).toBe('BAYI'); // 1 bln
+    expect(getPatientCategory(birth('2026-04-15'), false, 'L', t)).toBe('BAYI'); // 5 bln
+    expect(getPatientCategory(birth('2026-03-15'), false, 'L', t)).toBe('BALITA_APRAS'); // tepat 6 bln
+    expect(getPatientCategory(birth('2024-01-01'), false, 'L', t)).toBe('BALITA_APRAS'); // 2 th
+    expect(getPatientCategory(birth('2019-01-01'), false, 'L', t)).toBe('REMAJA'); // 7 th
+    expect(getPatientCategory(birth('2012-01-01'), false, 'L', t)).toBe('REMAJA'); // 14 th
+    expect(getPatientCategory(birth('1990-01-01'), false, 'L', t)).toBe('DEWASA');
+    expect(getPatientCategory(birth('1960-01-01'), false, 'L', t)).toBe('LANSIA');
   });
 });

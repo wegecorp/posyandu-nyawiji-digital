@@ -125,10 +125,11 @@ export function isMeasurementComplete(m: {
  * lanjutan cukup mengubah map ini — persen & filter ikut otomatis.
  */
 const COMPLETION_FIELDS: Record<PatientCategory, string[]> = {
-  BALITA: ['weight', 'height'],
-  ANAK: ['weight', 'height'],
+  BAYI: ['weight', 'height'],
+  BALITA_APRAS: ['weight', 'height'],
   REMAJA: ['weight', 'height'],
-  DEWASA_LANSIA: ['weight', 'height'],
+  DEWASA: ['weight', 'height'],
+  LANSIA: ['weight', 'height'],
   BUMIL: ['weight', 'height'],
 };
 

@@ -52,6 +52,7 @@ export interface ExportMeasurement {
   weightFaltering2T?: boolean;
   visionStatus?: string | null;
   hearingStatus?: string | null;
+  exclusiveBreastfeeding?: boolean | null;
   noteSource?: string | null;
   category?: string | null;
   notes?: string | null;
@@ -82,12 +83,33 @@ function ntLabel(status: string | null | undefined): string {
   return BLANK;
 }
 
+/**
+ * Ringkasan ASI eksklusif per pasien (dari seluruh pengukuran dalam periode).
+ * - ada jawaban Tidak di bulan ke-m → "Berhenti bulan m"
+ * - eksklusif tercatat sampai ≥ bulan 5 → "Eksklusif 6 bln"
+ * - belum sampai 6 bln → "s/d bulan N"
+ * - tak ada data → kosong
+ */
+function asiSummary(ms: ExportMeasurement[]): string {
+  const withAsi = ms
+    .filter((m) => m.exclusiveBreastfeeding != null)
+    .sort((a, b) => new Date(a.sessionDate).getTime() - new Date(b.sessionDate).getTime());
+  if (withAsi.length === 0) return BLANK;
+
+  const stopped = withAsi.find((m) => m.exclusiveBreastfeeding === false);
+  if (stopped) return stopped.ageInMonths != null ? `Berhenti bulan ${stopped.ageInMonths}` : 'Berhenti';
+
+  const lastAge = withAsi[withAsi.length - 1].ageInMonths;
+  if (lastAge != null && lastAge >= 5) return 'Eksklusif 6 bln';
+  return lastAge != null ? `s/d bulan ${lastAge}` : 'ASI eksklusif';
+}
+
 /** Status gizi terhitung (hanya balita) sebagai fallback snapshot tersimpan. */
 function growthFor(p: ExportPatient, m: ExportMeasurement) {
   const category =
     (m.category as PatientCategory) ??
     getPatientCategory(p.birthDate, p.isPregnant, p.gender, new Date(m.sessionDate));
-  if (category !== 'BALITA') return undefined;
+  if (category !== 'BAYI' && category !== 'BALITA_APRAS') return undefined;
   return computeGrowth({
     gender: p.gender,
     birthDate: p.birthDate,
@@ -108,11 +130,15 @@ export function buildRoster(
   periodEnd: Date,
 ): ExportRow[] {
   const latest = new Map<string, ExportMeasurement>();
+  const byPatient = new Map<string, ExportMeasurement[]>();
   for (const m of measurements) {
     const cur = latest.get(m.patientId);
     if (!cur || new Date(m.sessionDate).getTime() > new Date(cur.sessionDate).getTime()) {
       latest.set(m.patientId, m);
     }
+    const list = byPatient.get(m.patientId) ?? [];
+    list.push(m);
+    byPatient.set(m.patientId, list);
   }
 
   return [...patients]
@@ -135,6 +161,7 @@ export function buildRoster(
         'L/P': p.gender ? (GENDER_LABEL[p.gender] ?? p.gender) : BLANK,
         Bumil: p.isPregnant ? 'Ya' : 'Tidak',
         'Tgl Ukur Terakhir': m ? formatIndoDate(m.sessionDate) : BLANK,
+        'ASI Eksklusif': asiSummary(byPatient.get(p.id) ?? []),
         'BB (kg)': m?.weight ?? BLANK,
         'TB/PB (cm)': m?.height ?? BLANK,
         'LiLA (cm)': m?.armCircumference ?? BLANK,

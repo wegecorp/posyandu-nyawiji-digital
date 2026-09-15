@@ -42,27 +42,31 @@ export function getPatientCategory(
 ): PatientCategory {
   if (isPregnant && gender !== 'L') return 'BUMIL';
 
-  const { years } = calculateAge(birthDateString, targetDate);
+  // Kategori siklus hidup Posyandu, batas BULAN PENUH.
+  const { totalMonths } = calculateAge(birthDateString, targetDate);
 
-  if (years < 5) return 'BALITA';
-  if (years >= 5 && years < 10) return 'ANAK';
-  if (years >= 10 && years < 18) return 'REMAJA';
-  return 'DEWASA_LANSIA';
+  if (totalMonths < 6) return 'BAYI'; // 0-5 bln (6 bln 1 hari sudah bukan bayi)
+  if (totalMonths < 84) return 'BALITA_APRAS'; // 6 bln - 6 th 11 bln
+  if (totalMonths < 216) return 'REMAJA'; // 7 - 17 th
+  if (totalMonths < 720) return 'DEWASA'; // 18 - 59 th
+  return 'LANSIA'; // 60 th ke atas
 }
 
 
 export function getCategoryBadge(category: PatientCategory) {
   switch (category) {
-    case 'BALITA':
-      return { label: 'Balita (<5 th)', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' };
-    case 'ANAK':
-      return { label: 'Anak (5-9 th)', color: 'bg-teal-100 text-teal-800 border-teal-300' };
+    case 'BAYI':
+      return { label: 'Bayi (0-5 bln)', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' };
+    case 'BALITA_APRAS':
+      return { label: 'Balita & Apras (6 bln-6 th)', color: 'bg-teal-100 text-teal-800 border-teal-300' };
     case 'REMAJA':
-      return { label: 'Remaja (10-17 th)', color: 'bg-blue-100 text-blue-800 border-blue-300' };
+      return { label: 'Remaja (7-17 th)', color: 'bg-blue-100 text-blue-800 border-blue-300' };
     case 'BUMIL':
       return { label: 'Ibu Hamil', color: 'bg-pink-100 text-pink-800 border-pink-300' };
-    case 'DEWASA_LANSIA':
-      return { label: 'Dewasa / Lansia', color: 'bg-purple-100 text-purple-800 border-purple-300' };
+    case 'DEWASA':
+      return { label: 'Dewasa (18-59 th)', color: 'bg-purple-100 text-purple-800 border-purple-300' };
+    case 'LANSIA':
+      return { label: 'Lansia (60+ th)', color: 'bg-amber-100 text-amber-800 border-amber-300' };
     default:
       return { label: 'Umum', color: 'bg-slate-100 text-slate-800 border-slate-300' };
   }

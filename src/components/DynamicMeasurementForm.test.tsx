@@ -13,7 +13,7 @@ const patient: PatientData = {
   gender: 'L',
   isPregnant: false,
   posyanduId: 'pos1',
-  category: 'BALITA',
+  category: 'BALITA_APRAS',
   ageDisplay: '3 Tahun',
   createdAt: '2023-01-01T00:00:00.000Z',
 };

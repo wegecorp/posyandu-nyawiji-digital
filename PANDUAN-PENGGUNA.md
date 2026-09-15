@@ -161,7 +161,7 @@ Setelah masuk, kader melihat **beranda** posyandu:
 - **Tab Beranda / Analisis**: berpindah antara daftar pasien dan grafik ringkasan.
 - **Kotak Cari nama pasien**: menyaring daftar secara langsung.
 - **Filter status**: **Semua**, **Belum**, **Selesai** — untuk melihat siapa yang belum diukur.
-- **Chip kategori usia**: Semua Usia, Balita, Anak, Remaja, Dewasa/Lansia, Ibu Hamil.
+- **Chip kategori usia**: Semua Usia, Bayi (0-5 bln), Balita & Apras (6 bln-6 th), Remaja (7-17 th), Dewasa (18-59 th), Lansia (60+ th), Ibu Hamil.
 
 ![Daftar pasien — pencarian, filter status, chip usia, dan kartu pasien](docs/panduan/02-daftar-pasien.png)
 
@@ -193,15 +193,16 @@ Setelah masuk, kader melihat **beranda** posyandu:
    | Kolom | Untuk siapa |
    |---|---|
    | Berat Badan (BB) dan Tinggi/Panjang Badan (TB) | Semua pasien (wajib) |
-   | Posisi Ukur (Telentang / Berdiri) | Balita — menentukan koreksi tinggi ±0,7 cm |
-   | Lingkar Kepala (LK) | Balita |
+   | Posisi Ukur (Telentang / Berdiri) | Bayi & Balita/Apras — menentukan koreksi tinggi ±0,7 cm |
+   | Lingkar Kepala (LK) | Bayi & Balita/Apras |
+   | ASI Eksklusif | Bayi (0-5 bln) — berhenti setelah dijawab Tidak |
    | Lingkar Lengan Atas (LiLA), Lingkar Perut | Semua pasien (opsional) |
-   | Tekanan Darah (Tensi) | Remaja, Dewasa/Lansia, dan Ibu Hamil |
+   | Tekanan Darah (Tensi) | Remaja, Dewasa, Lansia, dan Ibu Hamil |
    | Usia Kehamilan | Ibu Hamil |
    | Gula darah, kolesterol, asam urat, HB | Sesuai kebutuhan pelayanan |
    | Skrining mata/telinga, Catatan | Sesuai kebutuhan |
 
-![Input Hari Ini — kolom ukur menyesuaikan usia, tersimpan otomatis](docs/panduan/03-input-hari-ini.png)
+![Input / Edit Sesi — kolom ukur menyesuaikan usia, tersimpan otomatis](docs/panduan/03-input-hari-ini.png)
 
 3. Nilai **tersimpan otomatis** — tidak ada tombol simpan. Tunggu tanda **Tersimpan Otomatis** setelah selesai mengisi.
 4. Bila seluruh ukuran wajib lengkap, status pasien menjadi **Selesai**. Klik **Selesai — Kembali ke Daftar** untuk mengukur pasien berikutnya.
@@ -287,12 +288,15 @@ Form pengukuran menyesuaikan kolomnya **secara otomatis** dengan umur pasien (di
 
 | Kelompok (label di aplikasi) | Rentang umur | Ukuran khusus yang ikut muncul |
 |---|---|---|
-| **Balita (<5 th)** | 0–4 tahun | Lingkar Kepala (LK); tinggi memakai **"Panjang / TB"** |
-| **Anak (5–9 th)** | 5–9 tahun | — |
-| **Remaja (10–17 th)** | 10–17 tahun | Tekanan Darah (Tensi) |
-| **Dewasa / Lansia** | 18 tahun ke atas | Tekanan Darah (Tensi) |
+| **Bayi (0-5 bln)** | 0–5 bulan | Lingkar Kepala (LK); **"Panjang / TB"**; **ASI Eksklusif** |
+| **Balita & Apras (6 bln-6 th)** | 6 bulan–6 tahun 11 bulan | Lingkar Kepala (LK); **"Panjang / TB"**; status gizi (0–60 bln) |
+| **Remaja (7-17 th)** | 7–17 tahun | Tekanan Darah (Tensi) |
+| **Dewasa (18-59 th)** | 18–59 tahun | Tekanan Darah (Tensi) |
+| **Lansia (60+ th)** | 60 tahun ke atas | Tekanan Darah (Tensi) |
 | **Ibu Hamil (Bumil)** | semua umur | Usia Kehamilan + Tekanan Darah |
 
+> Batas kelompok memakai **bulan penuh**: 6 bulan 1 hari sudah masuk **Balita & Apras** (bukan Bayi lagi); tepat 7 tahun masuk **Remaja**; tepat 60 tahun masuk **Lansia**.
+>
 > **Ibu Hamil (Bumil)** bukan ditentukan dari umur, melainkan **dicentang saat mendaftarkan pasien** (khusus pasien perempuan). Centang ini mengesampingkan kelompok berdasarkan umur.
 
 ### 6.2 Rincian data yang dicatat
@@ -301,12 +305,13 @@ Form pengukuran menyesuaikan kolomnya **secara otomatis** dengan umur pasien (di
 |---|---|---|---|
 | Berat Badan (BB) | kg | Semua kelompok | **Wajib** |
 | Tinggi / Panjang Badan (TB/PB) | cm | Semua kelompok | **Wajib** |
-| Posisi Ukur (Telentang / Berdiri) | — | Balita | Opsional (default otomatis menurut umur) |
+| Posisi Ukur (Telentang / Berdiri) | — | Bayi & Balita/Apras | Opsional (default otomatis menurut umur) |
 | Indeks Massa Tubuh (IMT) | kg/m² | Semua kelompok | Otomatis dihitung dari BB & TB |
-| Lingkar Kepala (LK) | cm | Balita | Opsional |
+| Lingkar Kepala (LK) | cm | Bayi & Balita/Apras | Opsional |
+| ASI Eksklusif | Ya / Tidak | Bayi (0–5 bln) | Opsional — berhenti ditanya setelah dijawab **Tidak** |
 | Lingkar Lengan Atas (LiLA) | cm | Semua kelompok | Opsional |
 | Lingkar Perut | cm | Semua kelompok | Opsional |
-| Tekanan Darah (Tensi) | mmHg | Remaja, Dewasa/Lansia, Ibu Hamil | Opsional |
+| Tekanan Darah (Tensi) | mmHg | Remaja, Dewasa, Lansia, Ibu Hamil | Opsional |
 | Usia Kehamilan | minggu | Ibu Hamil | Opsional |
 | Gula Darah (GDS) | mg/dL | Semua kelompok (jika alat tersedia) | Opsional |
 | Kolesterol Total | mg/dL | Semua kelompok (jika alat tersedia) | Opsional |
@@ -333,7 +338,7 @@ Menu **Analisis** otomatis menghitung hasil dan menyorot nilai yang patut diwasp
 
 | Indikator | Dihitung dari | Ambang "tidak normal" |
 |---|---|---|
-| Tensi Tinggi (hipertensi) | Tekanan darah | 140/90 mmHg atau lebih (Remaja, Dewasa/Lansia, Ibu Hamil) |
+| Tensi Tinggi (hipertensi) | Tekanan darah | 140/90 mmHg atau lebih (Remaja, Dewasa, Lansia, Ibu Hamil) |
 | Anemia (HB rendah) | Hemoglobin | Balita < 11,0 · Anak < 11,5 · Remaja < 12,0 · Ibu Hamil < 11,0 · Dewasa: pria < 13,0 / wanita < 12,0 g/dL |
 | Gula Darah Tinggi | Gula darah | 126 mg/dL atau lebih |
 | Kolesterol Tinggi | Kolesterol | 200 mg/dL atau lebih |
@@ -505,14 +510,14 @@ Bagian ini menjelaskan **tujuan** dan **cara** memakai aplikasi pada hari buka p
 - Bila tersedia lebih dari satu perangkat, atur pembagian peserta (mis. per RT) agar tidak ada peserta yang diinput dua kali.
 - Bila lokasi kurang sinyal, tetap **utamakan** mencari titik yang ada koneksi. Fitur luring hanya cadangan: data akan tersinkron otomatis saat kembali online — **jangan logout** sebelum itu.
 
-### 10.4 Sasaran non-balita (remaja, dewasa/lansia, ibu hamil)
+### 10.4 Sasaran non-bayi/balita (remaja, dewasa, lansia, ibu hamil)
 
 Alur 5 Langkah yang sama berlaku untuk semua sasaran. Yang membedakan hanya kolom pengukuran:
 
-- **Remaja & Dewasa/Lansia:** tekanan darah (dan lab sederhana bila alat tersedia) serta skrining mata/telinga.
+- **Remaja, Dewasa & Lansia:** tekanan darah (dan lab sederhana bila alat tersedia) serta skrining mata/telinga.
 - **Ibu Hamil:** tekanan darah, usia kehamilan, LiLA.
 
-Status "2T" dan kurva KMS hanya berlaku untuk **balita** (karena berbasis berat/umur). Untuk sasaran lain, perhatikan temuan **Tidak Normal** pada menu Analisis.
+Status "2T" dan kurva KMS hanya berlaku untuk **Bayi & Balita/Apras** (karena berbasis berat/umur). Untuk sasaran lain, perhatikan temuan **Tidak Normal** pada menu Analisis.
 
 ### 10.5 Rujukan sumber
 

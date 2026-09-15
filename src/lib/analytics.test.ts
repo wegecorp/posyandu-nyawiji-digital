@@ -7,7 +7,7 @@ function row(over: Record<string, unknown> = {}) {
     posyanduId: 'pos1',
     patientId: 'p1',
     sessionDate: new Date('2026-01-15T08:00:00'),
-    category: 'BALITA',
+    category: 'BALITA_APRAS',
     gender: 'L',
     systolic: null,
     diastolic: null,
@@ -33,7 +33,7 @@ describe('classifyOutcomes', () => {
 
   it('dewasa dengan tensi tinggi → Tidak Normal', () => {
     const { totals } = classifyOutcomes([
-      row({ category: 'DEWASA_LANSIA', systolic: 160, diastolic: 100 }),
+      row({ category: 'DEWASA', systolic: 160, diastolic: 100 }),
     ]);
     expect(totals[0].abnormal).toBe(1);
     expect(totals[0].abnormalByIndicator.hypertension).toBe(1);

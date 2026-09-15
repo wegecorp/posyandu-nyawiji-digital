@@ -6,6 +6,8 @@ import {
   addToSyncQueue,
   flushSyncQueue,
   clearSyncQueue,
+  clearQueuedMeasurement,
+  clearQueuedPatient,
   useAutoSave,
   genClientId,
   type UnsyncedItem,
@@ -205,5 +207,35 @@ describe('clearSyncQueue', () => {
     addToSyncQueue(measurementItem({ patientId: 'p2' }));
     clearSyncQueue();
     expect(getSyncQueue()).toHaveLength(0);
+  });
+});
+
+describe('sesi berbasis bulan', () => {
+  it('dua tanggal di BULAN yang sama digabung jadi satu sesi', () => {
+    const a = measurementItem({ payload: { weight: '8.5', sessionDate: '2026-01-10' } });
+    const b = measurementItem({ payload: { height: '70', sessionDate: '2026-01-25' } });
+    addToSyncQueue(a);
+    addToSyncQueue(b);
+    expect(getSyncQueue()).toHaveLength(1);
+  });
+
+  it('clearQueuedMeasurement hanya buang bulan yang diminta', () => {
+    addToSyncQueue(measurementItem({ payload: { weight: '8.5', sessionDate: '2026-01-10' } }));
+    addToSyncQueue(measurementItem({ payload: { weight: '9.0', sessionDate: '2026-02-14' } }));
+    addToSyncQueue(measurementItem({ patientId: 'p2', payload: { weight: '7', sessionDate: '2026-01-10' } }));
+    clearQueuedMeasurement('p1', '2026-01');
+    const queue = getSyncQueue();
+    expect(queue).toHaveLength(2);
+    expect(queue.every((q) => !(q.patientId === 'p1' && String(q.payload.sessionDate).startsWith('2026-01')))).toBe(true);
+  });
+
+  it('clearQueuedPatient buang semua antrean pasien itu saja', () => {
+    addToSyncQueue(measurementItem({ patientId: 'p1' }));
+    addToSyncQueue(measurementItem({ patientId: 'p1', payload: { weight: '9', sessionDate: '2026-03-10' } }));
+    addToSyncQueue(measurementItem({ patientId: 'p2', payload: { weight: '7', sessionDate: '2026-03-10' } }));
+    clearQueuedPatient('p1');
+    const queue = getSyncQueue();
+    expect(queue).toHaveLength(1);
+    expect(queue[0].patientId).toBe('p2');
   });
 });

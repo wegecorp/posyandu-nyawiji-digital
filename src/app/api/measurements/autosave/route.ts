@@ -74,19 +74,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Tanggal sesi tidak valid' }, { status: 400 });
     }
 
-    const startOfDay = new Date(targetDate);
-    startOfDay.setHours(0, 0, 0, 0);
+    // Sesi = BULAN: satu pengukuran per pasien per bulan, tanggal apa pun di bulan itu.
+    const startOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1, 0, 0, 0, 0);
+    const endOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0, 23, 59, 59, 999);
 
-    const endOfDay = new Date(targetDate);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    // Check if measurement exists for the target date
+    // Check if measurement exists for the target month
     const existingMeasurement = await prisma.measurement.findFirst({
       where: {
         patientId,
         sessionDate: {
-          gte: startOfDay,
-          lte: endOfDay,
+          gte: startOfMonth,
+          lte: endOfMonth,
         },
       },
     });
@@ -189,7 +187,7 @@ export async function POST(req: Request) {
       fieldData.hearingStatus = SCREENING_VALUES.includes(hearingStatus) ? hearingStatus : null;
     if (noteSource !== undefined)
       fieldData.noteSource = NOTE_SOURCES.includes(noteSource) ? noteSource : null;
-    if (notes !== undefined) fieldData.notes = notes;
+    if (notes !== undefined) fieldData.notes = notes === '' ? null : notes;
     if (recordedBy) fieldData.recordedBy = recordedBy;
     if (weight !== undefined || height !== undefined) fieldData.imt = imt;
 
@@ -263,7 +261,7 @@ export async function POST(req: Request) {
           const raced = await prisma.measurement.findFirst({
             where: {
               patientId,
-              sessionDate: { gte: startOfDay, lte: endOfDay },
+              sessionDate: { gte: startOfMonth, lte: endOfMonth },
             },
           });
           if (!raced) throw err;

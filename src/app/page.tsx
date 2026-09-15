@@ -15,9 +15,11 @@ import { DinkesDashboard } from '@/components/DinkesDashboard';
 import { AnalisisPage } from '@/components/analisis/AnalisisPage';
 import { AuthPage } from '@/components/AuthPage';
 import { EditPatientModal } from '@/components/EditPatientModal';
+import { DeletePatientConfirmModal } from '@/components/DeletePatientConfirmModal';
 import { ChangePasswordModal } from '@/components/ChangePasswordModal';
 import { ExitHint } from '@/components/ExitHint';
 import { useBackLayer, useExitGuard } from '@/lib/back-navigation';
+import { clearQueuedPatient } from '@/lib/offline-sync';
 import { isStandaloneMode } from '@/lib/pwa';
 import {
   Search,
@@ -62,6 +64,7 @@ export default function PosyanduApp() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isChangePassOpen, setIsChangePassOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<PatientData | null>(null);
+  const [deletingPatient, setDeletingPatient] = useState<PatientData | null>(null);
   const [showExitHint, setShowExitHint] = useState(false);
 
   const isReadOnly = user?.role === 'PUSKESMAS' || user?.role === 'DINKES';
@@ -168,6 +171,14 @@ export default function PosyanduApp() {
     if (selectedPatient?.id === updatedPatient.id) {
       setSelectedPatient(updatedPatient);
     }
+  };
+
+  // Handle Delete Patient Success
+  const handleDeleteSuccess = (deletedPatientId: string) => {
+    clearQueuedPatient(deletedPatientId);
+    setPatients((prev) => prev.filter((p) => p.id !== deletedPatientId));
+    setSelectedPatient((prev) => (prev?.id === deletedPatientId ? null : prev));
+    setEditingPatient((prev) => (prev?.id === deletedPatientId ? null : prev));
   };
 
   // Handle QR Camera scan result
@@ -508,6 +519,15 @@ export default function PosyanduApp() {
         patient={editingPatient}
         onClose={() => setEditingPatient(null)}
         onSuccess={handleEditSuccess}
+        onRequestDelete={(p) => setDeletingPatient(p)}
+      />
+
+      {/* 7b. Delete Patient Confirm Modal */}
+      <DeletePatientConfirmModal
+        isOpen={Boolean(deletingPatient)}
+        patient={deletingPatient}
+        onClose={() => setDeletingPatient(null)}
+        onSuccess={handleDeleteSuccess}
       />
 
       {/* 8. Hint keluar aplikasi (back dua kali di layar root, mode standalone) */}

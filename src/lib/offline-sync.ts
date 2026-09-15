@@ -36,17 +36,17 @@ export function getSyncQueue(): UnsyncedItem[] {
 
 /**
  * Kunci dedupe antrean:
- * - measurement: posyanduId + patientId + tanggal sesi (YYYY-MM-DD). Edit offline pada dua
- *   tanggal berbeda untuk pasien sama TIDAK boleh digabung (tanggal pertama jangan tertimpa).
+ * - measurement: posyanduId + patientId + BULAN sesi (YYYY-MM). Sesi = 1 bulan, jadi edit
+ *   offline pada dua tanggal berbeda di bulan yang sama digabung; bulan berbeda TIDAK.
  * - patient: clientId (idempotensi registrasi offline).
  */
 export function queueKey(item: UnsyncedItem): string {
   if (item.kind === 'measurement') {
-    const date =
+    const ym =
       typeof item.payload.sessionDate === 'string'
-        ? String(item.payload.sessionDate).slice(0, 10)
+        ? String(item.payload.sessionDate).slice(0, 7)
         : 'no-date';
-    return `m:${item.posyanduId || ''}:${item.patientId || ''}:${date}`;
+    return `m:${item.posyanduId || ''}:${item.patientId || ''}:${ym}`;
   }
   return `p:${item.clientId || item.id}`;
 }
@@ -93,6 +93,31 @@ export function clearSyncQueue() {
   } catch (e) {
     console.error('Error clearing sync queue:', e);
   }
+}
+
+/**
+ * Buang antrean pengukuran pasien untuk BULAN tertentu. Dipakai setelah sesi
+ * dihapus, supaya patch offline yang belum terkirim tidak menghidupkan ulang
+ * baris yang baru saja dihapus di server.
+ */
+export function clearQueuedMeasurement(patientId: string, ym: string) {
+  if (typeof window === 'undefined') return;
+  const queue = getSyncQueue().filter(
+    (q) =>
+      !(
+        q.kind === 'measurement' &&
+        q.patientId === patientId &&
+        typeof q.payload.sessionDate === 'string' &&
+        String(q.payload.sessionDate).slice(0, 7) === ym
+      ),
+  );
+  writeQueue(queue);
+}
+
+/** Buang SEMUA antrean milik pasien (dipakai saat pasien dihapus permanen). */
+export function clearQueuedPatient(patientId: string) {
+  if (typeof window === 'undefined') return;
+  writeQueue(getSyncQueue().filter((q) => q.patientId !== patientId));
 }
 
 /**

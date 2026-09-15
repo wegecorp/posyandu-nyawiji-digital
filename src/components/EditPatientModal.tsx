@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { PatientData } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
-import { X, Edit3, Calendar, User, Home, Phone, Heart, Check, AlertTriangle, Lock } from 'lucide-react';
+import { X, Edit3, Calendar, User, Home, Phone, Heart, Check, AlertTriangle, Lock, Trash2 } from 'lucide-react';
 import { calculateAge, getPatientCategory, getCategoryBadge, todayLocalISODate } from '@/lib/utils';
 import { useBackLayer } from '@/lib/back-navigation';
 
@@ -12,6 +12,7 @@ interface EditPatientModalProps {
   patient: PatientData | null;
   onClose: () => void;
   onSuccess: (updatedPatient: PatientData) => void;
+  onRequestDelete?: (patient: PatientData) => void;
 }
 
 export const EditPatientModal: React.FC<EditPatientModalProps> = ({
@@ -19,6 +20,7 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
   patient,
   onClose,
   onSuccess,
+  onRequestDelete,
 }) => {
   const { user } = useAuth();
   // Nilai awal diambil dari `patient` saat komponen di-mount (parent memakai key utk remount per pasien).
@@ -291,6 +293,23 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
               />
             </div>
           </div>
+
+          {/* Zona Bahaya: Hapus Pasien */}
+          {onRequestDelete && (
+            <div className="pt-2 border-t border-[#e9edef]">
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onRequestDelete(patient);
+                }}
+                className="w-full py-3 px-4 bg-[#fef2f2] hover:bg-[#fee2e2] text-[#ef4444] font-bold rounded-full text-xs transition-all touch-press border border-[#fecaca] flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Hapus Pasien</span>
+              </button>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="pt-2 flex gap-2.5">

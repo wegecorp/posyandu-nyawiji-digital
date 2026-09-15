@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { PatientData, MeasurementData } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
-import { useAutoSave } from '@/lib/offline-sync';
+import { useAutoSave, clearQueuedMeasurement } from '@/lib/offline-sync';
 import {
   Scale,
   Ruler,
@@ -21,8 +21,11 @@ import {
   TestTube,
   Eye,
   Ear,
+  Trash2,
+  Pencil,
+  X,
 } from 'lucide-react';
-import { getCategoryBadge, formatIndoDate, todayLocalISODate } from '@/lib/utils';
+import { getCategoryBadge, todayLocalISODate } from '@/lib/utils';
 import { validateMeasurementValue, validateBloodPressure, computeImt } from '@/lib/validation';
 import {
   computeGrowth,
@@ -33,6 +36,22 @@ import {
   type StaturePosition,
 } from '@/lib/growth';
 import { KmsChart } from '@/components/KmsChart';
+
+/** Bulan lokal 'YYYY-MM' dari tanggal ISO. Sesi pengukuran = 1 bulan. */
+function localYearMonth(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+const MONTH_NAMES = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+];
+
+function formatIndoMonth(ym: string): string {
+  const [y, m] = ym.split('-').map(Number);
+  return `${MONTH_NAMES[(m || 1) - 1]} ${y}`;
+}
 
 interface DynamicMeasurementFormProps {
   patient: PatientData;
@@ -67,11 +86,20 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   const [hearingStatus, setHearingStatus] = useState<string>('');
   const [noteSource, setNoteSource] = useState<string>('Kader');
   const [notes, setNotes] = useState<string>('');
-  const [sessionDate, setSessionDate] = useState<string>(() => todayLocalISODate());
+  const [sessionDate, setSessionDate] = useState<string>(
+    () => `${todayLocalISODate().slice(0, 7)}-01`,
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [activeTab, setActiveTab] = useState<'form' | 'history'>('form');
   const [historyList, setHistoryList] = useState<MeasurementData[]>([]);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState('');
+
+  const sessionMonth = sessionDate.slice(0, 7);
+  const currentMonth = todayLocalISODate().slice(0, 7);
+  const isEditingPastMonth = sessionMonth !== currentMonth;
 
   // Autosave Hook
   const { saveStatus, triggerAutoSave, flushNow } = useAutoSave(
@@ -122,7 +150,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
     };
   }, [patient.id]);
 
-  // Re-fetch measurement when sessionDate changes (backdate support).
+  // Muat ulang saat BULAN sesi berubah (dukung backdate).
   useEffect(() => {
     if (isReadOnly) return;
     let active = true;
@@ -132,22 +160,69 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
         if (!active || !result.success || !result.data) return;
         const p = result.data;
         if (p.measurements) setHistoryList(p.measurements);
-        const target = new Date(sessionDate);
-        const start = new Date(target);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(target);
-        end.setHours(23, 59, 59, 999);
-        const match = (p.measurements || []).find((m: MeasurementData) => {
-          const d = new Date(m.sessionDate);
-          return d >= start && d <= end;
-        });
+        const desired = sessionDate.slice(0, 7);
+        const match = (p.measurements || []).find(
+          (m: MeasurementData) => localYearMonth(m.sessionDate) === desired,
+        );
         applyMeasurement(match || null);
       })
       .catch(() => {});
     return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionDate]);
 
   const isReadOnly = user?.role === 'PUSKESMAS' || user?.role === 'DINKES';
+
+  // Riwayat dikelompokkan per BULAN (sesi). Ambil baris terbaru bila ada duplikat lama.
+  const historyByMonth = React.useMemo(() => {
+    const map = new Map<string, MeasurementData>();
+    for (const m of historyList) {
+      const ym = localYearMonth(m.sessionDate);
+      const cur = map.get(ym);
+      if (!cur || new Date(m.sessionDate).getTime() > new Date(cur.sessionDate).getTime()) {
+        map.set(ym, m);
+      }
+    }
+    return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  }, [historyList]);
+
+  // Buka bulan tertentu untuk diedit.
+  const handleEditMonth = (isoDate: string) => {
+    const ym = localYearMonth(isoDate);
+    void flushNow().then(() => {
+      setSessionDate(`${ym}-01`);
+      setActiveTab('form');
+      setConfirmDeleteId(null);
+    });
+  };
+
+  // Hapus satu sesi (bulan) pengukuran.
+  const handleDeleteMeasurement = async (id: string, ym: string) => {
+    setDeletingId(id);
+    setDeleteError('');
+    try {
+      const res = await fetch(`/api/measurements/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal menghapus pengukuran');
+
+      clearQueuedMeasurement(patient.id, ym);
+
+      // Muat ulang agar status N/T sesi lain ikut terkoreksi (server recompute).
+      const res2 = await fetch(`/api/patients/${patient.id}`);
+      const r2 = await res2.json();
+      if (r2.success && r2.data) {
+        const ms: MeasurementData[] = r2.data.measurements || [];
+        setHistoryList(ms);
+        const stillThere = ms.find((m) => localYearMonth(m.sessionDate) === sessionMonth);
+        if (ym === sessionMonth && !stillThere) applyMeasurement(null);
+      }
+      setConfirmDeleteId(null);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Gagal menghapus pengukuran');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   // Posisi efektif (tersimpan atau default menurut umur).
   const sessionAgeMonths = ageInCompletedMonths(patient.birthDate, sessionDate);
@@ -337,7 +412,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
           }`}
         >
           <Activity className="w-3.5 h-3.5" />
-          <span>Input Hari Ini</span>
+          <span>Input / Edit Sesi</span>
         </button>
         <button
           onClick={() => setActiveTab('history')}
@@ -346,7 +421,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
           }`}
         >
           <History className="w-3.5 h-3.5" />
-          <span>Riwayat ({historyList.length})</span>
+          <span>Riwayat ({historyByMonth.length})</span>
         </button>
       </div>
 
@@ -356,12 +431,12 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
           <div className="flex items-center gap-2 text-[#54656f] min-w-0">
             <Calendar className="w-3.5 h-3.5 text-[#128c7e] shrink-0" />
             <label className="text-[11px] flex items-center gap-1.5 truncate">
-              Sesi:
+              Sesi bulan:
               <input
-                type="date"
-                value={sessionDate}
-                max={todayLocalISODate()}
-                onChange={(e) => handleFieldChange('sessionDate', e.target.value)}
+                type="month"
+                value={sessionMonth}
+                max={currentMonth}
+                onChange={(e) => e.target.value && handleFieldChange('sessionDate', `${e.target.value}-01`)}
                 className="text-[11px] font-bold text-[#075e54] bg-[#f0f2f5] border border-[#e9edef] rounded-lg px-2 py-1 outline-none focus:border-[#128c7e]"
               />
             </label>
@@ -400,6 +475,22 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
         </div>
       )}
 
+      {/* Banner sesi bulan lampau */}
+      {activeTab === 'form' && isEditingPastMonth && (
+        <div className="flex items-center justify-between gap-2 bg-[#fff7ed] border border-[#ffedd5] rounded-2xl px-3.5 py-2.5 text-xs">
+          <span className="text-[#c2410c] font-bold flex items-center gap-1.5 min-w-0">
+            <Calendar className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Mengedit sesi {formatIndoMonth(sessionMonth)}</span>
+          </span>
+          <button
+            onClick={() => handleFieldChange('sessionDate', `${currentMonth}-01`)}
+            className="font-extrabold text-[#075e54] bg-white border border-[#e9edef] rounded-full px-3 py-1 shrink-0 touch-press"
+          >
+            Kembali ke bulan ini
+          </button>
+        </div>
+      )}
+
       {/* 1. INPUT FORM */}
       {activeTab === 'form' && (
         <div className="space-y-3.5">
@@ -429,6 +520,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 onChange={(v) => handleFieldChange('weight', v)}
                 step="0.05"
                 error={errors.weight}
+                onClear={isReadOnly ? undefined : () => handleFieldChange('weight', '')}
               />
               <MetricField
                 label={category === 'BALITA' ? 'Panjang / TB' : 'Tinggi Badan (TB)'}
@@ -437,6 +529,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 onChange={(v) => handleFieldChange('height', v)}
                 step="0.1"
                 error={errors.height}
+                onClear={isReadOnly ? undefined : () => handleFieldChange('height', '')}
               />
             </div>
 
@@ -457,7 +550,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                       key={p}
                       type="button"
                       disabled={isReadOnly}
-                      onClick={() => handleFieldChange('position', p)}
+                      onClick={() => handleFieldChange('position', position === p ? '' : p)}
                       className={`h-11 rounded-xl text-[11px] font-extrabold border transition-all ${
                         effectivePosition === p
                           ? 'bg-[#075e54] text-white border-[#075e54]'
@@ -469,7 +562,9 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                   ))}
                 </div>
                 <p className="text-[10px] text-[#8696a0] font-medium mt-1">
-                  Default: &lt;24 bln telentang, ≥24 bln berdiri. Koreksi ±0,7 cm otomatis.
+                  {isReadOnly
+                    ? 'Default: <24 bln telentang, ≥24 bln berdiri. Koreksi ±0,7 cm otomatis.'
+                    : `Default: <24 bln telentang, ≥24 bln berdiri. Koreksi ±0,7 cm otomatis.${position ? ' Tekan tombol aktif untuk kembali otomatis.' : ' Saat ini otomatis sesuai umur.'}`}
                 </p>
               </div>
             )}
@@ -515,6 +610,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 onChange={(v) => handleFieldChange('headCircumference', v)}
                 step="0.1"
                 error={errors.headCircumference}
+                onClear={isReadOnly ? undefined : () => handleFieldChange('headCircumference', '')}
               />
             </SectionCard>
           )}
@@ -534,6 +630,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 onChange={(v) => handleFieldChange('armCircumference', v)}
                 step="0.1"
                 error={errors.armCircumference}
+                onClear={isReadOnly ? undefined : () => handleFieldChange('armCircumference', '')}
               />
               <MetricField
                 label="Lingkar Perut"
@@ -542,6 +639,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 onChange={(v) => handleFieldChange('waistCircumference', v)}
                 step="0.1"
                 error={errors.waistCircumference}
+                onClear={isReadOnly ? undefined : () => handleFieldChange('waistCircumference', '')}
               />
             </div>
           </SectionCard>
@@ -560,6 +658,14 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 onSystolic={(v) => handleFieldChange('systolic', v)}
                 onDiastolic={(v) => handleFieldChange('diastolic', v)}
                 error={errors.systolic || errors.diastolic}
+                onClear={
+                  isReadOnly
+                    ? undefined
+                    : () => {
+                        handleFieldChange('systolic', '');
+                        handleFieldChange('diastolic', '');
+                      }
+                }
               />
             </SectionCard>
           )}
@@ -578,6 +684,14 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 onSystolic={(v) => handleFieldChange('systolic', v)}
                 onDiastolic={(v) => handleFieldChange('diastolic', v)}
                 error={errors.systolic || errors.diastolic}
+                onClear={
+                  isReadOnly
+                    ? undefined
+                    : () => {
+                        handleFieldChange('systolic', '');
+                        handleFieldChange('diastolic', '');
+                      }
+                }
               />
             </SectionCard>
           )}
@@ -600,6 +714,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                   inputMode="numeric"
                   placeholder="0"
                   error={errors.gestationalAge}
+                  onClear={isReadOnly ? undefined : () => handleFieldChange('gestationalAge', '')}
                 />
               </div>
               <BloodPressureField
@@ -608,6 +723,14 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 onSystolic={(v) => handleFieldChange('systolic', v)}
                 onDiastolic={(v) => handleFieldChange('diastolic', v)}
                 error={errors.systolic || errors.diastolic}
+                onClear={
+                  isReadOnly
+                    ? undefined
+                    : () => {
+                        handleFieldChange('systolic', '');
+                        handleFieldChange('diastolic', '');
+                      }
+                }
               />
             </SectionCard>
           )}
@@ -625,12 +748,14 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 label="Skrining Mata"
                 value={visionStatus}
                 onChange={(v) => handleFieldChange('visionStatus', v)}
+                onClear={isReadOnly ? undefined : () => handleFieldChange('visionStatus', '')}
               />
               <ScreeningField
                 icon={Ear}
                 label="Skrining Telinga"
                 value={hearingStatus}
                 onChange={(v) => handleFieldChange('hearingStatus', v)}
+                onClear={isReadOnly ? undefined : () => handleFieldChange('hearingStatus', '')}
               />
             </div>
           </SectionCard>
@@ -653,6 +778,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 placeholder="0"
                 size="sm"
                 error={errors.bloodSugar}
+                onClear={isReadOnly ? undefined : () => handleFieldChange('bloodSugar', '')}
               />
               <MetricField
                 label="Kolesterol Total"
@@ -664,6 +790,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 placeholder="0"
                 size="sm"
                 error={errors.cholesterol}
+                onClear={isReadOnly ? undefined : () => handleFieldChange('cholesterol', '')}
               />
               <MetricField
                 label="Asam Urat"
@@ -674,6 +801,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 placeholder="0.0"
                 size="sm"
                 error={errors.uricAcid}
+                onClear={isReadOnly ? undefined : () => handleFieldChange('uricAcid', '')}
               />
               <MetricField
                 label="Hemoglobin (HB)"
@@ -684,6 +812,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 placeholder="0.0"
                 size="sm"
                 error={errors.hemoglobin}
+                onClear={isReadOnly ? undefined : () => handleFieldChange('hemoglobin', '')}
               />
             </div>
           </SectionCard>
@@ -701,7 +830,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 <button
                   key={src}
                   type="button"
-                  onClick={() => handleFieldChange('noteSource', src)}
+                  onClick={() => handleFieldChange('noteSource', noteSource === src ? '' : src)}
                   className={`px-3 py-1.5 rounded-full border transition-all ${
                     noteSource === src
                       ? 'bg-[#075e54] text-white border-[#075e54]'
@@ -712,6 +841,18 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 </button>
               ))}
             </div>
+            {!isReadOnly && notes !== '' && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => handleFieldChange('notes', '')}
+                  className="flex items-center gap-1 text-[11px] font-bold text-[#8696a0] hover:text-[#ef4444] rounded-full px-2 py-1 transition-all touch-press"
+                  title="Kosongkan catatan"
+                >
+                  <X className="w-3 h-3" /> Kosongkan catatan
+                </button>
+              </div>
+            )}
             <textarea
               rows={3}
               value={notes}
@@ -726,27 +867,71 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
       {/* 2. RIWAYAT */}
       {activeTab === 'history' && (
         <div className="space-y-3">
+          {deleteError && (
+            <div className="p-3 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl text-xs text-[#ef4444] font-bold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{deleteError}</span>
+            </div>
+          )}
           {category === 'BALITA' && historyList.length > 0 && (
             <KmsChart measurements={historyList} gender={patient.gender} />
           )}
-          {historyList.length === 0 ? (
+          {historyByMonth.length === 0 ? (
             <div className="p-8 text-center bg-white rounded-2xl border border-[#e9edef] text-[#54656f] text-xs font-medium">
               Belum ada riwayat pengukuran sebelumnya untuk pasien ini.
             </div>
           ) : (
-            historyList.map((hist, idx) => (
+            historyByMonth.map(([ym, hist]) => (
               <div
-                key={hist.id || idx}
+                key={ym}
                 className="bg-white rounded-2xl p-4 border border-[#e9edef] shadow-xs space-y-2.5"
               >
                 <div className="flex items-center justify-between gap-2 text-xs border-b border-[#f0f2f5] pb-2.5">
-                  <div className="font-bold text-[#111b21] flex items-center gap-2">
-                    <Calendar className="w-3.5 h-3.5 text-[#128c7e]" />
-                    <span>{formatIndoDate(hist.sessionDate)}</span>
+                  <div className="font-bold text-[#111b21] flex items-center gap-2 min-w-0">
+                    <Calendar className="w-3.5 h-3.5 text-[#128c7e] shrink-0" />
+                    <span className="truncate">{formatIndoMonth(ym)}</span>
                   </div>
-                  <span className="text-[11px] text-[#667781]">
-                    Kader: {hist.recordedBy || '-'}
-                  </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {!isReadOnly && (
+                      <>
+                        <button
+                          onClick={() => handleEditMonth(hist.sessionDate)}
+                          className="flex items-center gap-1 text-[11px] font-bold text-[#075e54] bg-[#f0f2f5] hover:bg-[#e7fceb] border border-[#e9edef] rounded-full px-2.5 py-1 touch-press"
+                          title="Edit sesi bulan ini"
+                        >
+                          <Pencil className="w-3 h-3" /> Edit
+                        </button>
+                        {confirmDeleteId === hist.id ? (
+                          <span className="flex items-center gap-1">
+                            <button
+                              onClick={() => hist.id && handleDeleteMeasurement(hist.id, ym)}
+                              disabled={deletingId === hist.id}
+                              className="text-[11px] font-extrabold text-white bg-[#ef4444] hover:bg-[#dc2626] rounded-full px-2.5 py-1 touch-press disabled:opacity-50"
+                            >
+                              {deletingId === hist.id ? '...' : 'Ya'}
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="text-[11px] font-bold text-[#54656f] bg-white border border-[#e9edef] rounded-full px-2.5 py-1 touch-press"
+                            >
+                              Batal
+                            </button>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmDeleteId(hist.id || null)}
+                            className="flex items-center gap-1 text-[11px] font-bold text-[#ef4444] bg-white hover:bg-[#fef2f2] border border-[#fecaca] rounded-full px-2.5 py-1 touch-press"
+                            title="Hapus sesi bulan ini"
+                          >
+                            <Trash2 className="w-3 h-3" /> Hapus
+                          </button>
+                        )}
+                      </>
+                    )}
+                    <span className="text-[11px] text-[#667781] hidden sm:inline">
+                      {hist.recordedBy || '-'}
+                    </span>
+                  </div>
                 </div>
 
                 {(hist.weightStatus || hist.weightFaltering2T) && (
@@ -910,6 +1095,7 @@ function MetricField({
   inputMode = 'decimal',
   size = 'lg',
   error,
+  onClear,
 }: {
   label: string;
   unit: string;
@@ -920,6 +1106,7 @@ function MetricField({
   inputMode?: 'decimal' | 'numeric';
   size?: 'lg' | 'sm';
   error?: string;
+  onClear?: () => void;
 }) {
   return (
     <div>
@@ -944,6 +1131,16 @@ function MetricField({
             className={`${numInputCls} ${size === 'lg' ? 'text-xl' : 'text-lg'}`}
           />
         </div>
+        {onClear && value !== '' && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="w-6 h-6 flex items-center justify-center text-[#8696a0] hover:text-[#ef4444] rounded-full hover:bg-white transition-all shrink-0 touch-press"
+            title="Kosongkan field ini"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
         <span className="text-[10px] font-extrabold text-[#075e54] bg-white border border-[#e9edef] rounded-lg px-2 py-1 shrink-0">
           {unit}
         </span>
@@ -963,12 +1160,14 @@ function BloodPressureField({
   onSystolic,
   onDiastolic,
   error,
+  onClear,
 }: {
   systolic: string;
   diastolic: string;
   onSystolic: (value: string) => void;
   onDiastolic: (value: string) => void;
   error?: string;
+  onClear?: () => void;
 }) {
   return (
     <div>
@@ -1000,6 +1199,16 @@ function BloodPressureField({
             placeholder="Diastolik"
             className={`${numInputCls} text-lg`}
           />
+          {onClear && (systolic !== '' || diastolic !== '') && (
+            <button
+              type="button"
+              onClick={onClear}
+              className="w-6 h-6 flex items-center justify-center text-[#8696a0] hover:text-[#ef4444] rounded-full hover:bg-white transition-all shrink-0 touch-press"
+              title="Kosongkan tensi"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
           <span className="text-[10px] font-extrabold text-[#075e54] bg-white border border-[#e9edef] rounded-lg px-2 py-1 shrink-0">
             mmHg
           </span>
@@ -1019,24 +1228,38 @@ function ScreeningField({
   label,
   value,
   onChange,
+  onClear,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
   onChange: (value: string) => void;
+  onClear?: () => void;
 }) {
   return (
     <div className="bg-[#f0f2f5] border border-[#e9edef] rounded-2xl px-3.5 py-2.5">
-      <label className="flex items-center gap-1.5 text-[10px] font-bold text-[#667781] uppercase tracking-wide mb-1.5">
-        <Icon className="w-3.5 h-3.5 text-[#128c7e]" />
-        {label}
-      </label>
+      <div className="flex items-center justify-between gap-2 mb-1.5">
+        <label className="flex items-center gap-1.5 text-[10px] font-bold text-[#667781] uppercase tracking-wide">
+          <Icon className="w-3.5 h-3.5 text-[#128c7e]" />
+          {label}
+        </label>
+        {onClear && value !== '' && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="w-5 h-5 flex items-center justify-center text-[#8696a0] hover:text-[#ef4444] rounded-full hover:bg-white transition-all touch-press"
+            title="Kosongkan"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        )}
+      </div>
       <div className="grid grid-cols-2 bg-white p-1 rounded-xl border border-[#e9edef] gap-1">
         {(['Normal', 'Tidak Normal'] as const).map((opt) => (
           <button
             key={opt}
             type="button"
-            onClick={() => onChange(opt)}
+            onClick={() => onChange(value === opt ? '' : opt)}
             className={`py-2 rounded-lg text-[11px] font-bold transition-all ${
               value === opt
                 ? 'bg-[#075e54] text-white shadow-xs'

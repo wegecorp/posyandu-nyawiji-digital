@@ -550,7 +550,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                       key={p}
                       type="button"
                       disabled={isReadOnly}
-                      onClick={() => handleFieldChange('position', position === p ? '' : p)}
+                      onClick={() => handleFieldChange('position', p)}
                       className={`h-11 rounded-xl text-[11px] font-extrabold border transition-all ${
                         effectivePosition === p
                           ? 'bg-[#075e54] text-white border-[#075e54]'
@@ -562,9 +562,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                   ))}
                 </div>
                 <p className="text-[10px] text-[#8696a0] font-medium mt-1">
-                  {isReadOnly
-                    ? 'Default: <24 bln telentang, ≥24 bln berdiri. Koreksi ±0,7 cm otomatis.'
-                    : `Default: <24 bln telentang, ≥24 bln berdiri. Koreksi ±0,7 cm otomatis.${position ? ' Tekan tombol aktif untuk kembali otomatis.' : ' Saat ini otomatis sesuai umur.'}`}
+                  Default: &lt;24 bln telentang, ≥24 bln berdiri. Koreksi ±0,7 cm otomatis.
                 </p>
               </div>
             )}

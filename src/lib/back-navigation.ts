@@ -30,9 +30,24 @@ let suppressPop = 0;
 let listenerAttached = false;
 let exitArmed = false;
 let exitArmTimer: ReturnType<typeof setTimeout> | null = null;
+/** Tag unik entry guard yang sedang aktif (agar entry guard basi tak salah dikenali). */
+let guardTag: string | null = null;
 
 function pushGuardEntry() {
-  if (typeof window !== 'undefined') window.history.pushState({ bn: 'root' }, '');
+  if (typeof window !== 'undefined' && guardTag) window.history.pushState({ bn: guardTag }, '');
+}
+
+/**
+ * Tag entry history yang SEDANG aktif (`history.state.bn`). Dipakai sebelum
+ * `history.back()`: mundur hanya bila entry milik layer masih aktif. Kalau tidak
+ * (entry sudah dikonsumsi / `layers` desync), `back()` akan melewati entry app
+ * dan tab keluar ke homepage/New Tab browser.
+ */
+function currentHistoryTag(): string | null {
+  if (typeof window === 'undefined') return null;
+  const state = window.history.state as { bn?: unknown } | null | undefined;
+  if (!state || state.bn === undefined || state.bn === null) return null;
+  return String(state.bn);
 }
 
 function disarmExit() {
@@ -109,8 +124,12 @@ export function useBackLayer(active: boolean, onBack: BackHandler) {
       if (idx === layers.length - 1) {
         // Top: buang entry history miliknya tanpa memicu handler layer lain.
         layers.splice(idx, 1);
-        suppressPop += 1;
-        window.history.back();
+        // Mundur hanya bila entry layer ini masih entry aktif. Bila sudah
+        // dikonsumsi (layers desync), jangan back() — mencegah overshoot keluar app.
+        if (currentHistoryTag() === String(id)) {
+          suppressPop += 1;
+          window.history.back();
+        }
       } else {
         // Tengah: sisakan tombstone; entry-nya dimakan back berikutnya (no-op).
         layers[idx] = null;
@@ -137,16 +156,19 @@ export function useExitGuard(enabled: boolean, onExit: BackHandler) {
     attachListener();
     exitGuardActive = true;
     exitGuardOnExit = () => onExitRef.current();
+    guardTag = `g${nextId++}`;
     pushGuardEntry();
 
     return () => {
       disarmExit();
       exitGuardActive = false;
       exitGuardOnExit = null;
-      if (layers.length === 0) {
+      // Sama seperti layer: hanya mundur bila entry guard INI masih aktif.
+      if (layers.length === 0 && guardTag !== null && currentHistoryTag() === guardTag) {
         suppressPop += 1;
         window.history.back();
       }
+      guardTag = null;
     };
   }, [enabled]);
 }

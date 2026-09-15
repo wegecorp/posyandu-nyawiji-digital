@@ -56,6 +56,68 @@ describe('useBackLayer', () => {
   });
 });
 
+/**
+ * Fake `window.history` dengan stack entry nyata, supaya bisa membedakan
+ * "entry milik layer masih aktif" vs "sudah dikonsumsi" (penyebab overshoot
+ * ke New Tab / homepage browser).
+ */
+function installFakeHistory() {
+  const back = vi.fn();
+  const state: { current: unknown } = { current: null };
+  const fake = {
+    get state() {
+      return state.current;
+    },
+    get length() {
+      return 2;
+    },
+    pushState: vi.fn((s: unknown) => {
+      state.current = s;
+    }),
+    replaceState: vi.fn((s: unknown) => {
+      state.current = s;
+    }),
+    back,
+    forward: vi.fn(),
+    go: vi.fn(),
+  };
+  Object.defineProperty(window, 'history', { value: fake, configurable: true, writable: true });
+  return { back, setState: (s: unknown) => (state.current = s) };
+}
+
+describe('useBackLayer overshoot guard', () => {
+  it('TIDAK memanggil history.back() saat entry layer sudah tidak aktif (cegah keluar ke homepage browser)', async () => {
+    const { useBackLayer } = await loadModule();
+    const { back, setState } = installFakeHistory();
+
+    const { rerender } = renderHook(({ active }) => useBackLayer(active, () => {}), {
+      initialProps: { active: true },
+    });
+
+    // Simulasi entry layer sudah dikonsumsi / bukan entry aktif lagi.
+    setState({ bn: 'stale' });
+    rerender({ active: false });
+
+    expect(back).not.toHaveBeenCalled();
+  });
+
+  it('tetap memanggil history.back() sekali saat entry layer memang aktif', async () => {
+    const { useBackLayer } = await loadModule();
+    const { back, setState } = installFakeHistory();
+
+    const { rerender } = renderHook(({ active }) => useBackLayer(active, () => {}), {
+      initialProps: { active: true },
+    });
+    // Entry aktif = state milik layer yang baru dipush.
+    const pushed = (window.history.pushState as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls[0][0];
+    setState(pushed);
+
+    rerender({ active: false });
+    expect(back).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('useExitGuard', () => {
   it('back pertama memanggil onExit (hint), back kedua tidak menahan lagi', async () => {
     const { useExitGuard } = await loadModule();

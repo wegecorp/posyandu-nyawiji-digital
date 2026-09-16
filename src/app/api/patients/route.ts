@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
 import { calculateAge, getPatientCategory } from '@/lib/utils';
+import { supportsWeightFaltering } from '@/lib/growth/weight-progression';
 import { getAuthSession } from '@/lib/api-auth';
 import { resolvePatientScope } from '@/lib/patient-scope';
 import { validateBirthDate, validatePhone, validateTextLength, measurementCompletion } from '@/lib/validation';
@@ -116,7 +117,7 @@ export async function GET(req: Request) {
         todayMeasurement,
         measurementComplete: completion.percent === 100,
         dataCompletionPercent: completion.percent,
-        faltering2T: faltering2TPatients.has(p.id),
+        faltering2T: supportsWeightFaltering(category) && faltering2TPatients.has(p.id),
         lastMeasuredAt: latestDate ? latestDate.toISOString() : null,
         measuredThisMonth: Boolean(todayMeasurement),
       };

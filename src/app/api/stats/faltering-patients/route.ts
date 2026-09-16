@@ -41,6 +41,7 @@ export async function GET(req: Request) {
 
     const where: Record<string, unknown> = {
       weightFaltering2T: true,
+      category: { in: ['BAYI', 'BALITA_APRAS'] },
       sessionDate: { gte: fromObj, lt: toExclusive },
     };
 

@@ -7,7 +7,10 @@
  * Jalankan: `npm run db:backfill`
  */
 import { PrismaClient } from '@prisma/client';
-import { computeWeightProgression } from '../src/lib/growth/weight-progression.ts';
+import {
+  computeWeightProgression,
+  supportsWeightFaltering,
+} from '../src/lib/growth/weight-progression.ts';
 
 const prisma = new PrismaClient();
 
@@ -20,14 +23,16 @@ async function main() {
     const measurements = await prisma.measurement.findMany({
       where: { patientId: p.id },
       orderBy: { sessionDate: 'asc' },
-      select: { id: true, weight: true },
+      select: { id: true, weight: true, category: true },
     });
 
     let prevWeight = null;
     let prevStatus = null;
     const updates = [];
     for (const m of measurements) {
-      const prog = computeWeightProgression(prevWeight, m.weight, prevStatus);
+      // 2T hanya Bayi & Balita/Apras (snapshot kategori pengukuran).
+      const eligible = supportsWeightFaltering(m.category);
+      const prog = computeWeightProgression(prevWeight, m.weight, prevStatus, eligible);
       updates.push({ id: m.id, ...prog });
       if (prog.faltering2T) flagged++;
       if (m.weight != null) {

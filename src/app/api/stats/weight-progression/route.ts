@@ -12,6 +12,7 @@ import { requireRole } from '@/lib/api-auth';
 import { canViewPatientDetail } from '@/lib/stats-access';
 import { getPosyanduInfo } from '@/lib/analytics';
 import { registeredBalitaIds, ymOf } from '@/lib/growth-analytics';
+import { supportsWeightFaltering } from '@/lib/growth/weight-progression';
 
 export async function GET(req: Request) {
   try {
@@ -75,10 +76,15 @@ export async function GET(req: Request) {
           weight: true,
           weightStatus: true,
           weightFaltering2T: true,
+          category: true,
         },
       }),
       prisma.measurement.findMany({
-        where: { ...where, weightFaltering2T: true },
+        where: {
+          ...where,
+          weightFaltering2T: true,
+          category: { in: ['BAYI', 'BALITA_APRAS'] },
+        },
         select: {
           id: true,
           sessionDate: true,
@@ -134,7 +140,7 @@ export async function GET(req: Request) {
       if (m.weightStatus === 'NAIK') agg.naik++;
       else if (m.weightStatus === 'TIDAK_NAIK') agg.tidakNaik++;
       else agg.belumDinilai++;
-      if (m.weightFaltering2T) agg.duaT++;
+      if (m.weightFaltering2T && supportsWeightFaltering(m.category)) agg.duaT++;
     }
 
     const data = [...map.values()]

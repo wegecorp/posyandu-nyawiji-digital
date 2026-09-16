@@ -33,16 +33,26 @@ function round(v: number, dp: number): number {
 }
 
 /**
+ * Apakah kategori sasaran memakai penanda 2T (KMS/berat-umur).
+ * 2T hanya berlaku Bayi & Balita/Apras; sasaran lain tak boleh ditandai rujuk.
+ */
+export function supportsWeightFaltering(category?: string | null): boolean {
+  return category === 'BAYI' || category === 'BALITA_APRAS';
+}
+
+/**
  * Hitung progres satu pengukuran terhadap pengukuran terukur sebelumnya.
  *
  * @param prevWeight  Berat pengukuran terukur sebelumnya (null bila belum ada).
  * @param currentWeight Berat pengukuran ini.
  * @param prevStatus  `weightStatus` pengukuran sebelumnya (untuk rantai 2T).
+ * @param eligible    Kategori sasaran memakai 2T (lihat `supportsWeightFaltering`).
  */
 export function computeWeightProgression(
   prevWeight: number | null | undefined,
   currentWeight: number | null | undefined,
   prevStatus?: string | null,
+  eligible: boolean = true,
 ): WeightProgression {
   const prev = num(prevWeight);
   const cur = num(currentWeight);
@@ -50,7 +60,7 @@ export function computeWeightProgression(
     return { gain: null, status: null, faltering2T: false };
   }
   const status: WeightStatus = cur > prev ? 'NAIK' : 'TIDAK_NAIK';
-  const faltering2T = status === 'TIDAK_NAIK' && prevStatus === 'TIDAK_NAIK';
+  const faltering2T = eligible && status === 'TIDAK_NAIK' && prevStatus === 'TIDAK_NAIK';
   return { gain: round(cur - prev, 2), status, faltering2T };
 }
 

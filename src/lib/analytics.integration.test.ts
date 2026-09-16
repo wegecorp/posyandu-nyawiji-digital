@@ -185,4 +185,20 @@ describe('recomputePatientWeightProgression (rantai N/T & 2T)', () => {
     expect(rows.map((r) => r.weightStatus)).toEqual([null, 'TIDAK_NAIK', 'TIDAK_NAIK', 'TIDAK_NAIK']);
     expect(rows.map((r) => r.weightFaltering2T)).toEqual([false, false, true, true]);
   });
+
+  it('remaja tidak pernah ditandai 2T walau berat turun 2x berturut-turut', async () => {
+    const pos = await makePosyandu('WP-REM');
+    // Lahir 2013-01 → usia ~13 th (REMAJA) pada sesi 2026.
+    const z = await makePatient(pos, 'WP-REM', '2013-01-15', '2026-01-15');
+    await addMeasurement(z, pos, '2026-02-10', { weight: 45.0 });
+    await addMeasurement(z, pos, '2026-03-10', { weight: 44.0 });
+    await addMeasurement(z, pos, '2026-04-10', { weight: 43.0 });
+
+    await recomputePatientWeightProgression(z);
+
+    const rows = await prisma.measurement.findMany({ where: { patientId: z }, orderBy: { sessionDate: 'asc' } });
+    // N/T tetap dihitung (informasi), tapi penanda rujuk 2T dimatikan.
+    expect(rows.map((r) => r.weightStatus)).toEqual([null, 'TIDAK_NAIK', 'TIDAK_NAIK']);
+    expect(rows.every((r) => r.weightFaltering2T === false)).toBe(true);
+  });
 });

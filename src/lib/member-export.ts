@@ -8,6 +8,7 @@ import { calculateAge, formatIndoDate, getPatientCategory } from './utils';
 import {
   computeGrowth,
   findCategory,
+  supportsWeightFaltering,
   type GrowthIndex,
   type IndexResult,
   type StaturePosition,
@@ -109,11 +110,17 @@ function asiSummary(ms: ExportMeasurement[]): string {
   return lastAge != null ? `s/d bulan ${lastAge}` : 'ASI eksklusif';
 }
 
+/** Kategori sasaran pengukuran: snapshot tersimpan, fallback usia saat ukur. */
+function measurementCategory(p: ExportPatient, m: ExportMeasurement): PatientCategory {
+  return (
+    (m.category as PatientCategory) ??
+    getPatientCategory(p.birthDate, p.isPregnant, p.gender, new Date(m.sessionDate))
+  );
+}
+
 /** Status gizi terhitung (hanya balita) sebagai fallback snapshot tersimpan. */
 function growthFor(p: ExportPatient, m: ExportMeasurement) {
-  const category =
-    (m.category as PatientCategory) ??
-    getPatientCategory(p.birthDate, p.isPregnant, p.gender, new Date(m.sessionDate));
+  const category = measurementCategory(p, m);
   if (category !== 'BAYI' && category !== 'BALITA_APRAS') return undefined;
   return computeGrowth({
     gender: p.gender,
@@ -152,6 +159,7 @@ export function buildRoster(
       const m = latest.get(p.id);
       const age = calculateAge(p.birthDate, m ? new Date(m.sessionDate) : periodEnd);
       const g = m ? growthFor(p, m) : undefined;
+      const twoT = Boolean(m?.weightFaltering2T && m && supportsWeightFaltering(measurementCategory(p, m)));
       const tension =
         m?.systolic != null && m?.diastolic != null
           ? `${m.systolic}/${m.diastolic}`
@@ -179,7 +187,7 @@ export function buildRoster(
         'Status TB/U': statusLabel('TB_U', m?.stuntingStatus, g?.TB_U),
         'Status BB/TB': statusLabel('BB_TB', m?.wastingStatus, g?.BB_TB),
         'Berat Naik/Tidak': ntLabel(m?.weightStatus),
-        '2T (rujuk)': m?.weightFaltering2T ? 'Ya' : BLANK,
+        '2T (rujuk)': twoT ? 'Ya' : BLANK,
         'Tensi (mmHg)': tension,
         'Gula Darah (mg/dL)': m?.bloodSugar ?? BLANK,
         'Kolesterol (mg/dL)': m?.cholesterol ?? BLANK,
@@ -209,6 +217,7 @@ export function buildDetails(
     })
     .map((m) => {
       const p = byId.get(m.patientId)!;
+      const twoT = m.weightFaltering2T && supportsWeightFaltering(measurementCategory(p, m));
       const row: ExportRow = {
         Posyandu: p.unitName ?? BLANK,
         Tanggal: formatIndoDate(m.sessionDate),
@@ -238,7 +247,7 @@ export function buildDetails(
         'TB/U': statusLabel('TB_U', m.stuntingStatus),
         'BB/TB': statusLabel('BB_TB', m.wastingStatus),
         'Berat Naik/Tidak': ntLabel(m.weightStatus),
-        '2T': m.weightFaltering2T ? 'Ya' : BLANK,
+        '2T': twoT ? 'Ya' : BLANK,
         'Skrining Mata': m.visionStatus ?? BLANK,
         'Skrining Telinga': m.hearingStatus ?? BLANK,
         'Skrining TB': m.tbScreeningStatus ?? BLANK,
@@ -307,7 +316,7 @@ export function buildRiskList(patients: ExportPatient[], measurements: ExportMea
       rows.push({ ...base, 'Jenis Risiko': ind.label, Nilai: riskValue(m, ind) });
     }
 
-    if (m.weightFaltering2T) {
+    if (m.weightFaltering2T && supportsWeightFaltering(category)) {
       rows.push({
         ...base,
         'Jenis Risiko': 'BB 2T (tidak naik 2x)',

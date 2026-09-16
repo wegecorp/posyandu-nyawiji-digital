@@ -34,6 +34,7 @@ import {
   defaultPosition,
   findCategory,
   weightStatusShort,
+  supportsWeightFaltering,
   type StaturePosition,
 } from '@/lib/growth';
 import { KmsChart } from '@/components/KmsChart';
@@ -1045,7 +1046,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                           : ''}
                       </span>
                     )}
-                    {hist.weightFaltering2T && (
+                    {hist.weightFaltering2T && supportsWeightFaltering(hist.category ?? category) && (
                       <span className="px-2.5 py-1 rounded-full font-extrabold bg-red-100 text-red-700 border border-red-200">
                         2T — perlu rujuk
                       </span>

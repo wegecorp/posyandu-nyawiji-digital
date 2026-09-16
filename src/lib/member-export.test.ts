@@ -120,4 +120,15 @@ describe('buildRiskList', () => {
     // r1 terakhir BERESIKO → hanya 1 baris TB, bukan 2.
     expect(rows.filter((r) => r.Nama === 'Ani')).toHaveLength(1);
   });
+
+  it('2T remaja tidak masuk daftar risiko', () => {
+    const remaja: ExportPatient[] = [
+      { id: 'r3', regNumber: 'R3', name: 'Citra', birthDate: '2010-01-15', gender: 'P', isPregnant: false },
+    ];
+    const remajaMeas: ExportMeasurement[] = [
+      { patientId: 'r3', sessionDate: '2021-02-10', ageInMonths: 133, weight: 40, weightFaltering2T: true },
+    ];
+    const remajaRows = buildRiskList(remaja, remajaMeas);
+    expect(remajaRows.some((r) => r['Jenis Risiko'] === 'BB 2T (tidak naik 2x)')).toBe(false);
+  });
 });

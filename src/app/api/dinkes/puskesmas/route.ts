@@ -23,7 +23,7 @@ export async function GET() {
             users: { select: { id: true, username: true, mustChangePassword: true, disabledAt: true } },
             _count: { select: { patients: true, measurements: true } },
           },
-          orderBy: { name: 'asc' },
+          orderBy: [{ kalurahan: { name: 'asc' } }, { name: 'asc' }],
         },
         users: {
           select: { id: true, username: true, mustChangePassword: true, disabledAt: true },

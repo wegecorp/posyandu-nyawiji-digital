@@ -47,6 +47,13 @@ interface PosyanduRow {
   _count?: { patients: number; measurements: number };
 }
 
+interface KalBlock {
+  kalurahan: string;
+  items: PosyanduRow[];
+  isContinuation: boolean;
+  total: number;
+}
+
 export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterPosyandu, onExport }) => {
   const { user } = useAuth();
   const [posyandus, setPosyandus] = useState<PosyanduRow[]>([]);
@@ -293,10 +300,49 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
   const totalUkur = posyandus.reduce((acc, p) => acc + (p._count?.measurements || 0), 0);
   const pendingCount = posyandus.filter((p) => p.users?.[0]?.mustChangePassword).length;
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const sorted = [...filtered].sort(
+    (a, b) => a.kalurahan.localeCompare(b.kalurahan) || a.name.localeCompare(b.name)
+  );
+  const kalGroups: { kalurahan: string; items: PosyanduRow[] }[] = [];
+  for (const pos of sorted) {
+    const last = kalGroups[kalGroups.length - 1];
+    if (last && last.kalurahan === pos.kalurahan) last.items.push(pos);
+    else kalGroups.push({ kalurahan: pos.kalurahan, items: [pos] });
+  }
+  const pages: KalBlock[][] = [];
+  let currentBlocks: KalBlock[] = [];
+  let used = 0;
+  for (const g of kalGroups) {
+    let idx = 0;
+    while (idx < g.items.length) {
+      const remaining = PAGE_SIZE - used;
+      const canFit = g.items.length - idx <= remaining;
+      if (used > 0 && !canFit && g.items.length <= PAGE_SIZE) {
+        pages.push(currentBlocks);
+        currentBlocks = [];
+        used = 0;
+        continue;
+      }
+      const take = Math.min(remaining, g.items.length - idx);
+      currentBlocks.push({
+        kalurahan: g.kalurahan,
+        items: g.items.slice(idx, idx + take),
+        isContinuation: idx > 0,
+        total: g.items.length,
+      });
+      used += take;
+      idx += take;
+      if (used >= PAGE_SIZE) {
+        pages.push(currentBlocks);
+        currentBlocks = [];
+        used = 0;
+      }
+    }
+  }
+  if (currentBlocks.length) pages.push(currentBlocks);
+  const totalPages = Math.max(1, pages.length);
   const currentPage = Math.min(page, totalPages);
-  const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-  const groups = [...new Set(paged.map((p) => p.kalurahan))].sort((a, b) => a.localeCompare(b));
+  const pageBlocks = pages[currentPage - 1] ?? [];
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto pb-20">
@@ -412,15 +458,25 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
         </div>
       ) : (
         <div className="space-y-4">
-          {groups.map((kalurahan) => {
-            const rows = paged.filter((pos) => pos.kalurahan === kalurahan);
+          {q && (
+            <p className="text-[11px] font-bold text-[#54656f]">
+              Cocok {filtered.length} posyandu untuk &ldquo;{searchQuery.trim()}&rdquo;
+            </p>
+          )}
+          {pageBlocks.map((block, blockIdx) => {
+            const rows = block.items;
             return (
-              <div key={kalurahan}>
+              <div key={`${block.kalurahan}-${block.isContinuation}-${blockIdx}`}>
                 <div className="flex items-center gap-2 mb-2">
                   <MapPin className="w-3.5 h-3.5 text-[#128c7e]" />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-[#54656f]">{kalurahan}</span>
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[#54656f]">
+                    {block.kalurahan}
+                    {block.isContinuation ? ' (lanjutan)' : ''}
+                  </span>
                   <span className="text-[10px] font-bold text-[#128c7e] bg-[#e7fceb] px-2 py-0.5 rounded-full">
-                    {rows.length} posyandu
+                    {block.total > block.items.length
+                      ? `${rows.length} dari ${block.total} posyandu`
+                      : `${rows.length} posyandu`}
                   </span>
                   <div className="flex-1 h-px bg-[#e9edef]" />
                 </div>

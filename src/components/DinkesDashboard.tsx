@@ -229,12 +229,15 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
     return pkmMatch || posMatch;
   }) : puskesmasList;
 
+  const posMatches = (pos: PosyanduRow) =>
+    !q ||
+    pos.name.toLowerCase().includes(q) ||
+    pos.code.toLowerCase().includes(q) ||
+    pos.kalurahan.toLowerCase().includes(q);
+
   const groupByKalurahan = (posyandus: PosyanduRow[] = []) => {
     const groups = new Map<string, PosyanduRow[]>();
-    const rows = q ? posyandus.filter(
-      (pos) => pos.name.toLowerCase().includes(q) || pos.code.toLowerCase().includes(q) || pos.kalurahan.toLowerCase().includes(q)
-    ) : posyandus;
-    for (const pos of rows) {
+    for (const pos of posyandus.filter(posMatches)) {
       const key = pos.kalurahan || 'Lainnya';
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(pos);
@@ -332,10 +335,7 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              if (e.target.value.trim()) setExpandedId(null);
-            }}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari puskesmas / posyandu / kalurahan..."
             className="w-full pl-9 pr-3 py-2 text-sm bg-[#f0f2f5] rounded-lg border border-[#e9edef] outline-none focus:bg-white focus:border focus:border-[#075e54] font-medium text-[#111b21] placeholder-[#8696a0] transition-all"
           />
@@ -350,6 +350,12 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
           </button>
         )}
       </div>
+
+      {q && (
+        <p className="text-[11px] font-bold text-[#54656f] px-1 -mt-1">
+          Cocok {filteredPuskesmas.length} puskesmas untuk &ldquo;{searchQuery.trim()}&rdquo; — klik kartu untuk melihat posyandunya.
+        </p>
+      )}
 
       {/* List */}
       {isLoading ? (
@@ -366,10 +372,23 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
           {filteredPuskesmas.map((pkm) => {
             const pkmUser = pkm.users?.[0];
             const pkmPending = !!pkmUser?.mustChangePassword;
-            const isOpen = expandedId === pkm.id || !!q;
+            const isOpen = expandedId === pkm.id;
             const posCount = pkm.posyandus?.length || 0;
-            const visiblePosyandus = showAllPos[pkm.id] ? pkm.posyandus : (pkm.posyandus ?? []).slice(0, 10);
-            const groups = groupByKalurahan(visiblePosyandus);
+            const matchCount = q ? (pkm.posyandus ?? []).filter(posMatches).length : 0;
+            const allGroups = groupByKalurahan(pkm.posyandus);
+            const showAllGroups = !!showAllPos[pkm.id] || !!q;
+            let groups = allGroups;
+            let hiddenCount = 0;
+            if (!showAllGroups) {
+              groups = [];
+              let shown = 0;
+              for (const g of allGroups) {
+                if (groups.length > 0 && shown + g[1].length > 10) break;
+                groups.push(g);
+                shown += g[1].length;
+              }
+              hiddenCount = allGroups.reduce((a, g) => a + g[1].length, 0) - shown;
+            }
             return (
               <div key={pkm.id} className="bg-white rounded-[20px] border border-[#e9edef] shadow-xs overflow-hidden">
                 {/* Puskesmas header (click to expand) */}
@@ -396,6 +415,12 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
                           <Users className="w-3.5 h-3.5 text-[#128c7e]" />
                           {posCount} posyandu
                         </span>
+                        {q && (
+                          <>
+                            <span className="text-[#8696a0]">•</span>
+                            <span className="font-bold text-[#128c7e]">{matchCount} cocok</span>
+                          </>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -500,12 +525,12 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
                             </div>
                           </div>
                         ))}
-                        {posCount > 10 && !showAllPos[pkm.id] && (
+                        {hiddenCount > 0 && (
                           <button
                             onClick={() => setShowAllPos((s) => ({ ...s, [pkm.id]: true }))}
                             className="w-full py-2.5 bg-[#f0f2f5] hover:bg-[#e9edef] text-[#128c7e] border border-[#e9edef] rounded-xl text-xs font-bold transition-all touch-press"
                           >
-                            Tampilkan semua ({posCount} posyandu)
+                            Tampilkan semua ({hiddenCount} posyandu lagi)
                           </button>
                         )}
                       </div>

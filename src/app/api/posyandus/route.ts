@@ -69,6 +69,7 @@ export async function GET(req: Request) {
             users: { select: { id: true, username: true, mustChangePassword: true, disabledAt: true } },
             _count: { select: { patients: true, measurements: true } },
           },
+          orderBy: [{ kalurahan: { name: 'asc' } }, { name: 'asc' }],
         },
       },
       orderBy: { name: 'asc' },

@@ -272,7 +272,7 @@ Dinkes adalah pusat kendali tingkat kabupaten: membuat akun Puskesmas dan memant
 
 - Melihat ringkasan **Puskesmas, Posyandu, Pasien, dan total pengukuran** se-kabupaten.
 - **Daftarkan Puskesmas**: isi Nama Puskesmas dan pilih Kapanewon. Sistem otomatis membuat username staf (contoh `@pkm_wonosari1`). Sampaikan username + password default ke pengelola Puskesmas.
-- **Import Posyandu massal** dari file Excel/CSV dengan kolom: NAMA PUSKESMAS, NAMA KALURAHAN, NAMA PADUKUHAN, NAMA POSYANDU. Puskesmas yang **belum terdaftar akan dibuat otomatis** (kapanewon disimpulkan dari nama Puskesmas) beserta akun stafnya. Gunakan tombol **Analisis Dulu** untuk melihat laporan sebelum benar-benar di-import.
+- **Import Posyandu massal** dari file Excel/CSV dengan kolom: NAMA PUSKESMAS, NAMA KALURAHAN, NAMA PADUKUHAN, NAMA POSYANDU. Puskesmas yang **belum terdaftar akan dibuat otomatis** (kapanewon disimpulkan dari nama Puskesmas) beserta akun stafnya. **NAMA POSYANDU boleh dikosongkan** bila hanya ingin menambah Kalurahan (tanpa membuat posyandu). Gunakan tombol **Analisis Dulu** untuk melihat laporan sebelum benar-benar di-import.
 - **Buka / Reset Pass** untuk posyandu di bawah setiap puskesmas (bisa turun ke mode lihat data posyandu). Daftar posyandu per puskesmas dibatasi; klik **Tampilkan semua** untuk membuka seluruhnya.
 - Melihat daftar akun yang masih **Menunggu aktivasi**.
 

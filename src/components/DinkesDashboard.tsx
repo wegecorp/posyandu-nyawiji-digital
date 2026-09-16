@@ -585,8 +585,9 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
               <p>
                  Format: kolom <strong>NAMA PUSKESMAS · NAMA KALURAHAN · NAMA PADUKUHAN · NAMA POSYANDU</strong>.
                  Puskesmas yang belum terdaftar akan <strong>dibuat otomatis</strong> (kapanewon disimpulkan dari
-                 namanya) beserta akun stafnya. Import juga membuat akun posyandu dengan password default
-                 (keduanya wajib aktivasi saat login pertama).
+                 namanya) beserta akun stafnya. <strong>NAMA POSYANDU boleh dikosongkan</strong> bila hanya ingin
+                 menambah Kalurahan. Import juga membuat akun posyandu dengan password default (keduanya wajib
+                 aktivasi saat login pertama).
               </p>
             </div>
 

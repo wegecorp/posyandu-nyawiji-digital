@@ -81,7 +81,7 @@ function parseRows(buffer: Buffer): { rows: ImportRow[]; error: string | null } 
     const kalurahan = cells[colKalurahan] || '';
     const padukuhan = colPadukuhan >= 0 ? cells[colPadukuhan] || '' : '';
     const posyandu = cells[colPosyandu] || '';
-    if (!puskesmas || !kalurahan || !posyandu) continue; // baris kosong / judul
+    if (!puskesmas || !kalurahan) continue; // baris kosong / judul / tanpa wilayah
     rows.push({ rowNo: i + 1, puskesmas, kalurahan, padukuhan, posyandu });
   }
 
@@ -218,6 +218,9 @@ async function runImport(rows: ImportRow[], dryRun: boolean): Promise<Report> {
       kalurahanByKey.set(kKey, kalurahan);
       report.kalurahanCreated++;
     }
+
+    // Baris tanpa nama Posyandu = hanya menambah Kalurahan (referensi wilayah).
+    if (!row.posyandu) continue;
 
     // Idempotensi posyandu: sama HC + kalurahan + nama + padukuhan
     const pKey = `${hc.id}:${kalurahan.id}:${norm(row.posyandu)}:${norm(row.padukuhan || '')}`;

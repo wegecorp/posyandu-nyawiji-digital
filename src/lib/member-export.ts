@@ -4,7 +4,7 @@
  * Hanya dipakai untuk export level POSYANDU (data individu tidak keluar di atasnya).
  */
 
-import { calculateAge, formatIndoDate, getCategoryBadge, getPatientCategory } from './utils';
+import { calculateAge, formatIndoDate, formatIndoMonth, getCategoryBadge, getPatientCategory } from './utils';
 import {
   computeGrowth,
   findCategory,
@@ -185,7 +185,7 @@ export function buildRoster(
         'L/P': p.gender ? (GENDER_LABEL[p.gender] ?? p.gender) : BLANK,
         Alamat: p.address ?? BLANK,
         Bumil: p.isPregnant ? 'Ya' : 'Tidak',
-        'Tgl Ukur Terakhir': m ? formatIndoDate(m.sessionDate) : BLANK,
+        'Tgl Ukur Terakhir': m ? formatIndoMonth(m.sessionDate) : BLANK,
         'ASI Eksklusif': asiSummary(byPatient.get(p.id) ?? []),
         'Skrining TB': m?.tbScreeningStatus ?? BLANK,
         'BB (kg)': m?.weight ?? BLANK,
@@ -230,7 +230,7 @@ export function buildDetails(
       const twoT = m.weightFaltering2T && supportsWeightFaltering(measurementCategory(p, m));
       const row: ExportRow = {
         Posyandu: p.unitName ?? BLANK,
-        Tanggal: formatIndoDate(m.sessionDate),
+        Tanggal: formatIndoMonth(m.sessionDate),
         NoReg: p.regNumber,
         Nama: p.name,
         Alamat: p.address ?? BLANK,
@@ -315,7 +315,7 @@ export function buildRiskList(patients: ExportPatient[], measurements: ExportMea
       Umur: calculateAge(p.birthDate, session).display,
       'Kelompok Sasaran': categoryLabel(category),
       'L/P': p.gender ? (GENDER_LABEL[p.gender] ?? p.gender) : BLANK,
-      'Tanggal Ukur': formatIndoDate(m.sessionDate),
+      'Tanggal Ukur': formatIndoMonth(m.sessionDate),
       'Jenis Risiko': BLANK,
       Nilai: BLANK,
       Catatan: m.notes ?? BLANK,

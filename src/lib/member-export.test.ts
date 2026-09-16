@@ -63,7 +63,7 @@ describe('buildDetails', () => {
 
   it('1 baris per kunjungan, urut nama lalu tanggal', () => {
     expect(rows).toHaveLength(2);
-    expect(rows.map((r) => r.Tanggal)).toEqual(['15 Januari 2021', '15 Maret 2021']);
+    expect(rows.map((r) => r.Tanggal)).toEqual(['Januari 2021', 'Maret 2021']);
     expect(rows.every((r) => r.NoReg === 'POS-01-2026-0001')).toBe(true);
   });
 

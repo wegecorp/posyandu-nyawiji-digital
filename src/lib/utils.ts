@@ -93,3 +93,13 @@ export function formatIndoDate(dateString: string | Date) {
     year: 'numeric',
   });
 }
+
+/** Nama bulan + tahun, tanpa tanggal — untuk sesi pengukuran (sesi = 1 bulan). */
+export function formatIndoMonth(dateString: string | Date) {
+  if (!dateString) return '-';
+  const d = new Date(dateString);
+  return d.toLocaleDateString('id-ID', {
+    month: 'long',
+    year: 'numeric',
+  });
+}

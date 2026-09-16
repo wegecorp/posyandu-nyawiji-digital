@@ -4,7 +4,7 @@
  * Hanya dipakai untuk export level POSYANDU (data individu tidak keluar di atasnya).
  */
 
-import { calculateAge, formatIndoDate, getPatientCategory } from './utils';
+import { calculateAge, formatIndoDate, getCategoryBadge, getPatientCategory } from './utils';
 import {
   computeGrowth,
   findCategory,
@@ -118,6 +118,11 @@ function measurementCategory(p: ExportPatient, m: ExportMeasurement): PatientCat
   );
 }
 
+/** Label kelompok sasaran untuk kolom export (samakan dgn badge UI). */
+function categoryLabel(category: PatientCategory): string {
+  return getCategoryBadge(category).label;
+}
+
 /** Status gizi terhitung (hanya balita) sebagai fallback snapshot tersimpan. */
 function growthFor(p: ExportPatient, m: ExportMeasurement) {
   const category = measurementCategory(p, m);
@@ -172,6 +177,11 @@ export function buildRoster(
         Nama: p.name,
         'Tgl Lahir': formatIndoDate(p.birthDate),
         Umur: age.display,
+        'Kelompok Sasaran': categoryLabel(
+          m
+            ? measurementCategory(p, m)
+            : getPatientCategory(p.birthDate, p.isPregnant, p.gender, periodEnd),
+        ),
         'L/P': p.gender ? (GENDER_LABEL[p.gender] ?? p.gender) : BLANK,
         Alamat: p.address ?? BLANK,
         Bumil: p.isPregnant ? 'Ya' : 'Tidak',
@@ -225,6 +235,7 @@ export function buildDetails(
         Nama: p.name,
         Alamat: p.address ?? BLANK,
         'Umur (bln)': m.ageInMonths ?? BLANK,
+        'Kelompok Sasaran': categoryLabel(measurementCategory(p, m)),
         'BB (kg)': m.weight ?? BLANK,
         'TB/PB (cm)': m.height ?? BLANK,
         'LiLA (cm)': m.armCircumference ?? BLANK,
@@ -302,6 +313,7 @@ export function buildRiskList(patients: ExportPatient[], measurements: ExportMea
       NoReg: p.regNumber,
       Alamat: p.address ?? BLANK,
       Umur: calculateAge(p.birthDate, session).display,
+      'Kelompok Sasaran': categoryLabel(category),
       'L/P': p.gender ? (GENDER_LABEL[p.gender] ?? p.gender) : BLANK,
       'Tanggal Ukur': formatIndoDate(m.sessionDate),
       'Jenis Risiko': BLANK,

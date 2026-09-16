@@ -46,6 +46,16 @@ describe('buildRoster', () => {
     expect(rows[1]['Berat Naik/Tidak']).toBe('T');
     expect(rows[1]['2T (rujuk)']).toBe('Ya');
   });
+
+  it('kolom Kelompok Sasaran tepat setelah Umur', () => {
+    expect(Object.keys(rows[0])).toEqual(
+      expect.arrayContaining(['Umur', 'Kelompok Sasaran', 'L/P']),
+    );
+    // p1 lahir 2020-01-15, ukur terakhir 2021-03-15 → 14 bln = Balita & Apras
+    expect(rows[1]['Kelompok Sasaran']).toBe('Balita & Apras (6 bln-6 th)');
+    // p2 tanpa pengukuran → fallback ke periodEnd 2023-06-01, umur 1 th
+    expect(rows[0]['Kelompok Sasaran']).toBe('Balita & Apras (6 bln-6 th)');
+  });
 });
 
 describe('buildDetails', () => {
@@ -60,6 +70,12 @@ describe('buildDetails', () => {
   it('membawa seluruh field pengukuran', () => {
     expect(rows[1]['Z BB/U']).toBe('');
     expect(rows[1]['Berat Naik/Tidak']).toBe('T');
+  });
+
+  it('kolom Kelompok Sasaran tepat setelah Umur (bln)', () => {
+    const keys = Object.keys(rows[0]);
+    expect(keys.indexOf('Kelompok Sasaran')).toBe(keys.indexOf('Umur (bln)') + 1);
+    expect(rows[0]['Kelompok Sasaran']).toBe('Balita & Apras (6 bln-6 th)');
   });
 });
 
@@ -119,6 +135,10 @@ describe('buildRiskList', () => {
   it('pengukuran lama (bukan terakhir) tidak dipakai', () => {
     // r1 terakhir BERESIKO → hanya 1 baris TB, bukan 2.
     expect(rows.filter((r) => r.Nama === 'Ani')).toHaveLength(1);
+  });
+
+  it('kolom Kelompok Sasaran ikut di daftar risiko', () => {
+    expect(rows[0]['Kelompok Sasaran']).toBe('Balita & Apras (6 bln-6 th)');
   });
 
   it('2T remaja tidak masuk daftar risiko', () => {

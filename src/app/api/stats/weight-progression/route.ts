@@ -12,7 +12,7 @@ import { requireRole } from '@/lib/api-auth';
 import { canViewPatientDetail } from '@/lib/stats-access';
 import { getPosyanduInfo } from '@/lib/analytics';
 import { registeredBalitaIds, ymOf } from '@/lib/growth-analytics';
-import { supportsWeightFaltering } from '@/lib/growth/weight-progression';
+import { ageInCompletedMonths, isKmsAge } from '@/lib/growth';
 
 export async function GET(req: Request) {
   try {
@@ -76,22 +76,21 @@ export async function GET(req: Request) {
           weight: true,
           weightStatus: true,
           weightFaltering2T: true,
-          category: true,
         },
       }),
       prisma.measurement.findMany({
         where: {
           ...where,
           weightFaltering2T: true,
-          category: { in: ['BAYI', 'BALITA_APRAS'] },
         },
         select: {
           id: true,
+          patientId: true,
           sessionDate: true,
           weight: true,
           weightGain: true,
           ageInMonths: true,
-          patient: { select: { name: true, regNumber: true } },
+          patient: { select: { name: true, regNumber: true, birthDate: true } },
           posyandu: { select: { id: true, name: true, kalurahan: { select: { name: true } } } },
         },
         orderBy: { sessionDate: 'desc' },
@@ -107,6 +106,7 @@ export async function GET(req: Request) {
     // Cakupan penimbangan balita bulan berjalan (BALITA = umur 0-60 bln).
     const currentYm = ymOf(now);
     const registeredBalita = registeredBalitaIds(patientRows, now);
+    const birthOf = new Map(patientRows.map((p) => [p.id, p.birthDate]));
     const measuredThisMonth = new Set(
       meas.filter((m) => ymOf(m.sessionDate) === currentYm).map((m) => m.patientId),
     );
@@ -116,6 +116,12 @@ export async function GET(req: Request) {
       month: currentYm,
       balitaTotal: registeredBalita.size,
       balitaMeasured,
+    };
+
+    /** Umur (bulan) saat pengukuran; null bila pasien di luar scope. */
+    const ageAt = (m: { patientId: string; sessionDate: Date }): number | null => {
+      const birth = birthOf.get(m.patientId);
+      return birth ? ageInCompletedMonths(birth, m.sessionDate) : null;
     };
 
     type Agg = {
@@ -129,6 +135,8 @@ export async function GET(req: Request) {
     };
     const map = new Map<string, Agg>();
     for (const m of meas) {
+      // N/T & 2T hanya KMS (umur 0-60 bln); sasaran lain tak masuk agregat.
+      if (!isKmsAge(ageAt(m))) continue;
       const ym = ymOf(m.sessionDate);
       const key = `${m.posyanduId}|${ym}`;
       let agg = map.get(key);
@@ -140,7 +148,7 @@ export async function GET(req: Request) {
       if (m.weightStatus === 'NAIK') agg.naik++;
       else if (m.weightStatus === 'TIDAK_NAIK') agg.tidakNaik++;
       else agg.belumDinilai++;
-      if (m.weightFaltering2T && supportsWeightFaltering(m.category)) agg.duaT++;
+      if (m.weightFaltering2T) agg.duaT++;
     }
 
     const data = [...map.values()]
@@ -156,19 +164,21 @@ export async function GET(req: Request) {
       .sort((a, b) => a.ym.localeCompare(b.ym) || a.posyanduName.localeCompare(b.posyanduName));
 
     const faltering = canViewPatientDetail(session.role)
-      ? falteringRows.map((r) => ({
-          measurementId: r.id,
-          patientName: r.patient.name,
-          regNumber: r.patient.regNumber,
-          sessionDate: r.sessionDate,
-          weight: r.weight,
-          weightGain: r.weightGain,
-          ageInMonths: r.ageInMonths,
-          posyanduId: r.posyandu.id,
-          posyanduName: r.posyandu.name,
-          kalurahan: r.posyandu.kalurahan?.name ?? '',
-          ym: ymOf(r.sessionDate),
-        }))
+      ? falteringRows
+          .filter((r) => isKmsAge(ageInCompletedMonths(r.patient.birthDate, r.sessionDate)))
+          .map((r) => ({
+            measurementId: r.id,
+            patientName: r.patient.name,
+            regNumber: r.patient.regNumber,
+            sessionDate: r.sessionDate,
+            weight: r.weight,
+            weightGain: r.weightGain,
+            ageInMonths: r.ageInMonths,
+            posyanduId: r.posyandu.id,
+            posyanduName: r.posyandu.name,
+            kalurahan: r.posyandu.kalurahan?.name ?? '',
+            ym: ymOf(r.sessionDate),
+          }))
       : [];
 
     return NextResponse.json({ success: true, data, faltering, coverage, from: fromDate, to: toDate });

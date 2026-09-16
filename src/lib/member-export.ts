@@ -7,8 +7,9 @@
 import { calculateAge, formatIndoDate, formatIndoMonth, getCategoryBadge, getPatientCategory } from './utils';
 import {
   computeGrowth,
+  ageInCompletedMonths,
   findCategory,
-  supportsWeightFaltering,
+  isKmsAge,
   type GrowthIndex,
   type IndexResult,
   type StaturePosition,
@@ -118,6 +119,11 @@ function measurementCategory(p: ExportPatient, m: ExportMeasurement): PatientCat
   );
 }
 
+/** N/T & 2T hanya berlaku KMS (umur 0-60 bln saat pengukuran). */
+function kmsEligible(p: ExportPatient, m: ExportMeasurement): boolean {
+  return isKmsAge(ageInCompletedMonths(p.birthDate, m.sessionDate));
+}
+
 /** Label kelompok sasaran untuk kolom export (samakan dgn badge UI). */
 function categoryLabel(category: PatientCategory): string {
   return getCategoryBadge(category).label;
@@ -164,7 +170,7 @@ export function buildRoster(
       const m = latest.get(p.id);
       const age = calculateAge(p.birthDate, m ? new Date(m.sessionDate) : periodEnd);
       const g = m ? growthFor(p, m) : undefined;
-      const twoT = Boolean(m?.weightFaltering2T && m && supportsWeightFaltering(measurementCategory(p, m)));
+      const twoT = Boolean(m && m.weightFaltering2T && kmsEligible(p, m));
       const tension =
         m?.systolic != null && m?.diastolic != null
           ? `${m.systolic}/${m.diastolic}`
@@ -196,7 +202,7 @@ export function buildRoster(
         'Status BB/U': statusLabel('BB_U', m?.underweightStatus, g?.BB_U),
         'Status TB/U': statusLabel('TB_U', m?.stuntingStatus, g?.TB_U),
         'Status BB/TB': statusLabel('BB_TB', m?.wastingStatus, g?.BB_TB),
-        'Berat Naik/Tidak': ntLabel(m?.weightStatus),
+        'Berat Naik/Tidak': m && kmsEligible(p, m) ? ntLabel(m.weightStatus) : BLANK,
         '2T (rujuk)': twoT ? 'Ya' : BLANK,
         'Tensi (mmHg)': tension,
         'Gula Darah (mg/dL)': m?.bloodSugar ?? BLANK,
@@ -227,7 +233,7 @@ export function buildDetails(
     })
     .map((m) => {
       const p = byId.get(m.patientId)!;
-      const twoT = m.weightFaltering2T && supportsWeightFaltering(measurementCategory(p, m));
+      const twoT = m.weightFaltering2T && kmsEligible(p, m);
       const row: ExportRow = {
         Posyandu: p.unitName ?? BLANK,
         Tanggal: formatIndoMonth(m.sessionDate),
@@ -257,7 +263,7 @@ export function buildDetails(
         'BB/U': statusLabel('BB_U', m.underweightStatus),
         'TB/U': statusLabel('TB_U', m.stuntingStatus),
         'BB/TB': statusLabel('BB_TB', m.wastingStatus),
-        'Berat Naik/Tidak': ntLabel(m.weightStatus),
+        'Berat Naik/Tidak': kmsEligible(p, m) ? ntLabel(m.weightStatus) : BLANK,
         '2T': twoT ? 'Ya' : BLANK,
         'Skrining Mata': m.visionStatus ?? BLANK,
         'Skrining Telinga': m.hearingStatus ?? BLANK,
@@ -328,7 +334,7 @@ export function buildRiskList(patients: ExportPatient[], measurements: ExportMea
       rows.push({ ...base, 'Jenis Risiko': ind.label, Nilai: riskValue(m, ind) });
     }
 
-    if (m.weightFaltering2T && supportsWeightFaltering(category)) {
+    if (m.weightFaltering2T && kmsEligible(p, m)) {
       rows.push({
         ...base,
         'Jenis Risiko': 'BB 2T (tidak naik 2x)',

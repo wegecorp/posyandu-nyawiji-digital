@@ -164,7 +164,7 @@ describe('fetchCoverageBase (denominator historis)', () => {
 describe('recomputePatientWeightProgression (rantai N/T & 2T)', () => {
   it('menandai N/T/2T dan menghitung ulang setelah edit pengukuran lama', async () => {
     const pos = await makePosyandu('WP');
-    const z = await makePatient(pos, 'WP-Z', '2020-01-15', '2026-01-15');
+    const z = await makePatient(pos, 'WP-Z', '2023-01-15', '2026-01-15');
     const m1 = await addMeasurement(z, pos, '2026-02-10', { weight: 8.0 });
     await addMeasurement(z, pos, '2026-03-10', { weight: 8.2 });
     await addMeasurement(z, pos, '2026-04-10', { weight: 8.2 });
@@ -186,7 +186,7 @@ describe('recomputePatientWeightProgression (rantai N/T & 2T)', () => {
     expect(rows.map((r) => r.weightFaltering2T)).toEqual([false, false, true, true]);
   });
 
-  it('remaja tidak pernah ditandai 2T walau berat turun 2x berturut-turut', async () => {
+  it('di luar cakupan KMS (remaja/dewasa) → N/T & 2T null', async () => {
     const pos = await makePosyandu('WP-REM');
     // Lahir 2013-01 → usia ~13 th (REMAJA) pada sesi 2026.
     const z = await makePatient(pos, 'WP-REM', '2013-01-15', '2026-01-15');
@@ -197,8 +197,24 @@ describe('recomputePatientWeightProgression (rantai N/T & 2T)', () => {
     await recomputePatientWeightProgression(z);
 
     const rows = await prisma.measurement.findMany({ where: { patientId: z }, orderBy: { sessionDate: 'asc' } });
-    // N/T tetap dihitung (informasi), tapi penanda rujuk 2T dimatikan.
-    expect(rows.map((r) => r.weightStatus)).toEqual([null, 'TIDAK_NAIK', 'TIDAK_NAIK']);
+    // KMS hanya umur 0-60 bln → di luar itu N/T tak dihitung sama sekali.
+    expect(rows.map((r) => r.weightStatus)).toEqual([null, null, null]);
     expect(rows.every((r) => r.weightFaltering2T === false)).toBe(true);
+  });
+
+  it('batas KMS 60 bln: umur 61 bln tidak lagi dinilai', async () => {
+    const pos = await makePosyandu('WP-APRAS');
+    // Lahir 2021-03-05: sesi 2026-01-10 = 58 bln, 02-10 = 59, 03-10 = 60, 04-10 = 61.
+    const z = await makePatient(pos, 'WP-APRAS', '2021-03-05', '2026-01-15');
+    await addMeasurement(z, pos, '2026-01-10', { weight: 18.0 });
+    await addMeasurement(z, pos, '2026-02-10', { weight: 18.0 });
+    await addMeasurement(z, pos, '2026-03-10', { weight: 18.0 });
+    await addMeasurement(z, pos, '2026-04-10', { weight: 18.0 });
+
+    await recomputePatientWeightProgression(z);
+
+    const rows = await prisma.measurement.findMany({ where: { patientId: z }, orderBy: { sessionDate: 'asc' } });
+    expect(rows.map((r) => r.weightStatus)).toEqual([null, 'TIDAK_NAIK', 'TIDAK_NAIK', null]);
+    expect(rows.map((r) => r.weightFaltering2T)).toEqual([false, false, true, false]);
   });
 });

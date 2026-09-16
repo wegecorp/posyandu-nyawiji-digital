@@ -13,6 +13,7 @@
     "db:dev": "node prisma/dev-data.js",
     "db:reset": "node prisma/clean.js",
     "db:backfill": "node --env-file=.env --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/backfill-weight-progression.mjs",
+    "db:verify-weight": "node --env-file=.env --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-weight-progression.mjs",
     "data:gunungkidul": "node scripts/data-gunungkidul.js"
   },
   "prisma": {

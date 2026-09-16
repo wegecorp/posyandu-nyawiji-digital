@@ -20,7 +20,7 @@ import { prisma } from '@/lib/prisma';
 import { requireRole } from '@/lib/api-auth';
 import { getPatientCategory } from '@/lib/utils';
 import { INDICATORS, checkIndicator, type IndicatorDef } from '@/lib/clinical';
-import { computeGrowth, type StaturePosition } from '@/lib/growth';
+import { computeGrowth, ageInCompletedMonths, isKmsAge, type StaturePosition } from '@/lib/growth';
 import {
   buildRoster,
   buildDetails,
@@ -232,10 +232,13 @@ export async function GET(req: Request) {
               break;
           }
         }
-        if (m.weightStatus === 'NAIK') row.nt.naik++;
-        else if (m.weightStatus === 'TIDAK_NAIK') row.nt.tidakNaik++;
-        else row.nt.belumDinilai++;
-        if (m.weightFaltering2T) row.nt.duaT++;
+        // N/T & 2T hanya KMS (umur 0-60 bln); kategori Apras lanjut tidak dinilai.
+        if (isKmsAge(ageInCompletedMonths(m.patient.birthDate, m.sessionDate))) {
+          if (m.weightStatus === 'NAIK') row.nt.naik++;
+          else if (m.weightStatus === 'TIDAK_NAIK') row.nt.tidakNaik++;
+          else row.nt.belumDinilai++;
+          if (m.weightFaltering2T) row.nt.duaT++;
+        }
       }
 
       const applicable = INDICATORS.filter((ind) => ind.appliesTo.includes(category));

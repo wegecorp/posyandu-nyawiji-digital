@@ -356,6 +356,8 @@ Menu **Analisis** otomatis menghitung hasil dan menyorot nilai yang patut diwasp
 - **T (Tidak Naik)** — berat badan sama atau lebih kecil dari pengukuran sebelumnya.
 - **2T** — dua kali berturut-turut **Tidak Naik** → ditandai **"2T — perlu rujuk"** dan perlu ditindaklanjuti/dirujuk ke Puskesmas.
 
+> N/T & 2T hanya dihitung untuk anak **umur 0–60 bulan** (KMS, sejalan status gizi). Anak 61 bulan ke atas — dan semua sasaran remaja/dewasa/lansia/ibu hamil — tidak memiliki N/T/2T; perhatikan temuan **Tidak Normal** pada menu Analisis.
+
 ---
 
 ## 7. Fitur Bersama
@@ -531,7 +533,7 @@ Alur 5 Langkah yang sama berlaku untuk semua sasaran. Yang membedakan hanya kolo
 - **Remaja, Dewasa & Lansia:** tekanan darah (dan lab sederhana bila alat tersedia) serta skrining mata/telinga.
 - **Ibu Hamil:** tekanan darah, usia kehamilan, LiLA.
 
-Status "2T" dan kurva KMS hanya berlaku untuk **Bayi & Balita/Apras** (karena berbasis berat/umur). Untuk sasaran lain, perhatikan temuan **Tidak Normal** pada menu Analisis.
+Status "2T", "N/T", dan kurva KMS hanya berlaku untuk **anak umur 0–60 bulan** (berbasis berat/umur). Untuk sasaran lain, perhatikan temuan **Tidak Normal** pada menu Analisis.
 
 ### 10.5 Rujukan sumber
 

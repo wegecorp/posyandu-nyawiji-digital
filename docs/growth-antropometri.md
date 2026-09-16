@@ -27,6 +27,9 @@ Anak **>60 bulan** tidak dihitung status gizinya (data tetap tersimpan).
 > `BALITA_APRAS` usia **61–83 bulan** (5 th 1 bln–6 th 11 bln) tetap mencatat BB/TB tetapi
 > **status gizi kosong** ("di luar rentang tabel 0–60"). Upgrade = tabel **WHO Reference 2007**
 > (5–18 th) — belum dikerjakan.
+>
+> **N/T & 2T (KMS)** mengikuti batas umur yang sama: hanya **0–60 bulan** (per `isKmsAge`,
+> ADR-0004). Di luar itu `weightStatus`/`weightGain` = `null` dan `weightFaltering2T` = `false`.
 
 ---
 
@@ -171,6 +174,7 @@ tetap menampilkan semua kategori.
 | Tabel & interpolasi Z | `src/lib/growth/tables.ts` |
 | Kategori, ambang, warna | `src/lib/growth/categories.ts` |
 | Agregasi dashboard | `src/lib/growth-analytics.ts` |
+| Progres berat (N/T & 2T, 0–60 bln) | `src/lib/growth/weight-progression.ts`, `src/lib/weight-progression-db.ts` |
 | API dashboard | `src/app/api/stats/growth/route.ts` |
 | Hitung saat simpan | `src/app/api/measurements/autosave/route.ts` |
 | UI dashboard | `src/components/analisis/GrowthStatusDistribution.tsx` |

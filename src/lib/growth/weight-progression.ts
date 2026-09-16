@@ -1,7 +1,9 @@
 /**
  * Progres berat badan antar-kunjungan (KMS): Naik / Tidak Naik (N/T) dan 2T.
  *
- * Aturan (hasil grilling, lihat docs/audit-visualisasi.md §4):
+ * Aturan (lihat ADR-0004 + docs/audit-visualisasi.md §4):
+ * - Cakupan = umur 0–60 bulan penuh saat pengukuran (KMS/Permenkes 2/2020);
+ *   di luar itu → semua null (lihat `isKmsAge`).
  * - Bandingkan dengan pengukuran terukur sebelumnya (weight != null).
  * - `TIDAK_NAIK` bila berat sekarang <= sebelumnya (termasuk flat).
  * - `2T` = dua hasil `TIDAK_NAIK` berturut-turut pada pengukuran yang ada.
@@ -33,11 +35,12 @@ function round(v: number, dp: number): number {
 }
 
 /**
- * Apakah kategori sasaran memakai penanda 2T (KMS/berat-umur).
- * 2T hanya berlaku Bayi & Balita/Apras; sasaran lain tak boleh ditandai rujuk.
+ * Apakah umur (bulan penuh) berada dalam cakupan KMS 0–60 bulan.
+ * N/T & 2T hanya berlaku di rentang ini (samakan dengan status gizi
+ * Permenkes 2/2020 + kurva KMS); sasaran di luar → tak dinilai.
  */
-export function supportsWeightFaltering(category?: string | null): boolean {
-  return category === 'BAYI' || category === 'BALITA_APRAS';
+export function isKmsAge(ageMonths: number | null | undefined): boolean {
+  return ageMonths != null && ageMonths >= 0 && ageMonths <= 60;
 }
 
 /**
@@ -46,14 +49,17 @@ export function supportsWeightFaltering(category?: string | null): boolean {
  * @param prevWeight  Berat pengukuran terukur sebelumnya (null bila belum ada).
  * @param currentWeight Berat pengukuran ini.
  * @param prevStatus  `weightStatus` pengukuran sebelumnya (untuk rantai 2T).
- * @param eligible    Kategori sasaran memakai 2T (lihat `supportsWeightFaltering`).
+ * @param eligible    Umur saat pengukuran dalam cakupan KMS 0–60 bln (lihat `isKmsAge`).
  */
 export function computeWeightProgression(
   prevWeight: number | null | undefined,
   currentWeight: number | null | undefined,
-  prevStatus?: string | null,
-  eligible: boolean = true,
+  prevStatus: string | null | undefined,
+  eligible: boolean,
 ): WeightProgression {
+  if (!eligible) {
+    return { gain: null, status: null, faltering2T: false };
+  }
   const prev = num(prevWeight);
   const cur = num(currentWeight);
   if (prev == null || cur == null) {

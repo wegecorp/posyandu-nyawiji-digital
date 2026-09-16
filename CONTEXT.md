@@ -29,7 +29,8 @@ Login kader = cascade Puskesmas → Kalurahan → Posyandu (tanpa username). Sta
 - **Status gizi** — Z-score Permenkes 2/2020 (BB/U, TB/U, BB/TB, IMT/U), **hanya 0–60 bulan**.
   Lihat `docs/growth-antropometri.md`. (`ADR-0001`)
 - **N/T & 2T** — Naik/Tidak Naik berat vs pengukuran sebelumnya; 2T = dua kali tidak naik
-  berturut → perlu rujuk.
+  berturut → perlu rujuk. Hanya untuk **umur 0–60 bln** (KMS, sejalan status gizi);
+  sasaran lain `null`. (`ADR-0004`)
 - **ASI Eksklusif** — field bulanan, hanya untuk `BAYI` (0–5 bln); berhenti ditanya setelah
   dijawab **Tidak**. (`ADR-0002`)
 - **Skrining TB** — field bulanan `BERESIKO` / `TIDAK_BERESIKO`, semua kategori. (`ADR-0003`)
@@ -42,8 +43,8 @@ Login kader = cascade Puskesmas → Kalurahan → Posyandu (tanpa username). Sta
 ## Aturan kunci
 
 1. **Sesi = bulan.** Lookup pengukuran memakai rentang bulan, bukan hari.
-2. **Status gizi hanya 0–60 bln.** 61–83 bln (`BALITA_APRAS` lanjut) tetap dicatat BB/TB,
-   status gizi kosong. Upgrade = tabel WHO Reference 2007 (belum dikerjakan).
+2. **Status gizi & N/T/2T hanya 0–60 bln.** 61–83 bln (`BALITA_APRAS` lanjut) tetap dicatat
+   BB/TB, status gizi & N/T/2T kosong. Upgrade = tabel WHO Reference 2007 (belum dikerjakan).
 3. **Fail-closed scope.** Sesi tanpa cakupan lokasi ditolak, bukan dikembalikan tanpa filter
    (`src/lib/patient-scope.ts`, `src/lib/stats-access.ts`).
 4. **Privasi export.** Nama pasien: POSYANDU & PUSKESMAS saja. DINKES agregat.

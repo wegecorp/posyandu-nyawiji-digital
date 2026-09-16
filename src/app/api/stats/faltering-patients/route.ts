@@ -39,9 +39,9 @@ export async function GET(req: Request) {
     const page = Math.max(1, Number(searchParams.get('page') ?? 1) || 1);
     const pageSize = Math.min(100, Math.max(1, Number(searchParams.get('pageSize') ?? 20) || 20));
 
+    // Sumber tunggal: flag 2T (hanya true untuk KMS/umur 0-60 bln, lihat ADR-0004).
     const where: Record<string, unknown> = {
       weightFaltering2T: true,
-      category: { in: ['BAYI', 'BALITA_APRAS'] },
       sessionDate: { gte: fromObj, lt: toExclusive },
     };
 

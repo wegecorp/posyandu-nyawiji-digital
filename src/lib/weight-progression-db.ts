@@ -7,8 +7,8 @@
  */
 
 import { prisma } from './prisma';
-import { computeWeightProgression, supportsWeightFaltering } from './growth/weight-progression';
-import { getPatientCategory } from './utils';
+import { ageInCompletedMonths, isKmsAge } from './growth';
+import { computeWeightProgression } from './growth/weight-progression';
 
 /**
  * Hitung ulang weightGain / weightStatus / weightFaltering2T untuk semua
@@ -18,7 +18,7 @@ export async function recomputePatientWeightProgression(patientId: string): Prom
   const [patient, rows] = await Promise.all([
     prisma.patient.findUnique({
       where: { id: patientId },
-      select: { birthDate: true, isPregnant: true, gender: true },
+      select: { birthDate: true },
     }),
     prisma.measurement.findMany({
       where: { patientId },
@@ -34,9 +34,8 @@ export async function recomputePatientWeightProgression(patientId: string): Prom
   const updates: Array<{ id: string; gain: number | null; status: string | null; faltering2T: boolean }> = [];
 
   for (const m of rows) {
-    // 2T = KMS/berat-umur → hanya Bayi & Balita/Apras pada saat pengukuran.
-    const category = getPatientCategory(patient.birthDate, patient.isPregnant, patient.gender, m.sessionDate);
-    const eligible = supportsWeightFaltering(category);
+    // Cakupan KMS = umur 0-60 bln saat pengukuran (bukan kategori sasaran).
+    const eligible = isKmsAge(ageInCompletedMonths(patient.birthDate, m.sessionDate));
     const prog = computeWeightProgression(prevWeight, m.weight, prevStatus, eligible);
     updates.push({ id: m.id, gain: prog.gain, status: prog.status, faltering2T: prog.faltering2T });
     if (m.weight != null) {

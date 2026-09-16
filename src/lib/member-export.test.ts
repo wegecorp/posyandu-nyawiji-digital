@@ -152,3 +152,34 @@ describe('buildRiskList', () => {
     expect(remajaRows.some((r) => r['Jenis Risiko'] === 'BB 2T (tidak naik 2x)')).toBe(false);
   });
 });
+
+describe('cakupan KMS 0-60 bulan (N/T & 2T)', () => {
+  const kmsPatients: ExportPatient[] = [
+    { id: 'k1', regNumber: 'K1', name: 'Apras Lanjut', birthDate: '2021-03-05', gender: 'L', isPregnant: false },
+    { id: 'k2', regNumber: 'K2', name: 'Balita', birthDate: '2021-03-05', gender: 'L', isPregnant: false },
+  ];
+  const kmsMeasurements: ExportMeasurement[] = [
+    // 61 bln → di luar KMS, walau kolom tersimpan masih berisi T + 2T.
+    { patientId: 'k1', sessionDate: '2026-04-10', ageInMonths: 61, weight: 18, weightStatus: 'TIDAK_NAIK', weightFaltering2T: true },
+    // 60 bln → batas atas KMS.
+    { patientId: 'k2', sessionDate: '2026-03-10', ageInMonths: 60, weight: 18, weightStatus: 'TIDAK_NAIK', weightFaltering2T: true },
+  ];
+  const rows = buildRoster(kmsPatients, kmsMeasurements, new Date('2026-05-01T00:00:00'));
+  const byName = (n: string) => rows.find((r) => r.Nama === n)!;
+
+  it('umur 61 bln → kolom N/T & 2T kosong', () => {
+    expect(byName('Apras Lanjut')['Berat Naik/Tidak']).toBe('');
+    expect(byName('Apras Lanjut')['2T (rujuk)']).toBe('');
+  });
+
+  it('umur 60 bln → N/T & 2T tampil', () => {
+    expect(byName('Balita')['Berat Naik/Tidak']).toBe('T');
+    expect(byName('Balita')['2T (rujuk)']).toBe('Ya');
+  });
+
+  it('daftar risiko memuat umur 60 bln, menolak 61 bln', () => {
+    const risk = buildRiskList(kmsPatients, kmsMeasurements);
+    expect(risk.some((r) => r.Nama === 'Balita' && r['Jenis Risiko'] === 'BB 2T (tidak naik 2x)')).toBe(true);
+    expect(risk.some((r) => r.Nama === 'Apras Lanjut' && r['Jenis Risiko'] === 'BB 2T (tidak naik 2x)')).toBe(false);
+  });
+});

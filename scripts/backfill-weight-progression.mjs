@@ -9,32 +9,43 @@
 import { PrismaClient } from '@prisma/client';
 import {
   computeWeightProgression,
-  supportsWeightFaltering,
+  isKmsAge,
 } from '../src/lib/growth/weight-progression.ts';
 
 const prisma = new PrismaClient();
 
+/** Umur bulan penuh (samakan `ageInCompletedMonths` di src/lib/growth). */
+function ageInMonths(birthDate, sessionDate) {
+  const b = new Date(birthDate);
+  const s = new Date(sessionDate);
+  let months = (s.getFullYear() - b.getFullYear()) * 12 + (s.getMonth() - b.getMonth());
+  if (s.getDate() < b.getDate()) months--;
+  return months < 0 ? 0 : months;
+}
+
 async function main() {
-  const patients = await prisma.patient.findMany({ select: { id: true } });
+  const patients = await prisma.patient.findMany({ select: { id: true, birthDate: true } });
   let rows = 0;
   let flagged = 0;
+  let cleared = 0;
 
   for (const p of patients) {
     const measurements = await prisma.measurement.findMany({
       where: { patientId: p.id },
       orderBy: { sessionDate: 'asc' },
-      select: { id: true, weight: true, category: true },
+      select: { id: true, weight: true, sessionDate: true, weightStatus: true },
     });
 
     let prevWeight = null;
     let prevStatus = null;
     const updates = [];
     for (const m of measurements) {
-      // 2T hanya Bayi & Balita/Apras (snapshot kategori pengukuran).
-      const eligible = supportsWeightFaltering(m.category);
+      // N/T & 2T hanya umur 0-60 bln (KMS) saat pengukuran.
+      const eligible = isKmsAge(ageInMonths(p.birthDate, m.sessionDate));
       const prog = computeWeightProgression(prevWeight, m.weight, prevStatus, eligible);
       updates.push({ id: m.id, ...prog });
       if (prog.faltering2T) flagged++;
+      if (!eligible && m.weightStatus != null) cleared++;
       if (m.weight != null) {
         prevWeight = m.weight;
         prevStatus = prog.status;
@@ -55,7 +66,8 @@ async function main() {
   }
 
   console.log(
-    `Backfill progres berat selesai: ${patients.length} pasien, ${rows} pengukuran, ${flagged} penanda 2T.`,
+    `Backfill progres berat selesai: ${patients.length} pasien, ${rows} pengukuran, ` +
+      `${flagged} penanda 2T, ${cleared} baris non-KMS dibersihkan.`,
   );
 }
 

@@ -34,7 +34,7 @@ import {
   defaultPosition,
   findCategory,
   weightStatusShort,
-  supportsWeightFaltering,
+  isKmsAge,
   type StaturePosition,
 } from '@/lib/growth';
 import { KmsChart } from '@/components/KmsChart';
@@ -969,9 +969,11 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
               <span>{deleteError}</span>
             </div>
           )}
-          {isUnderFive && historyList.length > 0 && (
-            <KmsChart measurements={historyList} gender={patient.gender} />
-          )}
+          {historyList.some(
+            (m) =>
+              m.weight != null &&
+              isKmsAge(ageInCompletedMonths(patient.birthDate, m.sessionDate)),
+          ) && <KmsChart measurements={historyList} gender={patient.gender} />}
           {historyByMonth.length === 0 ? (
             <div className="p-8 text-center bg-white rounded-2xl border border-[#e9edef] text-[#54656f] text-xs font-medium">
               Belum ada riwayat pengukuran sebelumnya untuk pasien ini.
@@ -1030,7 +1032,8 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                   </div>
                 </div>
 
-                {(hist.weightStatus || hist.weightFaltering2T) && (
+                {(hist.weightStatus || hist.weightFaltering2T) &&
+                  isKmsAge(ageInCompletedMonths(patient.birthDate, hist.sessionDate)) && (
                   <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
                     {hist.weightStatus && (
                       <span
@@ -1046,7 +1049,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                           : ''}
                       </span>
                     )}
-                    {hist.weightFaltering2T && supportsWeightFaltering(hist.category ?? category) && (
+                    {hist.weightFaltering2T && (
                       <span className="px-2.5 py-1 rounded-full font-extrabold bg-red-100 text-red-700 border border-red-200">
                         2T — perlu rujuk
                       </span>

@@ -8,6 +8,7 @@ Bahasa: Indonesia. Format ringkas: Konteks → Keputusan → Konsekuensi → Alt
 | [0001](./0001-status-gizi-zscore.md) | Status gizi balita memakai tabel SD Permenkes 2/2020 (bukan LMS) | Accepted | growth |
 | [0002](./0002-kategori-siklus-hidup-dan-asi.md) | Kategori siklus hidup Posyandu & field ASI Eksklusif | Accepted | kategori, form |
 | [0003](./0003-skrining-tb.md) | Skrining TB bulanan (Beresiko / Tidak Beresiko) | Accepted | form, indikator |
+| [0004](./0004-cakupan-nt-2t-0-60-bulan.md) | Cakupan N/T & 2T terbatas umur 0–60 bulan (Permenkes 2/2020 + KMS) | Accepted | growth, analisis, export |
 
 ## Konvensi
 

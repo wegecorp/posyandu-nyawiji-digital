@@ -155,6 +155,8 @@ satu definisi himpunan (mis. balita yang terdaftar pada akhir periode) untuk pie
 ## 4. Spesifikasi Fitur: Kurva KMS + N/T/2T
 
 ### 4.1 Aturan (hasil grilling — final)
+- **Cakupan = umur 0–60 bulan penuh saat pengukuran** (KMS/Permenkes 2/2020, lihat ADR-0004);
+  di luar itu N/T & 2T = null/false.
 - Bandingkan berat dengan **pengukuran terukur sebelumnya** (yang benar-benar ada, `weight != null`).
 - `TIDAK_NAIK` bila `berat_sekarang <= berat_sebelumnya`; `NAIK` bila lebih besar.
 - `2T` = **dua hasil `TIDAK_NAIK` berturut-turut** pada pengukuran yang benar-benar ada. Absen/
@@ -305,8 +307,13 @@ Tes baru: `src/lib/analytics.test.ts` (belum dinilai, abnormal, appliesTo, dedup
 | Logika murni | ✅ | `src/lib/growth/weight-progression.ts` (+ diekspor dari `growth/index.ts`) |
 | Komputasi rantai | ✅ | `src/lib/weight-progression-db.ts`; dipanggil `autosave` (saat berat berubah) & `backfill-growth` |
 | Agregasi | ✅ | `GET /api/stats/weight-progression` (data per unit + `faltering[]`, role-scoped) |
-| Kurva KMS | ✅ | `src/components/KmsChart.tsx` (BB/U vs umur + 5 garis SD) di tab Riwayat, hanya BALITA |
-| Badge N/T & 2T | ✅ | Tab Riwayat (`DynamicMeasurementForm`) + status BB/U & BB/TB kini tampil |
+| Kurva KMS | ✅ | `src/components/KmsChart.tsx` (BB/U vs umur + 5 garis SD) di tab Riwayat; tampil selama ada titik umur 0–60 (cap 60 bln) |
+| Badge N/T & 2T | ✅ | Tab Riwayat (`DynamicMeasurementForm`) + status BB/U & BB/TB kini tampil; hanya umur 0–60 bln |
+
+**Revisi pasca-Wave 2 (ADR-0004):** cakupan N/T & 2T dipersempit dari kategori
+`BAYI`+`BALITA_APRAS` (0–83 bln) menjadi **umur 0–60 bln** (`isKmsAge`). Non-KMS →
+`null`/`false`. Read path (agregasi, rekap, riwayat, export) ikut digerbangi; data lama
+dibersihkan lewat `npm run db:backfill`.
 | Watchlist peran atas | ✅ | `WeightProgressionCard.tsx` dipakai di Posyandu/Puskesmas/Dinkes Analisis |
 
 **Catatan operasional:** setelah deploy, isi kolom baru pada data lama dengan salah satu cara:

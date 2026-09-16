@@ -68,6 +68,22 @@ export default function PosyanduApp() {
 
   const isReadOnly = user?.role === 'PUSKESMAS' || user?.role === 'DINKES';
 
+  // Ganti akun (logout -> login user lain): komponen ini tidak unmount, jadi state view
+  // lama menempel dan aplikasi mendarat di form pasien/tabel posyandu milik akun
+  // sebelumnya. Reset saat identitas berubah. Key = user.id (bukan posyanduId) supaya
+  // PUSKESMAS/DINKES ganti posyandu aktif (user sama) tetap di view-nya. Pola React
+  // "adjust state during render" — setState langsung di render, bukan useEffect.
+  const [prevUserId, setPrevUserId] = useState(user?.id);
+  if (prevUserId !== user?.id) {
+    setPrevUserId(user?.id);
+    setSelectedPatient(null);
+    setActiveViewMode('default');
+    setMainView('beranda');
+    setSelectedCategory('ALL');
+    setStatusFilter('ALL');
+    setSearchQuery('');
+  }
+
   // Monotonic sequence — respons fetch pasien yang sudah basi (konteks/query berubah)
   // dibuang, tidak boleh menimpa daftar terbaru posyandu lain.
   const fetchSeqRef = useRef(0);

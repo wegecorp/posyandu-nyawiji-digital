@@ -71,7 +71,7 @@ export function GrowthStatusDistribution({ from, to }: { from: string; to: strin
 
   return (
     <>
-      <ChartCard title="Distribusi Status Gizi Balita" subtitle="Permenkes 2/2020 — pengukuran terakhir per anak">
+      <ChartCard title="Status Gizi (0–60 bulan)" subtitle="Permenkes 2/2020 — pengukuran terakhir per anak">
         <div className="mb-3">
           <label className="block text-[10px] font-bold text-[#667781] uppercase tracking-wide mb-1">
             Indeks

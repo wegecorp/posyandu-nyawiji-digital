@@ -9,6 +9,9 @@ import { TrendingUp, Users, AlertTriangle } from 'lucide-react';
 import { ChartCard } from './ChartCard';
 import { GrowthStatusDistribution } from './GrowthStatusDistribution';
 import { WeightProgressionCard } from './WeightProgressionCard';
+import { BreastfeedingCard } from './BreastfeedingCard';
+import { CategoryCoverageCard } from './CategoryCoverageCard';
+import { TbScreeningCard } from './TbScreeningCard';
 import { OutcomeDonut } from './OutcomeDonut';
 import { IndicatorDrillSheet } from './IndicatorDrillSheet';
 import { PeriodControl, periodToRange } from './PeriodControl';
@@ -198,6 +201,10 @@ export function DinkesAnalisis() {
 
       {/* 0b. Progres berat badan (N/T & 2T) */}
       <WeightProgressionCard from={from} to={to} />
+
+      <BreastfeedingCard from={from} to={to} />
+      <TbScreeningCard from={from} to={to} />
+      <CategoryCoverageCard from={from} to={to} />
 
       {/* 1. Trend Line — Partisipasi Kabupaten */}
       {trendData.length > 0 && (

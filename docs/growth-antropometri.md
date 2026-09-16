@@ -22,6 +22,12 @@ Permenkes No. 2 Tahun 2020 tentang Standar Antropometri Anak, Lampiran Bab II.**
 
 Anak **>60 bulan** tidak dihitung status gizinya (data tetap tersimpan).
 
+> **Kaitannya dengan kategori siklus hidup (ADR-0002):** status gizi hanya berlaku untuk
+> `BAYI` (0–5 bln) dan `BALITA_APRAS` (6–83 bln). Karena tabel Permenkes berhenti di 60 bulan,
+> `BALITA_APRAS` usia **61–83 bulan** (5 th 1 bln–6 th 11 bln) tetap mencatat BB/TB tetapi
+> **status gizi kosong** ("di luar rentang tabel 0–60"). Upgrade = tabel **WHO Reference 2007**
+> (5–18 th) — belum dikerjakan.
+
 ---
 
 ## 2. Rumus utama Z-score

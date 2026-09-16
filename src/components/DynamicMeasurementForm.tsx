@@ -1054,22 +1054,22 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 )}
 
                 <div className="flex flex-wrap gap-1.5 text-[11px]">
-                  {hist.weight && (
+                  {hist.weight != null && (
                     <MetricChip label="BB" value={`${hist.weight} kg`} />
                   )}
-                  {hist.height && (
+                  {hist.height != null && (
                     <MetricChip label="TB" value={`${hist.height} cm`} />
                   )}
-                  {hist.headCircumference && (
+                  {hist.headCircumference != null && (
                     <MetricChip label="LK" value={`${hist.headCircumference} cm`} />
                   )}
-                  {hist.armCircumference && (
+                  {hist.armCircumference != null && (
                     <MetricChip label="LiLA" value={`${hist.armCircumference} cm`} />
                   )}
-                  {hist.waistCircumference && (
+                  {hist.waistCircumference != null && (
                     <MetricChip label="Lingkar Perut" value={`${hist.waistCircumference} cm`} />
                   )}
-                  {hist.imt && (
+                  {hist.imt != null && (
                     <MetricChip label="IMT" value={`${hist.imt} kg/m²`} />
                   )}
                   {hist.underweightStatus && (
@@ -1090,19 +1090,19 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                       value={findCategory('BB_TB', hist.wastingStatus)?.label ?? hist.wastingStatus}
                     />
                   )}
-                  {hist.systolic && (
+                  {hist.systolic != null && (
                     <MetricChip label="Tensi" value={`${hist.systolic}/${hist.diastolic} mmHg`} />
                   )}
-                  {hist.bloodSugar && (
+                  {hist.bloodSugar != null && (
                     <MetricChip label="GDS" value={`${hist.bloodSugar} mg/dL`} />
                   )}
-                  {hist.cholesterol && (
+                  {hist.cholesterol != null && (
                     <MetricChip label="Kolesterol" value={`${hist.cholesterol} mg/dL`} />
                   )}
-                  {hist.uricAcid && (
+                  {hist.uricAcid != null && (
                     <MetricChip label="Asam Urat" value={`${hist.uricAcid} mg/dL`} />
                   )}
-                  {hist.hemoglobin && (
+                  {hist.hemoglobin != null && (
                     <MetricChip label="HB" value={`${hist.hemoglobin} g/dL`} />
                   )}
                   {hist.visionStatus && (

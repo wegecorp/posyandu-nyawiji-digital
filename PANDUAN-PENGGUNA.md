@@ -52,10 +52,10 @@ Tata urut pembuatan akun (dari atas ke bawah):
 
 ### Aturan privasi data pasien
 
-- **Kader Posyandu** hanya melihat data pasien **posyandunya sendiri**, dan boleh mengunduh **data anggotanya sendiri** (nama, nomor registrasi, dan rincian pengukuran) lewat **Rekap Ringkas → Excel** — lihat bagian 7.
-- **Puskesmas** melihat data pasien di posyandu binaannya (termasuk nama, untuk pembinaan).
+- **Kader Posyandu** hanya melihat data pasien **posyandunya sendiri**, dan boleh mengunduh **data anggotanya sendiri** (nama, nomor registrasi, dan rincian pengukuran) lewat **Export Data → Excel** — lihat bagian 7.
+- **Puskesmas** melihat data pasien di posyandu binaannya (termasuk nama, untuk pembinaan) dan boleh mengunduh data per pasien untuk posyandu binaan yang dipilih.
 - **Dinas Kesehatan** hanya melihat **agregat per wilayah** (jumlah, persentase) tanpa nama pasien, untuk perencanaan dan evaluasi.
-- Rekap untuk **Puskesmas** dan **Dinas Kesehatan** berisi **agregat** (ringkasan per unit), **bukan** baris per pasien.
+- Rekap untuk **Dinas Kesehatan** berisi **agregat** (ringkasan per unit), **bukan** baris per pasien.
 - Aturan lengkap ada pada halaman **Kebijakan Privasi** dan **Syarat & Ketentuan** di aplikasi (tautan tersedia di halaman login).
 
 ---
@@ -157,7 +157,7 @@ Tugas utama kader adalah pelayanan hari buka posyandu: mendaftarkan pasien dan m
 
 Setelah masuk, kader melihat **beranda** posyandu:
 
-- **Bar atas**: nama posyandu, tombol **Install Aplikasi**, dan ikon **Rekap Ringkas**.
+- **Bar atas**: nama posyandu, tombol **Install Aplikasi**, dan ikon **Export Data**.
 - **Tab Beranda / Analisis**: berpindah antara daftar pasien dan grafik ringkasan.
 - **Kotak Cari nama pasien**: menyaring daftar secara langsung.
 - **Filter status**: **Semua**, **Belum**, **Selesai** — untuk melihat siapa yang belum diukur.
@@ -256,9 +256,11 @@ Puskesmas tidak mencatat pengukuran, tetapi **mengawasi Posyandu binaan** dan me
 - **Daftarkan Posyandu**: isi Nama Posyandu, pilih Kalurahan, dan Padukuhan. Sistem otomatis membuat akun posyandu untuk kader (kader memilih Puskesmas → Kalurahan → Posyandu saat login).
 - **Edit** data posyandu (nama, kalurahan, padukuhan). Kode posyandu tidak bisa diubah.
 - **Reset password** (ikon kunci): mengembalikan password posyandu ke password default. Kader harus aktivasi ulang saat login berikutnya. Biasanya dilakukan bila kader lupa password.
+- **Nonaktifkan / Aktifkan** (ikon daya): menonaktifkan akun kader **tanpa menghapus data**. Akun nonaktif tidak bisa login dan sesinya dicabut; bisa diaktifkan kembali kapan saja.
+- **Hapus posyandu** (ikon tempat sampah): hapus permanen posyandu **hanya bila belum punya pasien & pengukuran**. Bila sudah ada data, sistem menolak — gunakan **Nonaktifkan** sebagai gantinya.
 - **Buka Meja**: melihat langsung isi data pelayanan sebuah posyandu dalam mode **read-only** (hanya lihat, tidak bisa ubah/hapus).
 
-**Rekap Ringkas:** tombol **Rekap Wilayah** membuka ringkasan agregat seluruh posyandu binaan (lihat bagian 7).
+**Export Data:** tombol **Rekap Wilayah** membuka panel export/agregat seluruh posyandu binaan (lihat bagian 7).
 
 Di tab **Analisis**, Puskesmas dapat melihat tren partisipasi, peringkat posyandu, distribusi status gizi, progres berat badan (N/T & 2T), dan temuan per indikator. Detail per wilayah dapat dibuka sampai daftar pasien (nama) per posyandu.
 
@@ -270,11 +272,11 @@ Dinkes adalah pusat kendali tingkat kabupaten: membuat akun Puskesmas dan memant
 
 - Melihat ringkasan **Puskesmas, Posyandu, Pasien, dan total pengukuran** se-kabupaten.
 - **Daftarkan Puskesmas**: isi Nama Puskesmas dan pilih Kapanewon. Sistem otomatis membuat username staf (contoh `@pkm_wonosari1`). Sampaikan username + password default ke pengelola Puskesmas.
-- **Import Posyandu massal** dari file Excel/CSV dengan kolom: NAMA PUSKESMAS, NAMA KALURAHAN, NAMA PADUKUHAN, NAMA POSYANDU. Gunakan tombol **Analisis Dulu** untuk melihat laporan sebelum benar-benar di-import.
+- **Import Posyandu massal** dari file Excel/CSV dengan kolom: NAMA PUSKESMAS, NAMA KALURAHAN, NAMA PADUKUHAN, NAMA POSYANDU. Puskesmas yang **belum terdaftar akan dibuat otomatis** (kapanewon disimpulkan dari nama Puskesmas) beserta akun stafnya. Gunakan tombol **Analisis Dulu** untuk melihat laporan sebelum benar-benar di-import.
 - **Buka / Reset Pass** untuk posyandu di bawah setiap puskesmas (bisa turun ke mode lihat data posyandu). Daftar posyandu per puskesmas dibatasi; klik **Tampilkan semua** untuk membuka seluruhnya.
 - Melihat daftar akun yang masih **Menunggu aktivasi**.
 
-**Rekap Ringkas:** tombol **Rekap Kabupaten** membuka ringkasan agregat se-kabupaten (lihat bagian 7).
+**Export Data:** tombol **Rekap Kabupaten** membuka panel export/agregat se-kabupaten (lihat bagian 7).
 
 > **Catatan privasi:** Dinkes hanya melihat **agregat per wilayah** (per puskesmas dan per posyandu), bukan nama per pasien. Detail sampai tingkat pasien hanya untuk Posyandu dan Puskesmas.
 
@@ -309,6 +311,7 @@ Form pengukuran menyesuaikan kolomnya **secara otomatis** dengan umur pasien (di
 | Indeks Massa Tubuh (IMT) | kg/m² | Semua kelompok | Otomatis dihitung dari BB & TB |
 | Lingkar Kepala (LK) | cm | Bayi & Balita/Apras | Opsional |
 | ASI Eksklusif | Ya / Tidak | Bayi (0–5 bln) | Opsional — berhenti ditanya setelah dijawab **Tidak** |
+| Skrining TB | Beresiko / Tidak Beresiko | Semua kelompok | Opsional — ditanya tiap bulan |
 | Lingkar Lengan Atas (LiLA) | cm | Semua kelompok | Opsional |
 | Lingkar Perut | cm | Semua kelompok | Opsional |
 | Tekanan Darah (Tensi) | mmHg | Remaja, Dewasa, Lansia, Ibu Hamil | Opsional |
@@ -357,28 +360,36 @@ Menu **Analisis** otomatis menghitung hasil dan menyorot nilai yang patut diwasp
 
 ## 7. Fitur Bersama
 
-### Rekap Ringkas
+### Export Data (Excel)
 
-Ringkasan pelayanan untuk **semua kelompok umur**, diunduh sebagai berkas **Excel**. Isi berkas **berbeda menurut jenjang**:
+Satu panel export untuk **semua jenjang**, diunduh sebagai berkas **Excel**. Ada 3 langkah:
+**Isi → Cakupan → Periode**, dengan **preview** sebelum mengunduh.
 
-| Jenjang | Isi berkas Excel | Identitas pasien? |
-|---|---|---|
-| **Kader Posyandu** | `Ringkasan`, daftar posyandu, **`Daftar Anggota`** (1 baris per pasien), **`Detail Pengukuran`** (1 baris per kunjungan) | **Ya** — nama & nomor registrasi milik posyandu sendiri |
-| **Puskesmas** | `Ringkasan` + satu baris per posyandu binaan | Tidak — agregat |
-| **Dinkes** | `Ringkasan` global kabupaten + satu baris per puskesmas | Tidak — agregat |
+**Isi berkas** (centang yang diinginkan):
+- `Ringkasan` — agregat per unit (selalu ikut).
+- `Daftar Anggota` — 1 baris per pasien (snapshot terakhir dalam periode).
+- `Detail Pengukuran` — 1 baris per kunjungan (bisa banyak baris per pasien).
+- `Daftar Berisiko` — pasien dengan temuan: **2T**, **TB beresiko**, atau indikator klinis abnormal; menyertakan kolom **Posyandu** dan **Alamat**.
 
-> Berkas untuk **kader memuat data individu** (nama, nomor registrasi, BB/TB, status gizi, N/T, 2T, hasil lab, catatan) karena hanya untuk posyandu sendiri. Berkas **Puskesmas & Dinkes tetap agregat** — lihat [Aturan privasi data pasien](#aturan-privasi-data-pasien).
+| Jenjang | Cakupan | Data per pasien (nama)? | Batas |
+|---|---|---|---|
+| **Kader Posyandu** | posyandu sendiri (terkunci) | Ya — Anggota, Detail, Berisiko | — |
+| **Puskesmas** | semua binaan, atau **pilih posyandu** (multi-centang) | Ya — Anggota, Detail, Berisiko | maks **30 posyandu / 20.000 baris** |
+| **Dinkes** | seluruh kabupaten | **Tidak** — hanya `Ringkasan` (agregat) | tanpa batas (agregat) |
 
-Isi rekap antara lain: jumlah terdaftar & terukur, status gizi balita, **N / T / 2T**, serta temuan per indikator (hipertensi, anemia, gula darah, kolesterol, asam urat, skrining mata/telinga).
+> Untuk multi-unit, `Daftar Anggota`/`Detail` digabung dalam satu sheet dengan kolom
+> **Posyandu** agar mudah difilter/di-pivot di Excel.
 
 Cara memakai:
 
-1. Buka **Rekap Ringkas** (ikon berkas di bar atas, atau tombol **Rekap Wilayah / Rekap Kabupaten** di beranda).
-2. Pilih **periode** (maksimal **12 bulan** untuk kader/Puskesmas, **24 bulan** untuk Dinkes).
-3. Periksa ringkasan yang tampil.
-4. Klik **Unduh Rekap Excel**, lalu simpan atau kirim ke jenjang di atasnya.
+1. Buka **Export Data** (ikon berkas di bar atas, atau tombol **Rekap Wilayah / Rekap Kabupaten** di beranda).
+2. Centang **Isi** yang diinginkan (Anggota/Detail/Beresiko bila perlu).
+3. Pilih **Cakupan** (khusus Puskesmas: semua binaan atau pilih posyandu).
+4. Pilih **Periode** (maksimal **12 bulan** untuk kader/Puskesmas, **24 bulan** untuk Dinkes).
+5. Periksa **Preview** (jumlah unit/pasien/kunjungan + estimasi baris). Bila melebihi batas, persempit pilihan/periode.
+6. Klik **Unduh Excel**, lalu simpan atau kirim ke jenjang di atasnya.
 
-![Rekap Ringkas — pilih periode lalu Unduh Rekap Excel](docs/panduan/04-rekap-excel.png)
+![Export Data — pilih isi & periode lalu Unduh Excel](docs/panduan/04-rekap-excel.png)
 
 ### Menu Analisis (tab di bagian atas)
 
@@ -392,6 +403,9 @@ Semua jenjang dapat melihat grafik dan ringkasan. Gunakan pemilih periode (6/12/
 | Progres berat badan (N/T & 2T) | Ya | Ya | Ya (agregat) |
 | Distribusi hasil Normal / Tidak Normal | Ya | Ya | Ya |
 | Temuan Tidak Normal per indikator | Ya | Ya | Ya |
+| ASI Eksklusif (bayi 0–5 bln) | Ya | Ya | Ya (agregat) |
+| Skrining TB (dinilai / beresiko) | Ya | Ya | Ya (agregat) |
+| Cakupan per kelompok sasaran | Ya | Ya | Ya |
 | Detail per wilayah | Daftar pasien sendiri | Posyandu → daftar pasien | Puskesmas → Posyandu (**tanpa nama**) |
 
 Cara membaca:
@@ -427,7 +441,7 @@ Bagian ini merangkum perjalanan data dari Posyandu sampai Dinas Kesehatan — un
 |---|---|---|---|
 | Nama & nomor registrasi pasien | Posyandu sendiri | Posyandu binaan | Tidak (agregat) |
 | Detail pengukuran per pasien | Ya | Ya (mode lihat) | Tidak |
-| Unduh data individu (Excel) | Ya (posyandu sendiri) | Tidak | Tidak |
+| Unduh data individu (Excel) | Ya (posyandu sendiri) | Ya (posyandu binaan dipilih) | Tidak |
 | Rekap agregat per unit | Ya | Ya | Ya |
 | Kelola / reset akun posyandu | Tidak | Ya | Ya |
 | Buat akun puskesmas | Tidak | Tidak | Ya |
@@ -445,7 +459,7 @@ Bagian ini merangkum perjalanan data dari Posyandu sampai Dinas Kesehatan — un
    - Data tersimpan sementara di perangkat (tanda **"Tersimpan Offline"**).
    - **Jangan logout** sebelum data tersinkron.
    - Saat kembali online, data **tersinkron otomatis** (lihat pemberitahuan "menunggu sinkron ke server").
-   - **Periksa di Rekap Ringkas** bahwa semua sudah masuk sebelum disetorkan.
+   - **Periksa di Export Data** bahwa semua sudah masuk sebelum disetorkan.
 5. Bila terjadi **bentrok data** (dua perangkat mengisi bersamaan), aplikasi menampilkan peringatan "Data Bentrok — Muat Ulang". Muat ulang halaman untuk mengambil data terbaru. Sebaiknya gunakan **satu HP utama** untuk input.
 6. Nomor registrasi, kode posyandu, dan kode puskesmas **dibuat otomatis oleh sistem** — tidak perlu dihafal, cukup pakai pencarian nama.
 7. Untuk bantuan/lupa password: hubungi jenjang di atas Anda.
@@ -500,7 +514,7 @@ Bagian ini menjelaskan **tujuan** dan **cara** memakai aplikasi pada hari buka p
 
 **Langkah 5 — Validasi & Sinkronisasi Data**
 1. Pastikan perangkat terhubung **internet (online)**. Bila sebelumnya sempat luring, tunggu sampai tidak ada lagi pemberitahuan "menunggu sinkron ke server".
-2. Buka **Rekap Ringkas**, pilih periode (bulan ini).
+2. Buka **Export Data**, centang isi yang perlu, pilih periode (bulan ini).
 3. Periksa ringkasan: jumlah terdaftar, terukur, N/T, 2T, dan temuan. Cocokkan dengan catatan hari itu.
 4. Klik **Unduh Rekap Excel**, lalu setorkan ke Puskesmas sesuai jalur yang berlaku. Berkas kader memuat **Daftar Anggota** & **Detail Pengukuran** (lihat bagian 7).
 

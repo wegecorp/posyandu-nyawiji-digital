@@ -6,18 +6,19 @@ Aplikasi web modern untuk digitalisasi pencatatan, pemantauan kesehatan balita &
 
 ## 🚀 Fitur Utama
 
-- 👶 **Manajemen Pasien**: Pencatatan data balita dan ibu hamil secara terstruktur.
-- 📏 **Pencatatan Pengukuran**: Catat Berat Badan (BB), Tinggi/Panjang Badan (TB/PB), Lingkar Kepala, LiLA, Tensi, & Usia Kehamilan.
+- 👶 **Manajemen Pasien**: Pencatatan pasien lintas **kategori siklus hidup** — Bayi (0–5 bln), Balita & Apras (6 bln–6 th), Remaja, Dewasa, Lansia, dan Ibu Hamil. Kolom form menyesuaikan kategori otomatis.
+- 📏 **Pencatatan Pengukuran (per bulan)**: BB, TB/PB, Lingkar Kepala, LiLA, Lingkar Perut, Tensi, Usia Kehamilan, lab sederhana, skrining mata/telinga, **ASI Eksklusif** (bayi), dan **Skrining TB** (beresiko / tidak beresiko).
+- 📈 **Status Gizi & Pertumbuhan**: Z-score Permenkes 2/2020 (BB/U, TB/U, BB/TB, IMT/U) untuk 0–60 bulan, kurva KMS, penanda **N/T & 2T**.
 - 📱 **Sistem QR Code**: Scan & cetak QR Code pasien untuk pencarian data instan saat hari pelayanan.
 - 👥 **Multi-Role User**:
-- **DINKES**: Pemantauan data kesehatan tingkat kabupaten/kota.
-- **PUSKESMAS**: Pengawasan & manajemen Posyandu di wilayah kerja kecamatan/kapanewon.
+- **DINKES**: Pemantauan data kesehatan tingkat kabupaten/kota + **import wilayah** (CSV posyandu, Puskesmas dibuat otomatis).
+- **PUSKESMAS**: Pengawasan & manajemen Posyandu di wilayah kerja kecamatan/kapanewon (buat, nonaktifkan, hapus posyandu kosong, reset password).
 - **POSYANDU**: Operasional kader untuk pencatatan rutin pasien & pelayanan bulanan.
+- 📊 **Export Excel terpadu**: satu panel — Ringkasan agregat, Daftar Anggota, Detail Pengukuran, dan Daftar Berisiko; cakupan menyesuaikan peran dengan batas ukuran.
 - 🔑 **Kredensial**:
   - Staf Puskesmas login dengan **username otomatis** dari nama puskesmas (mis. `pkm_semanu1`, `pkm_wonosari2`) + **password default puskesmas** (`PUSKESMAS_DEFAULT_PASSWORD`).
   - Kader Posyandu login via cascade (Puskesmas → Kalurahan → Posyandu) tanpa username, memakai **password default posyandu** (`POSYANDU_DEFAULT_PASSWORD`) lalu wajib aktivasi/ganti password saat login pertama.
   - Penulisan angka romawi dinormalisasi otomatis: `Ii` → `II`, `Iii` → `III`.
-- 📊 **Ekspor & Impor Excel**: Kemudahan pengolahan data & pelaporan via file `.xlsx`.
 
 ---
 

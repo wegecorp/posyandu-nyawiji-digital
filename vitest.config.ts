@@ -10,5 +10,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    // Uji fuzz antropometri & integrasi DB bisa >5s saat suite penuh berjalan paralel.
+    testTimeout: 30_000,
   },
 });

@@ -10,6 +10,9 @@ import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
 import { GrowthStatusDistribution } from './GrowthStatusDistribution';
 import { WeightProgressionCard } from './WeightProgressionCard';
+import { BreastfeedingCard } from './BreastfeedingCard';
+import { CategoryCoverageCard } from './CategoryCoverageCard';
+import { TbScreeningCard } from './TbScreeningCard';
 import { OutcomeDonut } from './OutcomeDonut';
 import { PeriodControl, periodToRange } from './PeriodControl';
 import { EmptyState } from './EmptyState';
@@ -147,6 +150,11 @@ export function PosyanduAnalisis() {
 
       {/* 0b. Progres berat badan (N/T & 2T) */}
       <WeightProgressionCard from={from} to={to} />
+
+      {/* 0c. ASI Eksklusif + Skrining TB + Cakupan per kelompok sasaran */}
+      <BreastfeedingCard from={from} to={to} />
+      <TbScreeningCard from={from} to={to} />
+      <CategoryCoverageCard from={from} to={to} />
 
       {/* 1. Trend Line */}
       {trendData.length > 0 && (

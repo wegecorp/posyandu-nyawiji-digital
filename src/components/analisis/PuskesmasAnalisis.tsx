@@ -10,6 +10,9 @@ import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
 import { GrowthStatusDistribution } from './GrowthStatusDistribution';
 import { WeightProgressionCard } from './WeightProgressionCard';
+import { BreastfeedingCard } from './BreastfeedingCard';
+import { CategoryCoverageCard } from './CategoryCoverageCard';
+import { TbScreeningCard } from './TbScreeningCard';
 import { OutcomeDonut } from './OutcomeDonut';
 import { IndicatorDrillSheet } from './IndicatorDrillSheet';
 import { PeriodControl, periodToRange } from './PeriodControl';
@@ -156,6 +159,10 @@ export function PuskesmasAnalisis() {
 
       {/* 0b. Progres berat badan (N/T & 2T) */}
       <WeightProgressionCard from={from} to={to} />
+
+      <BreastfeedingCard from={from} to={to} />
+      <TbScreeningCard from={from} to={to} />
+      <CategoryCoverageCard from={from} to={to} />
 
       {/* 1. Trend Line */}
       {trendData.length > 0 && (

@@ -687,7 +687,11 @@ export function AuthPage() {
         </div>
 
         <div className="text-center mt-4 text-xs text-[#54656f] space-y-1.5">
-          <p className="flex items-center justify-center gap-2">
+          <p className="flex flex-wrap items-center justify-center gap-2">
+            <Link href="/panduan" className="font-bold text-[#075e54] hover:underline">
+              Panduan Pengguna
+            </Link>
+            <span aria-hidden>·</span>
             <Link href="/privasi" className="font-bold text-[#075e54] hover:underline">
               Kebijakan Privasi
             </Link>

@@ -39,7 +39,9 @@ pm2 logs posyandu-nyawiji --lines 50   # pastikan tidak ada error
 
 - [ ] Tab **Analisis** → kartu **Progres Berat Badan**: cakupan bulan ini `X/Y`, jumlah tidak naik, **2T**.
 - [ ] Daftar **Perlu Rujuk (2T)** terisi dan menampilkan nama/posyandu/bulan.
-- [ ] Ranking partisipasi: urut **tertinggi dulu**, bar **0% tampil kosong**, ada nomor urut.
+- [ ] Ranking partisipasi: urut **tertinggi dulu**, nomor urut, bar **0% kosong**. Angka `x / y pasien` = agregat **seluruh periode terpilih**, bukan 1 bulan.
+- [ ] Ganti periode 6/12/24 → peringkat & angka `x/y` ikut berubah (bukti agregat mengikuti filter).
+- [ ] Unit tanpa sasaran terdaftar tampil abu **"tanpa data"** (bukan merah 0%); unit punya sasaran tapi 0 terukur tetap **merah 0%**.
 - [ ] Ganti periode 6/12/24 → jumlah titik tren sesuai (6/12/24).
 - [ ] Drill ke puskesmas → ganti periode → data posyandu ikut refresh (tidak kosong/basi).
 
@@ -48,7 +50,7 @@ pm2 logs posyandu-nyawiji --lines 50   # pastikan tidak ada error
 - [ ] Sama seperti Puskesmas, plus drill puskesmas → posyandu.
 - [ ] Donut **"Distribusi Hasil Pengukuran"** punya segmen **Belum Dinilai** (abu) di samping Normal/Tidak Normal.
 - [ ] Stacked bar **"Distribusi Hasil Pengukuran per Indikator"** hanya **Normal/Tidak Normal** (tanpa Belum Dinilai).
-- [ ] Ranking partisipasi **Puskesmas** menampilkan delta **↑/↓ poin** vs bulan sebelumnya; bulan tanpa pembanding → tanpa badge.
+- [ ] Ranking partisipasi **Puskesmas**: peringkat = agregat periode, delta **↑/↓ poin** = momentum bulan terakhir vs sebelumnya (terpisah dari peringkat); bulan tanpa pembanding → tanpa badge.
 - [ ] Kartu ringkasan menampilkan **bulan terakhir yang ada datanya**, bukan bulan berjalan 0%.
 - [ ] Drill kabupaten → puskesmas → posyandu berjalan.
 
@@ -57,6 +59,7 @@ pm2 logs posyandu-nyawiji --lines 50   # pastikan tidak ada error
 - [ ] Network tab: `GET /api/stats/weight-progression` → `200` untuk tiap peran; `coverage.balitaTotal` wajar.
 - [ ] Balita tanpa nilai lab (hanya BB/TB) masuk **Belum Dinilai**, **bukan Normal** (validasi inti F2).
 - [ ] Partisipasi bulan lampau tidak berubah saat pasien baru ditambahkan (validasi F1).
+- [ ] Ranking = Σterukur ÷ Σsasaran sepanjang periode; samakan dengan hitung manual dari tren partisipasi.
 
 ## 6. Rollback
 

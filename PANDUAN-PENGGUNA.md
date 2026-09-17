@@ -4,6 +4,8 @@ Panduan untuk pengguna aplikasi (kader Posyandu, petugas Puskesmas, dan Dinas Ke
 
 Dokumen ini juga memuat **Skenario Hari Buka Posyandu** yang memadankan alur kerja nyata (5 Langkah Posyandu ILP) dengan langkah-langkah di dalam aplikasi.
 
+> Versi ringkas dari panduan ini juga tersedia **di dalam aplikasi**: buka ikon **Panduan** (buku) di bar atas setelah login, atau tautan **Panduan Pengguna** di halaman login.
+
 ---
 
 ## Daftar Isi
@@ -14,10 +16,13 @@ Dokumen ini juga memuat **Skenario Hari Buka Posyandu** yang memadankan alur ker
 4. [Install / Simpan Aplikasi di HP](#4-install--simpan-aplikasi-di-hp)
 5. [Panduan per Jenjang](#5-panduan-per-jenjang)
    - [5.1 Kader Posyandu](#51-kader-posyandu)
+     - [Hapus Pasien](#hapus-pasien)
+     - [Hapus Sesi Pengukuran](#hapus-sesi-pengukuran)
    - [5.2 Staf Puskesmas](#52-staf-puskesmas)
    - [5.3 Dinas Kesehatan](#53-dinas-kesehatan)
 6. [Data yang Dicatat & Kelompok Sasaran](#6-data-yang-dicatat--kelompok-sasaran)
 7. [Fitur Bersama](#7-fitur-bersama)
+   - [Keluar Akun / Ganti Akun](#keluar-akun--ganti-akun)
 8. [Alur & Kepemilikan Data](#8-alur--kepemilikan-data)
 9. [Tips Umum](#9-tips-umum)
 10. [Skenario Hari Buka Posyandu (5 Langkah ILP)](#10-skenario-hari-buka-posyandu-5-langkah-ilp)
@@ -104,7 +109,16 @@ Ketentuan password:
 - Tidak boleh sama dengan password default.
 - Ingat dan jaga kerahasiaannya.
 
-Setelah aktif, Anda bisa mengganti password kapan saja lewat ikon akun di pojok kanan atas (Detail Akun Sesi) → **Ubah Password Saya**.
+Setelah aktif, Anda bisa mengganti password kapan saja.
+
+### Mengganti Password Sendiri (kapan saja)
+
+1. Ketuk nama akun di **pojok kiri atas** bar aplikasi.
+2. Pada **Detail Akun Sesi**, pilih **Ubah Password Saya**.
+3. Isi **Password Saat Ini**, **Password Baru** (minimal 8 karakter), dan **Konfirmasi Password Baru**.
+4. Klik **Simpan Password Baru**.
+
+> Setelah ganti password, sesi di perangkat ini tetap aktif — tidak perlu login ulang.
 
 ---
 
@@ -244,6 +258,26 @@ Salah ketik nama, tanggal lahir, atau data lain? Kader dapat memperbaikinya tanp
 3. Simpan. Daftar dan pengukuran pasien ikut memakai data terbaru.
 
 > Perubahan **tanggal lahir** memengaruhi perhitungan **usia**, **kelompok sasaran**, dan **status gizi**. Perhatikan peringatan data ganda saat menyimpan agar tidak ada pasien tercatat dua kali.
+
+#### Hapus Pasien
+
+Dipakai bila pasien memang salah daftar, pindah, atau datanya tidak lagi diperlukan. Hanya **Kader Posyandu** yang bisa menghapus; Puskesmas dan Dinkes hanya melihat.
+
+1. Pada kartu pasien, ketuk ikon **pensil** (Edit).
+2. Di bagian bawah formulir, klik **Hapus Pasien** (Zona Bahaya).
+3. Pada jendela konfirmasi, klik **Ya, Hapus Pasien**.
+
+> **Perhatian:** penghapusan bersifat **permanen** — seluruh riwayat pengukuran pasien ikut terhapus dan **tidak dapat dibatalkan**. Untuk koreksi biasa (salah ketik nama/tanggal lahir), gunakan **Edit**, bukan hapus.
+
+#### Hapus Sesi Pengukuran
+
+Dipakai bila satu bulan pengukuran salah input dan perlu dibuang.
+
+1. Buka pasien, pilih tab **Riwayat**.
+2. Pada baris bulan yang ingin dihapus, klik **Hapus**.
+3. Klik **Ya** untuk konfirmasi.
+
+> Setelah dihapus, perhitungan **N/T** dan tanda **2T** pasien dihitung ulang dari awal. Hanya kader pemilik posyandu yang bisa menghapus.
 
 ### 5.2 Staf Puskesmas
 
@@ -392,6 +426,14 @@ Cara memakai:
 6. Klik **Unduh Excel**, lalu simpan atau kirim ke jenjang di atasnya.
 
 ![Export Data — pilih isi & periode lalu Unduh Excel](docs/panduan/04-rekap-excel.png)
+
+### Keluar Akun / Ganti Akun
+
+1. Ketuk nama akun di **pojok kiri atas** bar aplikasi.
+2. Pada **Detail Akun Sesi**, klik **Keluar Akun (Logout)**.
+3. Untuk ganti akun, lanjutkan login memakai akun yang lain.
+
+> **Jangan logout** bila masih ada data **menunggu sinkron ke server** (lihat pemberitahuan di bar atas). Tunggu sampai perangkat online dan antrean sinkron kosong.
 
 ### Menu Analisis (tab di bagian atas)
 

@@ -237,6 +237,33 @@ pm2 start posyandu-nyawiji
 pm2 save
 ```
 
+### 7b. Update frontend-only (tanpa perubahan schema)
+
+Bila diff hanya menyentuh UI/komponen (mis. commit peringkat partisipasi `ce85e48` —
+`DinkesAnalisis.tsx`, `PuskesmasAnalisis.tsx`, `UnitScoreboard.tsx`), **lewati**
+`prisma db push` & `db:backfill`:
+
+```bash
+cd /opt/nyawiji
+git pull
+npm ci
+npm run build            # HARUS sukses sebelum restart
+pm2 restart posyandu-nyawiji
+pm2 logs posyandu-nyawiji --lines 50   # pastikan tidak ada error
+```
+
+Cek dulu apakah ada perubahan schema:
+
+```bash
+git diff --name-only HEAD@{1} HEAD -- prisma/   # kosong = aman jalur frontend-only
+```
+
+Rollback cepat:
+
+```bash
+cd /opt/nyawiji && git revert <commit> --no-edit && npm run build && pm2 restart posyandu-nyawiji
+```
+
 ---
 
 ## 8. Pindah ke domain sendiri (setelah domain dibeli)
@@ -279,7 +306,7 @@ Tetap jalankan sslip.io untuk sementara; saat domain siap:
 
 ## Status deploy
 
-Terakhir diperbarui: 2026-09-11.
+Terakhir diperbarui: 2026-09-17.
 
 - [x] VPS Ubuntu 24.04 + hardening (ufw, fail2ban) + swap 2 GB
 - [x] Node 22, PM2, Nginx, sqlite3, certbot

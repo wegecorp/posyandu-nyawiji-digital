@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { APP_NAME } from '@/lib/branding';
 import {
@@ -12,6 +13,7 @@ import {
   BarChart3,
   RefreshCw,
   Download,
+  BookOpen,
 } from 'lucide-react';
 import { getSyncQueue, flushSyncQueue } from '@/lib/offline-sync';
 import { usePwaInstall, type InstallGuide } from '@/lib/pwa';
@@ -158,6 +160,16 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <FileSpreadsheet className="w-5 h-5 text-[#25d366]" />
           </button>
+
+          {/* Panduan Pengguna */}
+          <Link
+            href="/panduan"
+            aria-label="Panduan Pengguna"
+            className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
+            title="Panduan Pengguna"
+          >
+            <BookOpen className="w-5 h-5 text-white" />
+          </Link>
         </div>
       </div>
 

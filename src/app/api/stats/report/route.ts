@@ -39,7 +39,16 @@ type ReportRow = {
   unitName: string;
   registered: number;
   measured: number;
-  balita: { total: number; normal: number; underweight: number; severelyUnderweight: number; riskOverweight: number };
+  balita: {
+    total: number;
+    normal: number;
+    underweight: number;
+    severelyUnderweight: number;
+    riskOverweight: number;
+    statureNormal: number;
+    stunted: number;
+    severelyStunted: number;
+  };
   nt: { naik: number; tidakNaik: number; duaT: number; belumDinilai: number };
   indicators: Record<string, Bucket>;
 };
@@ -50,7 +59,16 @@ function emptyRow(unitId: string, unitName: string): ReportRow {
     unitName,
     registered: 0,
     measured: 0,
-    balita: { total: 0, normal: 0, underweight: 0, severelyUnderweight: 0, riskOverweight: 0 },
+    balita: {
+      total: 0,
+      normal: 0,
+      underweight: 0,
+      severelyUnderweight: 0,
+      riskOverweight: 0,
+      statureNormal: 0,
+      stunted: 0,
+      severelyStunted: 0,
+    },
     nt: { naik: 0, tidakNaik: 0, duaT: 0, belumDinilai: 0 },
     indicators: {},
   };
@@ -87,8 +105,13 @@ export async function GET(req: Request) {
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
-    const wantMembers = includeParam.includes('anggota') || includeParam.includes('detail');
-    const wantRisk = includeParam.includes('beresiko');
+    // Data per pasien hanya untuk POSYANDU & PUSKESMAS.
+    const canDetails = session.role !== 'DINKES';
+    const wantRoster = canDetails && includeParam.includes('anggota');
+    const wantDetails = canDetails && includeParam.includes('detail');
+    const wantRisk = canDetails && includeParam.includes('beresiko');
+    const wantMembers = wantRoster || wantDetails;
+    const anyPerPatient = canDetails && (wantMembers || wantRisk);
     const unitIdsParam = searchParams.get('unitIds');
 
     // Batas periode: role bawah 12 bulan, DINKES 24 bulan.
@@ -128,7 +151,7 @@ export async function GET(req: Request) {
     }
     const posyanduIds = scope.ids;
 
-    if ((wantMembers || wantRisk) && posyanduIds.length > MAX_EXPORT_UNITS) {
+    if (anyPerPatient && posyanduIds.length > MAX_EXPORT_UNITS) {
       return NextResponse.json(
         {
           error: `Terlalu banyak posyandu (${posyanduIds.length}). Maksimal ${MAX_EXPORT_UNITS} posyandu untuk export data per pasien — persempit pilihan.`,
@@ -188,10 +211,9 @@ export async function GET(req: Request) {
       return r;
     };
 
-    // Terdaftar: createdAt <= akhir periode.
-    const toMs = toExclusive.getTime();
+    // Terdaftar: createdAt sebelum akhir periode (sama dgn memberSheets).
     for (const p of patients) {
-      if (p.createdAt.getTime() <= toMs) getPosRow(p.posyanduId).registered++;
+      if (p.createdAt.getTime() < toExclusive.getTime()) getPosRow(p.posyanduId).registered++;
     }
 
     // Pengukuran terakhir per pasien dalam periode.
@@ -206,7 +228,7 @@ export async function GET(req: Request) {
       row.measured++;
 
       const category = (m.category as PatientCategory) ??
-        getPatientCategory(m.patient.birthDate, m.patient.isPregnant);
+        getPatientCategory(m.patient.birthDate, m.patient.isPregnant, m.patient.gender, m.sessionDate);
 
       if (category === 'BAYI' || category === 'BALITA_APRAS') {
         row.balita.total++;
@@ -235,6 +257,20 @@ export async function GET(req: Request) {
             case 'obese':
               row.balita.riskOverweight++;
               break;
+          }
+        }
+        const tb = res.TB_U;
+        if (tb) {
+          switch (tb.categoryKey) {
+            case 'stunted':
+              row.balita.stunted++;
+              break;
+            case 'severely_stunted':
+              row.balita.severelyStunted++;
+              break;
+            default:
+              // 'normal' + 'tall' digabung (Permenkes: "tinggi" masuk normal utk survei).
+              row.balita.statureNormal++;
           }
         }
         // N/T & 2T hanya KMS (umur 0-60 bln); kategori Apras lanjut tidak dinilai.
@@ -279,7 +315,6 @@ export async function GET(req: Request) {
     const global = emptyRow('global', 'Total');
     for (const r of rows) mergeRow(global, r);
 
-    const canDetails = session.role !== 'DINKES';
     const estimates = {
       units: posyanduIds.length,
       patients: patients.filter((p) => p.createdAt.getTime() < toExclusive.getTime()).length,
@@ -303,9 +338,19 @@ export async function GET(req: Request) {
       let members: MemberSheets | null = null;
       let risks: ExportRow[] | null = null;
 
-      if (canDetails && (wantMembers || wantRisk) && posyanduIds.length > 0) {
+      if (anyPerPatient && posyanduIds.length > 0) {
         const data = await memberSheets(posyanduIds, fromObj, toExclusive);
-        const rowCount = data.patients.length + data.measurements.length;
+        const periodEnd = new Date(toExclusive.getTime() - 1);
+        if (wantMembers) {
+          members = {};
+          if (wantRoster) members.roster = buildRoster(data.patients, data.measurements, periodEnd);
+          if (wantDetails) members.details = buildDetails(data.patients, data.measurements);
+        }
+        if (wantRisk) risks = buildRiskList(data.patients, data.measurements);
+
+        // Hitung baris sebenarnya (berisiko bisa >1 baris/pasien).
+        const rowCount =
+          (members?.roster?.length ?? 0) + (members?.details?.length ?? 0) + (risks?.length ?? 0);
         if (rowCount > MAX_EXPORT_ROWS) {
           return NextResponse.json(
             {
@@ -314,14 +359,6 @@ export async function GET(req: Request) {
             { status: 413 },
           );
         }
-        const periodEnd = new Date(toExclusive.getTime() - 1);
-        if (wantMembers) {
-          members = {
-            roster: buildRoster(data.patients, data.measurements, periodEnd),
-            details: buildDetails(data.patients, data.measurements),
-          };
-        }
-        if (wantRisk) risks = buildRiskList(data.patients, data.measurements);
       }
 
       return xlsxResponse(payload, members, risks);
@@ -341,6 +378,9 @@ function mergeRow(dst: ReportRow, src: ReportRow) {
   dst.balita.underweight += src.balita.underweight;
   dst.balita.severelyUnderweight += src.balita.severelyUnderweight;
   dst.balita.riskOverweight += src.balita.riskOverweight;
+  dst.balita.statureNormal += src.balita.statureNormal;
+  dst.balita.stunted += src.balita.stunted;
+  dst.balita.severelyStunted += src.balita.severelyStunted;
   dst.nt.naik += src.nt.naik;
   dst.nt.tidakNaik += src.nt.tidakNaik;
   dst.nt.duaT += src.nt.duaT;
@@ -372,6 +412,9 @@ function flatRow(no: number | string, r: ReportRow) {
     'Gizi Kurang': r.balita.underweight,
     'Gizi Sangat Kurang': r.balita.severelyUnderweight,
     'Gizi Risiko Lebih': r.balita.riskOverweight,
+    'Perawakan Normal': r.balita.statureNormal,
+    'Pendek (TB/U)': r.balita.stunted,
+    'Sangat Pendek (TB/U)': r.balita.severelyStunted,
     'N (naik)': r.nt.naik,
     'T (tidak naik)': r.nt.tidakNaik,
     '2T (rujuk)': r.nt.duaT,
@@ -385,7 +428,7 @@ function flatRow(no: number | string, r: ReportRow) {
   return out;
 }
 
-type MemberSheets = { roster: ExportRow[]; details: ExportRow[] };
+type MemberSheets = { roster?: ExportRow[]; details?: ExportRow[] };
 type MemberData = { patients: ExportPatient[]; measurements: ExportMeasurement[] };
 
 /** Ambil pasien + pengukuran periode untuk sekumpulan posyandu (export per pasien). */
@@ -440,33 +483,39 @@ function setCols(ws: XLSX.WorkSheet, rows: ExportRow[]) {
 function xlsxResponse(p: ReportPayload, members: MemberSheets | null, risks: ExportRow[] | null) {
   const wb = XLSX.utils.book_new();
 
-  const globalSheet = XLSX.utils.json_to_sheet([flatRow('TOTAL', p.global)]);
+  const globalRow = flatRow('TOTAL', p.global);
+  const globalSheet = XLSX.utils.json_to_sheet([globalRow]);
+  setCols(globalSheet, [globalRow]);
   XLSX.utils.book_append_sheet(wb, globalSheet, 'Ringkasan');
 
-  const unitSheet = XLSX.utils.json_to_sheet(
-    p.units.map((r, i) => flatRow(i + 1, r)),
-  );
+  const unitRows = p.units.map((r, i) => flatRow(i + 1, r));
+  const unitSheet = XLSX.utils.json_to_sheet(unitRows);
+  setCols(unitSheet, unitRows);
   XLSX.utils.book_append_sheet(wb, unitSheet, p.unitLabel);
 
-  if (members) {
+  if (members?.roster) {
     const rosterSheet = XLSX.utils.json_to_sheet(members.roster);
     setCols(rosterSheet, members.roster);
     XLSX.utils.book_append_sheet(wb, rosterSheet, 'Daftar Anggota');
+  }
 
+  if (members?.details) {
     const detailSheet = XLSX.utils.json_to_sheet(members.details);
     setCols(detailSheet, members.details);
     XLSX.utils.book_append_sheet(wb, detailSheet, 'Detail Pengukuran');
   }
 
   if (risks) {
-    const riskSheet = XLSX.utils.json_to_sheet(risks);
+    const riskSheet = risks.length
+      ? XLSX.utils.json_to_sheet(risks)
+      : XLSX.utils.aoa_to_sheet([['Tidak ada temuan risiko pada periode ini.']]);
     setCols(riskSheet, risks);
     XLSX.utils.book_append_sheet(wb, riskSheet, 'Daftar Berisiko');
   }
 
   const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
   const scopeLabel =
-    members && p.units.length === 1 ? sanitizeName(p.units[0].unitName) : sanitizeName(p.unitLabel);
+    p.units.length === 1 ? sanitizeName(p.units[0].unitName) : sanitizeName(p.unitLabel);
   const filename = `Rekap_${scopeLabel}_${p.from}_${p.to}.xlsx`;
   return new NextResponse(buffer, {
     headers: {

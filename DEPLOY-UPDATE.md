@@ -130,6 +130,46 @@ curl -sI --resolve posyandunyawiji.my.id:443:127.0.0.1 https://posyandunyawiji.m
 
 ---
 
+## 5. Rilis spesifik — kolom input sesuai sasaran (ADR 0005)
+
+Perubahan ini **frontend-only** (tanpa perubahan `prisma/`) → cukup **Jalur A**.
+Kolom pengukuran kini mengikuti umur/sasaran (bayi tanpa kolesterol, dsb),
+dihitung live dari tanggal lahir + bulan sesi. Tidak ada migrasi DB; data lama
+tetap aman dan diabaikan analitik bila tak lagi berlaku.
+
+```bash
+cd /opt/nyawiji
+git pull
+npm ci
+git diff --name-only HEAD@{1} HEAD -- prisma/   # HARUS kosong
+
+npm run build            # wajib sukses
+pm2 restart posyandu-nyawiji
+pm2 logs posyandu-nyawiji --lines 50
+curl -I http://127.0.0.1:3001          # 200
+```
+
+Verifikasi cepat (login **POSYANDU**, buka input pengukuran):
+
+1. Pasien **Bayi / Balita** → Lab hanya **Hemoglobin (HB)**; tak ada Kolesterol/GDS/Asam Urat.
+2. Pasien **Lansia** → ada **Gula Darah, Kolesterol, Asam Urat, Lingkar Perut**.
+3. Pasien **Ibu Hamil** → ada **Usia Kehamilan** + Tensi + LiLA.
+4. Edit sesi **bulan lampau** (saat pasien masih bayi) → kolom ikut menyesuaikan.
+
+Rollback (frontend-only, tanpa DB):
+
+```bash
+cd /opt/nyawiji
+git revert <commit_ini> --no-edit
+npm run build
+pm2 restart posyandu-nyawiji
+```
+
+> Tanpa perubahan schema: **tidak perlu** `prisma db push`, `db:backfill`, atau
+> `rm -rf .next` (tidak ada route yang dihapus di rilis ini).
+
+---
+
 ## Jebakan (sering kejadian)
 
 - **`pm2 restart` sebelum `npm run build` sukses** → crash-loop

@@ -18,6 +18,16 @@ const patient: PatientData = {
   createdAt: '2023-01-01T00:00:00.000Z',
 };
 
+const lansiaPatient: PatientData = {
+  ...patient,
+  id: 'p2',
+  regNumber: 'POS-WNS-01-2026-0002',
+  name: 'Mbah Tarno',
+  birthDate: '1960-01-01T00:00:00.000Z',
+  category: 'LANSIA',
+  ageDisplay: '66 Tahun',
+};
+
 const calls: Array<{ url: string; method: string }> = [];
 
 function fetchMock(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
@@ -36,12 +46,13 @@ function fetchMock(input: RequestInfo | URL, init?: RequestInit): Promise<Respon
       )
     );
   }
-  if (method === 'GET' && url.includes('/api/patients/p1')) {
+  if (method === 'GET' && url.includes('/api/patients/')) {
+    const p = url.includes('/api/patients/p2') ? lansiaPatient : patient;
     return Promise.resolve(
       new Response(
         JSON.stringify({
           success: true,
-          data: { ...patient, todayMeasurement: null, measurements: [] },
+          data: { ...p, todayMeasurement: null, measurements: [] },
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       )
@@ -91,5 +102,32 @@ describe('DynamicMeasurementForm autosave behavior', () => {
 
     expect(listFetches).toHaveLength(0);
     expect(autosaves.length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('DynamicMeasurementForm kolom sesuai sasaran', () => {
+  it('balita: tanpa Kolesterol Total, tetap ada Hemoglobin (HB)', async () => {
+    render(
+      <AuthProvider>
+        <DynamicMeasurementForm patient={patient} onBackToList={() => {}} onShowQR={() => {}} />
+      </AuthProvider>
+    );
+    await waitFor(() => expect(screen.getByText('Hemoglobin (HB)')).toBeTruthy());
+
+    expect(screen.queryByText('Kolesterol Total')).toBeNull();
+    expect(screen.queryByText('Gula Darah (GDS)')).toBeNull();
+    expect(screen.queryByText('Lingkar Perut')).toBeNull();
+  });
+
+  it('lansia: Kolesterol Total & Lingkar Perut muncul', async () => {
+    render(
+      <AuthProvider>
+        <DynamicMeasurementForm patient={lansiaPatient} onBackToList={() => {}} onShowQR={() => {}} />
+      </AuthProvider>
+    );
+    await waitFor(() => expect(screen.getByText('Kolesterol Total')).toBeTruthy());
+
+    expect(screen.getByText('Gula Darah (GDS)')).toBeTruthy();
+    expect(screen.getByText('Lingkar Perut')).toBeTruthy();
   });
 });

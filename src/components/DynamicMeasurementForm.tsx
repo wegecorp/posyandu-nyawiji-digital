@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { PatientData, MeasurementData } from '@/lib/types';
+import { PatientData, MeasurementData, PatientCategory } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
 import { useAutoSave, clearQueuedMeasurement } from '@/lib/offline-sync';
 import {
@@ -26,7 +26,8 @@ import {
   Pencil,
   X,
 } from 'lucide-react';
-import { getCategoryBadge, todayLocalISODate } from '@/lib/utils';
+import { getCategoryBadge, getPatientCategory, todayLocalISODate } from '@/lib/utils';
+import { fieldAppliesTo } from '@/lib/measurement-fields';
 import {
   validateMeasurementValue,
   validateBloodPressure,
@@ -81,10 +82,6 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   onShowQR,
 }) => {
   const { user } = useAuth();
-  const category = patient.category || 'BALITA_APRAS';
-  const badge = getCategoryBadge(category);
-  // Engine antropometri hanya 0-60 bln → status gizi/LK/posisi untuk Bayi & Balita/Apras.
-  const isUnderFive = category === 'BAYI' || category === 'BALITA_APRAS';
 
   // Form Fields State — inisialisasi instan (0ms) dari data pengukuran yang sudah ada
   const tmInit = patient.todayMeasurement;
@@ -112,6 +109,35 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   const [sessionDate, setSessionDate] = useState<string>(
     () => `${todayLocalISODate().slice(0, 7)}-01`,
   );
+
+  // Kategori sasaran dihitung live dari tanggal lahir & bulan sesi — umur berubah,
+  // field ikut berubah otomatis (termasuk saat mengedit sesi lampau).
+  const effectiveCategory: PatientCategory = React.useMemo(() => {
+    if (patient.isPregnant && patient.gender !== 'L') return 'BUMIL';
+    return getPatientCategory(
+      patient.birthDate,
+      patient.isPregnant,
+      patient.gender,
+      new Date(`${sessionDate}T00:00:00`),
+    );
+  }, [patient.birthDate, patient.isPregnant, patient.gender, sessionDate]);
+  const badge = getCategoryBadge(effectiveCategory);
+  // Engine antropometri hanya 0-60 bln → status gizi/LK/posisi untuk Bayi & Balita/Apras.
+  const isUnderFive = effectiveCategory === 'BAYI' || effectiveCategory === 'BALITA_APRAS';
+
+  const showArm = fieldAppliesTo('armCircumference', effectiveCategory);
+  const showWaist = fieldAppliesTo('waistCircumference', effectiveCategory);
+  const showTensi = fieldAppliesTo('systolic', effectiveCategory);
+  const showGestational = fieldAppliesTo('gestationalAge', effectiveCategory);
+  const showBloodSugar = fieldAppliesTo('bloodSugar', effectiveCategory);
+  const showCholesterol = fieldAppliesTo('cholesterol', effectiveCategory);
+  const showUricAcid = fieldAppliesTo('uricAcid', effectiveCategory);
+  const showHemoglobin = fieldAppliesTo('hemoglobin', effectiveCategory);
+  const showVision = fieldAppliesTo('visionStatus', effectiveCategory);
+  const showHearing = fieldAppliesTo('hearingStatus', effectiveCategory);
+  const showTb = fieldAppliesTo('tbScreeningStatus', effectiveCategory);
+  const showLab = showBloodSugar || showCholesterol || showUricAcid || showHemoglobin;
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [activeTab, setActiveTab] = useState<'form' | 'history'>('form');
@@ -216,12 +242,12 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   // ASI eksklusif: hanya Bayi, dan berhenti setelah pernah dijawab "Tidak" pada
   // bulan SEBELUM sesi yang sedang dibuka (bulan itu sendiri tetap bisa dikoreksi).
   const showAsi = React.useMemo(() => {
-    if (category !== 'BAYI') return false;
+    if (effectiveCategory !== 'BAYI') return false;
     const targetYm = sessionDate.slice(0, 7);
     return !historyList.some(
       (m) => m.exclusiveBreastfeeding === false && localYearMonth(m.sessionDate) < targetYm,
     );
-  }, [category, historyList, sessionDate]);
+  }, [effectiveCategory, historyList, sessionDate]);
 
   // Buka bulan tertentu untuk diedit.
   const handleEditMonth = (isoDate: string) => {
@@ -689,105 +715,65 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
             </SectionCard>
           )}
 
-          {/* Ukur Tambahan — semua kategori (opsional) */}
-          <SectionCard>
-            <SectionHeader
-              icon={Ruler}
-              title="Ukur Tambahan"
-              hint="Opsional — untuk semua kategori"
-            />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <MetricField
-                label="Lingkar Lengan Atas (LiLA)"
-                unit="cm"
-                value={armCircumference}
-                onChange={(v) => handleFieldChange('armCircumference', v)}
-                error={errors.armCircumference}
-                onClear={isReadOnly ? undefined : () => handleFieldChange('armCircumference', '')}
-              />
-              <MetricField
-                label="Lingkar Perut"
-                unit="cm"
-                value={waistCircumference}
-                onChange={(v) => handleFieldChange('waistCircumference', v)}
-                error={errors.waistCircumference}
-                onClear={isReadOnly ? undefined : () => handleFieldChange('waistCircumference', '')}
-              />
-            </div>
-          </SectionCard>
-
-          {/* D. Ukur Khusus Remaja (10-17 th) */}
-          {category === 'REMAJA' && (
+          {/* Ukur Tambahan — menyesuaikan sasaran (opsional) */}
+          {(showArm || showWaist) && (
             <SectionCard>
               <SectionHeader
-                icon={HeartPulse}
-                title="Ukur Khusus Remaja"
-                hint="Tekanan darah"
-              />
-              <BloodPressureField
-                systolic={systolic}
-                diastolic={diastolic}
-                onSystolic={(v) => handleFieldChange('systolic', v)}
-                onDiastolic={(v) => handleFieldChange('diastolic', v)}
-                error={errors.systolic || errors.diastolic}
-                onClear={
-                  isReadOnly
-                    ? undefined
-                    : () => {
-                        handleFieldChange('systolic', '');
-                        handleFieldChange('diastolic', '');
-                      }
-                }
-              />
-            </SectionCard>
-          )}
-
-          {/* E. Ukur Khusus Dewasa / Lansia */}
-          {(category === 'DEWASA' || category === 'LANSIA') && (
-            <SectionCard>
-              <SectionHeader
-                icon={HeartPulse}
-                title="Ukur Khusus Dewasa / Lansia"
-                hint="Tekanan darah"
-              />
-              <BloodPressureField
-                systolic={systolic}
-                diastolic={diastolic}
-                onSystolic={(v) => handleFieldChange('systolic', v)}
-                onDiastolic={(v) => handleFieldChange('diastolic', v)}
-                error={errors.systolic || errors.diastolic}
-                onClear={
-                  isReadOnly
-                    ? undefined
-                    : () => {
-                        handleFieldChange('systolic', '');
-                        handleFieldChange('diastolic', '');
-                      }
-                }
-              />
-            </SectionCard>
-          )}
-
-          {/* F. Pemeriksaan Ibu Hamil */}
-          {category === 'BUMIL' && (
-            <SectionCard>
-              <SectionHeader
-                icon={HeartPulse}
-                title="Pemeriksaan Ibu Hamil"
-                hint="Usia kehamilan & tekanan darah"
+                icon={Ruler}
+                title="Ukur Tambahan"
+                hint="Opsional — sesuai kelompok sasaran"
               />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <MetricField
-                  label="Usia Kehamilan"
-                  unit="minggu"
-                  value={gestationalAge}
-                  onChange={(v) => handleFieldChange('gestationalAge', v)}
-                  inputMode="numeric"
-                  placeholder="0"
-                  error={errors.gestationalAge}
-                  onClear={isReadOnly ? undefined : () => handleFieldChange('gestationalAge', '')}
-                />
+                {showArm && (
+                  <MetricField
+                    label="Lingkar Lengan Atas (LiLA)"
+                    unit="cm"
+                    value={armCircumference}
+                    onChange={(v) => handleFieldChange('armCircumference', v)}
+                    error={errors.armCircumference}
+                    onClear={isReadOnly ? undefined : () => handleFieldChange('armCircumference', '')}
+                  />
+                )}
+                {showWaist && (
+                  <MetricField
+                    label="Lingkar Perut"
+                    unit="cm"
+                    value={waistCircumference}
+                    onChange={(v) => handleFieldChange('waistCircumference', v)}
+                    error={errors.waistCircumference}
+                    onClear={isReadOnly ? undefined : () => handleFieldChange('waistCircumference', '')}
+                  />
+                )}
               </div>
+            </SectionCard>
+          )}
+
+          {/* Tensi / Pemeriksaan Ibu Hamil — Remaja, Dewasa, Lansia, Bumil */}
+          {showTensi && (
+            <SectionCard>
+              <SectionHeader
+                icon={HeartPulse}
+                title={effectiveCategory === 'BUMIL' ? 'Pemeriksaan Ibu Hamil' : 'Tekanan Darah'}
+                hint={
+                  effectiveCategory === 'BUMIL'
+                    ? 'Usia kehamilan & tekanan darah'
+                    : 'Tekanan darah (tensi)'
+                }
+              />
+              {showGestational && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <MetricField
+                    label="Usia Kehamilan"
+                    unit="minggu"
+                    value={gestationalAge}
+                    onChange={(v) => handleFieldChange('gestationalAge', v)}
+                    inputMode="numeric"
+                    placeholder="0"
+                    error={errors.gestationalAge}
+                    onClear={isReadOnly ? undefined : () => handleFieldChange('gestationalAge', '')}
+                  />
+                </div>
+              )}
               <BloodPressureField
                 systolic={systolic}
                 diastolic={diastolic}
@@ -806,119 +792,137 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
             </SectionCard>
           )}
 
-          {/* Skrining Indra — semua kategori (opsional) */}
-          <SectionCard>
-            <SectionHeader
-              icon={Eye}
-              title="Skrining Indra"
-              hint="Hasil pemeriksaan mata & telinga"
-            />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <ScreeningField
+          {/* Skrining Indra (opsional) */}
+          {(showVision || showHearing) && (
+            <SectionCard>
+              <SectionHeader
                 icon={Eye}
-                label="Skrining Mata"
-                value={visionStatus}
-                onChange={(v) => handleFieldChange('visionStatus', v)}
-                onClear={isReadOnly ? undefined : () => handleFieldChange('visionStatus', '')}
+                title="Skrining Indra"
+                hint="Hasil pemeriksaan mata & telinga"
               />
-              <ScreeningField
-                icon={Ear}
-                label="Skrining Telinga"
-                value={hearingStatus}
-                onChange={(v) => handleFieldChange('hearingStatus', v)}
-                onClear={isReadOnly ? undefined : () => handleFieldChange('hearingStatus', '')}
-              />
-            </div>
-          </SectionCard>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {showVision && (
+                  <ScreeningField
+                    icon={Eye}
+                    label="Skrining Mata"
+                    value={visionStatus}
+                    onChange={(v) => handleFieldChange('visionStatus', v)}
+                    onClear={isReadOnly ? undefined : () => handleFieldChange('visionStatus', '')}
+                  />
+                )}
+                {showHearing && (
+                  <ScreeningField
+                    icon={Ear}
+                    label="Skrining Telinga"
+                    value={hearingStatus}
+                    onChange={(v) => handleFieldChange('hearingStatus', v)}
+                    onClear={isReadOnly ? undefined : () => handleFieldChange('hearingStatus', '')}
+                  />
+                )}
+              </div>
+            </SectionCard>
+          )}
 
-          {/* Skrining TB — semua kategori (opsional) */}
-          <SectionCard>
-            <SectionHeader
-              icon={Activity}
-              title="Skrining Tuberkulosis (TB)"
-              hint="Apakah berisiko TB bulan ini?"
-            />
-            <div className="grid grid-cols-2 bg-white p-1 rounded-xl border border-[#e9edef] gap-1">
-              {([
-                { value: 'TIDAK_BERESIKO', label: 'Tidak Beresiko' },
-                { value: 'BERESIKO', label: 'Beresiko' },
-              ] as const).map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  disabled={isReadOnly}
-                  onClick={() =>
-                    handleFieldChange('tbScreeningStatus', tbScreeningStatus === opt.value ? '' : opt.value)
-                  }
-                  className={`py-2.5 rounded-lg text-xs font-extrabold border transition-all disabled:opacity-60 ${
-                    tbScreeningStatus === opt.value
-                      ? opt.value === 'BERESIKO'
-                        ? 'bg-[#dc2626] text-white border-[#dc2626]'
-                        : 'bg-[#075e54] text-white border-[#075e54]'
-                      : 'bg-[#f0f2f5] text-[#54656f] border-[#e9edef]'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-            <p className="text-[10px] text-[#8696a0] font-medium">
-              Tekan pilihan yang aktif untuk mengosongkan.
-            </p>
-          </SectionCard>
+          {/* Skrining TB (opsional) */}
+          {showTb && (
+            <SectionCard>
+              <SectionHeader
+                icon={Activity}
+                title="Skrining Tuberkulosis (TB)"
+                hint="Apakah berisiko TB bulan ini?"
+              />
+              <div className="grid grid-cols-2 bg-white p-1 rounded-xl border border-[#e9edef] gap-1">
+                {([
+                  { value: 'TIDAK_BERESIKO', label: 'Tidak Beresiko' },
+                  { value: 'BERESIKO', label: 'Beresiko' },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    disabled={isReadOnly}
+                    onClick={() =>
+                      handleFieldChange('tbScreeningStatus', tbScreeningStatus === opt.value ? '' : opt.value)
+                    }
+                    className={`py-2.5 rounded-lg text-xs font-extrabold border transition-all disabled:opacity-60 ${
+                      tbScreeningStatus === opt.value
+                        ? opt.value === 'BERESIKO'
+                          ? 'bg-[#dc2626] text-white border-[#dc2626]'
+                          : 'bg-[#075e54] text-white border-[#075e54]'
+                        : 'bg-[#f0f2f5] text-[#54656f] border-[#e9edef]'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-[#8696a0] font-medium">
+                Tekan pilihan yang aktif untuk mengosongkan.
+              </p>
+            </SectionCard>
+          )}
 
-          {/* G. Lab Sederhana */}
-          <SectionCard>
-            <SectionHeader
-              icon={TestTube}
-              title="Laboratorium Sederhana"
-              hint="Opsional — isi hanya jika alat tersedia"
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <MetricField
-                label="Gula Darah (GDS)"
-                unit="mg/dL"
-                value={bloodSugar}
-                onChange={(v) => handleFieldChange('bloodSugar', v)}
-                inputMode="numeric"
-                placeholder="0"
-                size="sm"
-                error={errors.bloodSugar}
-                onClear={isReadOnly ? undefined : () => handleFieldChange('bloodSugar', '')}
+          {/* Lab Sederhana — kolom menyesuaikan sasaran (mis. balita hanya HB) */}
+          {showLab && (
+            <SectionCard>
+              <SectionHeader
+                icon={TestTube}
+                title="Laboratorium Sederhana"
+                hint="Opsional — isi hanya jika alat tersedia"
               />
-              <MetricField
-                label="Kolesterol Total"
-                unit="mg/dL"
-                value={cholesterol}
-                onChange={(v) => handleFieldChange('cholesterol', v)}
-                inputMode="numeric"
-                placeholder="0"
-                size="sm"
-                error={errors.cholesterol}
-                onClear={isReadOnly ? undefined : () => handleFieldChange('cholesterol', '')}
-              />
-              <MetricField
-                label="Asam Urat"
-                unit="mg/dL"
-                value={uricAcid}
-                onChange={(v) => handleFieldChange('uricAcid', v)}
-                placeholder="0.0"
-                size="sm"
-                error={errors.uricAcid}
-                onClear={isReadOnly ? undefined : () => handleFieldChange('uricAcid', '')}
-              />
-              <MetricField
-                label="Hemoglobin (HB)"
-                unit="g/dL"
-                value={hemoglobin}
-                onChange={(v) => handleFieldChange('hemoglobin', v)}
-                placeholder="0.0"
-                size="sm"
-                error={errors.hemoglobin}
-                onClear={isReadOnly ? undefined : () => handleFieldChange('hemoglobin', '')}
-              />
-            </div>
-          </SectionCard>
+              <div className="grid grid-cols-2 gap-3">
+                {showBloodSugar && (
+                  <MetricField
+                    label="Gula Darah (GDS)"
+                    unit="mg/dL"
+                    value={bloodSugar}
+                    onChange={(v) => handleFieldChange('bloodSugar', v)}
+                    inputMode="numeric"
+                    placeholder="0"
+                    size="sm"
+                    error={errors.bloodSugar}
+                    onClear={isReadOnly ? undefined : () => handleFieldChange('bloodSugar', '')}
+                  />
+                )}
+                {showCholesterol && (
+                  <MetricField
+                    label="Kolesterol Total"
+                    unit="mg/dL"
+                    value={cholesterol}
+                    onChange={(v) => handleFieldChange('cholesterol', v)}
+                    inputMode="numeric"
+                    placeholder="0"
+                    size="sm"
+                    error={errors.cholesterol}
+                    onClear={isReadOnly ? undefined : () => handleFieldChange('cholesterol', '')}
+                  />
+                )}
+                {showUricAcid && (
+                  <MetricField
+                    label="Asam Urat"
+                    unit="mg/dL"
+                    value={uricAcid}
+                    onChange={(v) => handleFieldChange('uricAcid', v)}
+                    placeholder="0.0"
+                    size="sm"
+                    error={errors.uricAcid}
+                    onClear={isReadOnly ? undefined : () => handleFieldChange('uricAcid', '')}
+                  />
+                )}
+                {showHemoglobin && (
+                  <MetricField
+                    label="Hemoglobin (HB)"
+                    unit="g/dL"
+                    value={hemoglobin}
+                    onChange={(v) => handleFieldChange('hemoglobin', v)}
+                    placeholder="0.0"
+                    size="sm"
+                    error={errors.hemoglobin}
+                    onClear={isReadOnly ? undefined : () => handleFieldChange('hemoglobin', '')}
+                  />
+                )}
+              </div>
+            </SectionCard>
+          )}
 
           {/* H. Catatan */}
           <SectionCard>

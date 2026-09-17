@@ -324,12 +324,14 @@ Form pengukuran menyesuaikan kolomnya **secara otomatis** dengan umur pasien (di
 
 | Kelompok (label di aplikasi) | Rentang umur | Ukuran khusus yang ikut muncul |
 |---|---|---|
-| **Bayi (0-5 bln)** | 0–5 bulan | Lingkar Kepala (LK); **"Panjang / TB"**; **ASI Eksklusif** |
-| **Balita & Apras (6 bln-6 th)** | 6 bulan–6 tahun 11 bulan | Lingkar Kepala (LK); **"Panjang / TB"**; status gizi (0–60 bln) |
-| **Remaja (7-17 th)** | 7–17 tahun | Tekanan Darah (Tensi) |
-| **Dewasa (18-59 th)** | 18–59 tahun | Tekanan Darah (Tensi) |
-| **Lansia (60+ th)** | 60 tahun ke atas | Tekanan Darah (Tensi) |
-| **Ibu Hamil (Bumil)** | semua umur | Usia Kehamilan + Tekanan Darah |
+| **Bayi (0-5 bln)** | 0–5 bulan | Lingkar Kepala (LK); **"Panjang / TB"**; **ASI Eksklusif**; Hemoglobin (HB) |
+| **Balita & Apras (6 bln-6 th)** | 6 bulan–6 tahun 11 bulan | Lingkar Kepala (LK); **"Panjang / TB"**; status gizi (0–60 bln); LiLA; HB |
+| **Remaja (7-17 th)** | 7–17 tahun | Tekanan Darah (Tensi); LiLA; lab PTM (GDS, Kolesterol, Asam Urat) bila alat tersedia; HB |
+| **Dewasa (18-59 th)** | 18–59 tahun | Tekanan Darah (Tensi); LiLA; Lingkar Perut; lab PTM; HB |
+| **Lansia (60+ th)** | 60 tahun ke atas | Tekanan Darah (Tensi); LiLA; Lingkar Perut; lab PTM; HB |
+| **Ibu Hamil (Bumil)** | semua umur | Usia Kehamilan + Tekanan Darah; LiLA (KEK); HB |
+
+> Kolom **Laboratorium Sederhana** ikut menyesuaikan sasaran: **Kolesterol, Gula Darah, dan Asam Urat** hanya muncul untuk **Remaja, Dewasa, dan Lansia** (skrining PTM). Bayi & Balita hanya melihat **Hemoglobin (HB)**. Jadi tidak ada lagi kolom kolesterol untuk bayi.
 
 > Batas kelompok memakai **bulan penuh**: 6 bulan 1 hari sudah masuk **Balita & Apras** (bukan Bayi lagi); tepat 7 tahun masuk **Remaja**; tepat 60 tahun masuk **Lansia**.
 >
@@ -346,13 +348,13 @@ Form pengukuran menyesuaikan kolomnya **secara otomatis** dengan umur pasien (di
 | Lingkar Kepala (LK) | cm | Bayi & Balita/Apras | Opsional |
 | ASI Eksklusif | Ya / Tidak | Bayi (0–5 bln) | Opsional — berhenti ditanya setelah dijawab **Tidak** |
 | Skrining TB | Beresiko / Tidak Beresiko | Semua kelompok | Opsional — ditanya tiap bulan |
-| Lingkar Lengan Atas (LiLA) | cm | Semua kelompok | Opsional |
-| Lingkar Perut | cm | Semua kelompok | Opsional |
+| Lingkar Lengan Atas (LiLA) | cm | Balita & Apras, Remaja, Dewasa, Lansia, Ibu Hamil | Opsional |
+| Lingkar Perut | cm | Dewasa, Lansia | Opsional |
 | Tekanan Darah (Tensi) | mmHg | Remaja, Dewasa, Lansia, Ibu Hamil | Opsional |
 | Usia Kehamilan | minggu | Ibu Hamil | Opsional |
-| Gula Darah (GDS) | mg/dL | Semua kelompok (jika alat tersedia) | Opsional |
-| Kolesterol Total | mg/dL | Semua kelompok (jika alat tersedia) | Opsional |
-| Asam Urat | mg/dL | Semua kelompok (jika alat tersedia) | Opsional |
+| Gula Darah (GDS) | mg/dL | Remaja, Dewasa, Lansia (jika alat tersedia) | Opsional |
+| Kolesterol Total | mg/dL | Remaja, Dewasa, Lansia (jika alat tersedia) | Opsional |
+| Asam Urat | mg/dL | Remaja, Dewasa, Lansia (jika alat tersedia) | Opsional |
 | Hemoglobin (HB) | g/dL | Semua kelompok (jika alat tersedia) | Opsional |
 | Skrining Mata | Normal / Tidak Normal | Semua kelompok | Opsional |
 | Skrining Telinga | Normal / Tidak Normal | Semua kelompok | Opsional |

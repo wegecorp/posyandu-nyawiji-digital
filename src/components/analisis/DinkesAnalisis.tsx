@@ -22,6 +22,7 @@ import { EmptyState } from './EmptyState';
 import { INDICATORS } from '@/lib/clinical';
 import { PARTISIPASI_BURUK_THRESHOLD } from '@/lib/clinical';
 import { useBackLayer } from '@/lib/back-navigation';
+import { AnalisisPageSkeleton } from '@/components/Skeleton';
 
 type CoverageData = { ym: string; unitId: string; unitName: string; numerator: number; denominator: number; participation: number };
 type OutcomeData = {
@@ -273,11 +274,7 @@ export function DinkesAnalisis() {
   const activeMonth = drillHcId ? drillLatestMonth : latestMonth;
 
   if (loading && coverageData.length === 0) {
-    return (
-      <div className="p-8 text-center text-sm font-bold text-[#54656f]">
-        Memuat data statistik...
-      </div>
-    );
+    return <AnalisisPageSkeleton />;
   }
 
   const hasAnyData = coverageData.some((d) => d.numerator > 0);

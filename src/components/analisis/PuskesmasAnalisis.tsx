@@ -22,6 +22,7 @@ import { UnitScoreboard } from './UnitScoreboard';
 import { EmptyState } from './EmptyState';
 import { PARTISIPASI_BURUK_THRESHOLD, INDICATORS } from '@/lib/clinical';
 import { useBackLayer } from '@/lib/back-navigation';
+import { AnalisisPageSkeleton } from '@/components/Skeleton';
 
 
 type CoverageData = { ym: string; unitId: string; unitName: string; numerator: number; denominator: number; participation: number };
@@ -140,7 +141,7 @@ export function PuskesmasAnalisis() {
   }, [latestOutcome]);
 
   if (loading && posyanduCoverage.length === 0) {
-    return <div className="p-8 text-center text-sm font-bold text-[#54656f]">Memuat data statistik...</div>;
+    return <AnalisisPageSkeleton />;
   }
 
   const hasAnyData = posyanduCoverage.some((d) => d.numerator > 0);

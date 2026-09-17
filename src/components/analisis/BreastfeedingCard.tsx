@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Baby } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
+import { ChartCardSkeleton } from '@/components/Skeleton';
 import { BreastfeedingDrillSheet, formatYM } from './BreastfeedingDrillSheet';
 import { useBackLayer } from '@/lib/back-navigation';
 
@@ -79,11 +80,7 @@ export function BreastfeedingCard({
   );
 
   if (loading && rows.length === 0) {
-    return (
-      <ChartCard title="ASI Eksklusif (Bayi)">
-        <p className="py-6 text-center text-xs font-bold text-[#54656f]">Memuat data...</p>
-      </ChartCard>
-    );
+    return <ChartCardSkeleton height="h-44" />;
   }
 
   if (!latest) {

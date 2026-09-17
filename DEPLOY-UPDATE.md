@@ -130,7 +130,19 @@ curl -sI --resolve posyandunyawiji.my.id:443:127.0.0.1 https://posyandunyawiji.m
 
 ---
 
-## 5. Rilis spesifik — kolom input sesuai sasaran (ADR 0005)
+## 5. Pembaruan Nginx (Gzip + Static File Caching)
+
+Bila ada pembaruan konfigurasi Nginx (`deploy/nginx-posyandu.conf`):
+
+```bash
+cd /opt/nyawiji && git pull
+sudo cp deploy/nginx-posyandu.conf /etc/nginx/sites-available/posyandu
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+---
+
+## 6. Rilis spesifik — kolom input sesuai sasaran (ADR 0005)
 
 Perubahan ini **frontend-only** (tanpa perubahan `prisma/`) → cukup **Jalur A**.
 Kolom pengukuran kini mengikuti umur/sasaran (bayi tanpa kolesterol, dsb),

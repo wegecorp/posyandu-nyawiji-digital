@@ -23,6 +23,7 @@ import {
   Search,
 } from 'lucide-react';
 import { useBackLayer } from '@/lib/back-navigation';
+import { DashboardListSkeleton } from '@/components/Skeleton';
 
 const inputCls =
   'w-full px-3.5 py-2.5 text-xs bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all';
@@ -441,10 +442,7 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
 
       {/* List */}
       {isLoading ? (
-        <div className="p-12 flex flex-col items-center gap-2 text-xs font-bold text-[#54656f]">
-          <RefreshCw className="w-5 h-5 animate-spin text-[#128c7e]" />
-          Memuat posyandu binaan...
-        </div>
+        <DashboardListSkeleton count={5} />
       ) : posyandus.length === 0 ? (
         <div className="bg-white rounded-2xl p-8 border border-[#e9edef] text-center space-y-2 shadow-xs">
           <p className="text-xs text-[#54656f] font-bold">Belum ada akun Posyandu di bawah Puskesmas ini.</p>

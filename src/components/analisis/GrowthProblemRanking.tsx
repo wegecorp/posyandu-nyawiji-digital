@@ -99,9 +99,10 @@ export function GrowthProblemRanking({
         </div>
 
         {loading ? (
-          <div className="py-8 flex flex-col items-center gap-2 text-xs font-bold text-[#54656f]">
-            <RefreshCw className="w-5 h-5 animate-spin text-[#128c7e]" />
-            Memuat data...
+          <div className="space-y-2 py-2" aria-busy="true">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-11 w-full bg-[#f0f2f5] rounded-xl animate-pulse" />
+            ))}
           </div>
         ) : units.length === 0 ? (
           <p className="py-8 text-center text-xs font-bold text-[#54656f]">

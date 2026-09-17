@@ -18,6 +18,7 @@ import { OutcomeDonut } from './OutcomeDonut';
 import { PeriodControl, periodToRange } from './PeriodControl';
 import { EmptyState } from './EmptyState';
 import { INDICATORS } from '@/lib/clinical';
+import { AnalisisPageSkeleton } from '@/components/Skeleton';
 
 type CoverageData = { ym: string; unitId: string; unitName: string; numerator: number; denominator: number; participation: number };
 type OutcomeData = { ym: string; unitId: string; unitName: string; total: number; normal: number; abnormal: number; notAssessed: number; abnormalByIndicator: Record<string, number> };
@@ -123,7 +124,7 @@ export function PosyanduAnalisis() {
   }, [latestAbnormal]);
 
   if (loading && myCoverage.length === 0) {
-    return <div className="p-8 text-center text-sm font-bold text-[#54656f]">Memuat data statistik...</div>;
+    return <AnalisisPageSkeleton />;
   }
 
   const hasAnyData = myCoverage.some((d) => d.numerator > 0);

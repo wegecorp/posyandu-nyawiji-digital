@@ -93,7 +93,9 @@ export function GrowthStatusDistribution({ from, to, hcId }: { from: string; to:
         </div>
 
         {loading ? (
-          <p className="py-8 text-center text-xs font-bold text-[#54656f]">Memuat data status gizi...</p>
+          <div className="w-full h-44 bg-[#f0f2f5] rounded-xl animate-pulse flex items-center justify-center text-xs font-bold text-[#8696a0]">
+            Memuat diagram status gizi...
+          </div>
         ) : !hasStatus ? (
           <p className="py-8 text-center text-xs font-bold text-[#54656f]">
             Belum ada balita dengan status gizi terhitung pada periode ini.

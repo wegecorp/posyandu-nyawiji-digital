@@ -42,3 +42,47 @@ export const FormLoadingSkeleton: React.FC = () => (
     <div className="h-11 w-full bg-[#e9edef] rounded-full mt-4" />
   </div>
 );
+
+export const DashboardListSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => (
+  <div className="space-y-3" aria-busy="true" aria-label="Memuat data dashboard">
+    {Array.from({ length: count }).map((_, i) => (
+      <div key={i} className="bg-white rounded-[20px] border border-[#e9edef] p-4 shadow-xs animate-pulse flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="w-9 h-9 rounded-full bg-[#f0f2f5] shrink-0" />
+          <div className="space-y-2 min-w-0 flex-1">
+            <div className="h-4 w-40 sm:w-56 bg-[#e9edef] rounded-md" />
+            <div className="h-3 w-28 bg-[#f0f2f5] rounded-md" />
+          </div>
+        </div>
+        <div className="w-8 h-8 rounded-full bg-[#f0f2f5] shrink-0" />
+      </div>
+    ))}
+  </div>
+);
+
+export const ChartCardSkeleton: React.FC<{ height?: string }> = ({ height = 'h-48' }) => (
+  <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#e9edef] shadow-xs animate-pulse space-y-3" aria-busy="true">
+    <div className="space-y-1.5">
+      <div className="h-4 w-36 bg-[#e9edef] rounded-md" />
+      <div className="h-3 w-48 bg-[#f0f2f5] rounded-md" />
+    </div>
+    <div className={`w-full ${height} bg-[#f0f2f5] rounded-xl flex items-center justify-center`} />
+  </div>
+);
+
+export const AnalisisPageSkeleton: React.FC = () => (
+  <div className="space-y-4" aria-busy="true" aria-label="Memuat analisis statistik">
+    {/* Header bar placeholder */}
+    <div className="flex items-center justify-between animate-pulse">
+      <div className="h-5 w-44 bg-[#e9edef] rounded-md" />
+      <div className="h-8 w-32 bg-[#f0f2f5] rounded-full" />
+    </div>
+    {/* Main large chart card */}
+    <ChartCardSkeleton height="h-56" />
+    {/* 2-column smaller cards */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <ChartCardSkeleton height="h-40" />
+      <ChartCardSkeleton height="h-40" />
+    </div>
+  </div>
+);

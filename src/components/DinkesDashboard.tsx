@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { puskesmasUsernameBase } from '@/lib/names';
 import { useBackLayer } from '@/lib/back-navigation';
+import { DashboardListSkeleton } from '@/components/Skeleton';
 
 interface DinkesDashboardProps {
   onExportAll: () => void;
@@ -367,10 +368,7 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
 
       {/* List */}
       {isLoading ? (
-        <div className="p-12 flex flex-col items-center gap-2 text-xs font-bold text-[#54656f]">
-          <RefreshCw className="w-5 h-5 animate-spin text-[#128c7e]" />
-          Memuat data Puskesmas...
-        </div>
+        <DashboardListSkeleton count={6} />
       ) : filteredPuskesmas.length === 0 ? (
         <div className="bg-white rounded-2xl p-8 border border-[#e9edef] text-center space-y-2 shadow-xs">
           <p className="text-xs text-[#54656f] font-bold">Tidak ada data cocok dengan pencarian.</p>

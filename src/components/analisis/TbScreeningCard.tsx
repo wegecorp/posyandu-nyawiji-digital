@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Activity } from 'lucide-react';
 import { ChartCard } from './ChartCard';
+import { ChartCardSkeleton } from '@/components/Skeleton';
 
 type Row = {
   ym: string;
@@ -74,11 +75,7 @@ export function TbScreeningCard({ from, to, hcId }: { from: string; to: string; 
   );
 
   if (loading && rows.length === 0) {
-    return (
-      <ChartCard title="Skrining Tuberkulosis (TB)">
-        <p className="py-6 text-center text-xs font-bold text-[#54656f]">Memuat data...</p>
-      </ChartCard>
-    );
+    return <ChartCardSkeleton height="h-44" />;
   }
 
   if (!latest) {

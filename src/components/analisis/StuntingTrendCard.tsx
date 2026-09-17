@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ChartCard } from './ChartCard';
+import { ChartCardSkeleton } from '@/components/Skeleton';
 
 type Resp = {
   success: boolean;
@@ -49,11 +50,7 @@ export function StuntingTrendCard({ from, to, hcId }: { from: string; to: string
   );
 
   if (loading) {
-    return (
-      <ChartCard title="Tren Stunting (TB/U)">
-        <p className="py-6 text-center text-xs font-bold text-[#54656f]">Memuat data...</p>
-      </ChartCard>
-    );
+    return <ChartCardSkeleton height="h-52" />;
   }
 
   if (trend.length === 0) {

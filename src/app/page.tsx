@@ -10,7 +10,12 @@ import { ExitHint } from '@/components/ExitHint';
 import { useBackLayer, useExitGuard } from '@/lib/back-navigation';
 import { clearQueuedPatient } from '@/lib/offline-sync';
 import { isStandaloneMode } from '@/lib/pwa';
-import { PatientListSkeleton, FormLoadingSkeleton } from '@/components/Skeleton';
+import {
+  PatientListSkeleton,
+  FormLoadingSkeleton,
+  DashboardListSkeleton,
+  AnalisisPageSkeleton,
+} from '@/components/Skeleton';
 import {
   Search,
   UserPlus,
@@ -37,36 +42,21 @@ const DynamicMeasurementForm = dynamic(
 const AnalisisPage = dynamic(
   () => import('@/components/analisis/AnalisisPage').then((m) => m.AnalisisPage),
   {
-    loading: () => (
-      <div className="p-12 text-center text-sm font-bold text-[#54656f] flex flex-col items-center gap-2">
-        <RefreshCw className="w-6 h-6 animate-spin text-[#075e54]" />
-        <span>Memuat analisis...</span>
-      </div>
-    ),
+    loading: () => <AnalisisPageSkeleton />,
   }
 );
 
 const DinkesDashboard = dynamic(
   () => import('@/components/DinkesDashboard').then((m) => m.DinkesDashboard),
   {
-    loading: () => (
-      <div className="p-12 text-center text-sm font-bold text-[#54656f] flex flex-col items-center gap-2">
-        <RefreshCw className="w-6 h-6 animate-spin text-[#075e54]" />
-        <span>Memuat dashboard Dinkes...</span>
-      </div>
-    ),
+    loading: () => <DashboardListSkeleton count={5} />,
   }
 );
 
 const PuskesmasDashboard = dynamic(
   () => import('@/components/PuskesmasDashboard').then((m) => m.PuskesmasDashboard),
   {
-    loading: () => (
-      <div className="p-12 text-center text-sm font-bold text-[#54656f] flex flex-col items-center gap-2">
-        <RefreshCw className="w-6 h-6 animate-spin text-[#075e54]" />
-        <span>Memuat dashboard Puskesmas...</span>
-      </div>
-    ),
+    loading: () => <DashboardListSkeleton count={4} />,
   }
 );
 

@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, TrendingDown, TrendingUp, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
+import { ChartCardSkeleton } from '@/components/Skeleton';
 import { DrillSheet } from './DrillSheet';
 import { PatientDrillList } from './PatientDrillList';
 import { useBackLayer } from '@/lib/back-navigation';
@@ -103,11 +104,7 @@ export function WeightProgressionCard({ from, to, hcId }: { from: string; to: st
   }, [rows, latestMonth]);
 
   if (loading) {
-    return (
-      <ChartCard title="Progres Berat Badan (N/T)">
-        <p className="py-6 text-center text-xs font-bold text-[#54656f]">Memuat data...</p>
-      </ChartCard>
-    );
+    return <ChartCardSkeleton height="h-48" />;
   }
 
   if (!latestMonth) {

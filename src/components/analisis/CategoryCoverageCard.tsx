@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChartCard } from './ChartCard';
+import { ChartCardSkeleton } from '@/components/Skeleton';
 import { CATEGORY_ORDER } from '@/lib/coverage-analytics';
 import { getCategoryBadge } from '@/lib/utils';
 
@@ -45,11 +46,7 @@ export function CategoryCoverageCard({ from, to, hcId }: { from: string; to: str
   const monthRows = useMemo(() => rows.filter((r) => r.ym === latest), [rows, latest]);
 
   if (loading && rows.length === 0) {
-    return (
-      <ChartCard title="Cakupan per Kelompok Sasaran">
-        <p className="py-6 text-center text-xs font-bold text-[#54656f]">Memuat data...</p>
-      </ChartCard>
-    );
+    return <ChartCardSkeleton height="h-44" />;
   }
 
   if (!latest) {

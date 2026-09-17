@@ -156,19 +156,19 @@ export async function POST(req: Request) {
 
     // Build update object only for provided fields
     const fieldData: Record<string, string | number | boolean | null> = {};
-    if (weight !== undefined) fieldData.weight = weight === '' || weight === null ? null : parseFloat(weight);
-    if (height !== undefined) fieldData.height = height === '' || height === null ? null : parseFloat(height);
+    if (weight !== undefined) fieldData.weight = weight === '' || weight === null ? null : Number(weight);
+    if (height !== undefined) fieldData.height = height === '' || height === null ? null : Number(height);
     if (position !== undefined)
       fieldData.position = POSITION_VALUES.includes(position) ? position : null;
     if (headCircumference !== undefined)
       fieldData.headCircumference =
-        headCircumference === '' || headCircumference === null ? null : parseFloat(headCircumference);
+        headCircumference === '' || headCircumference === null ? null : Number(headCircumference);
     if (armCircumference !== undefined)
       fieldData.armCircumference =
-        armCircumference === '' || armCircumference === null ? null : parseFloat(armCircumference);
+        armCircumference === '' || armCircumference === null ? null : Number(armCircumference);
     if (waistCircumference !== undefined)
       fieldData.waistCircumference =
-        waistCircumference === '' || waistCircumference === null ? null : parseFloat(waistCircumference);
+        waistCircumference === '' || waistCircumference === null ? null : Number(waistCircumference);
     if (systolic !== undefined)
       fieldData.systolic = systolic === '' || systolic === null ? null : parseInt(systolic, 10);
     if (diastolic !== undefined)
@@ -177,13 +177,13 @@ export async function POST(req: Request) {
       fieldData.gestationalAge =
         gestationalAge === '' || gestationalAge === null ? null : parseInt(gestationalAge, 10);
     if (bloodSugar !== undefined)
-      fieldData.bloodSugar = bloodSugar === '' || bloodSugar === null ? null : parseFloat(bloodSugar);
+      fieldData.bloodSugar = bloodSugar === '' || bloodSugar === null ? null : Number(bloodSugar);
     if (cholesterol !== undefined)
-      fieldData.cholesterol = cholesterol === '' || cholesterol === null ? null : parseFloat(cholesterol);
+      fieldData.cholesterol = cholesterol === '' || cholesterol === null ? null : Number(cholesterol);
     if (uricAcid !== undefined)
-      fieldData.uricAcid = uricAcid === '' || uricAcid === null ? null : parseFloat(uricAcid);
+      fieldData.uricAcid = uricAcid === '' || uricAcid === null ? null : Number(uricAcid);
     if (hemoglobin !== undefined)
-      fieldData.hemoglobin = hemoglobin === '' || hemoglobin === null ? null : parseFloat(hemoglobin);
+      fieldData.hemoglobin = hemoglobin === '' || hemoglobin === null ? null : Number(hemoglobin);
     if (visionStatus !== undefined)
       fieldData.visionStatus = SCREENING_VALUES.includes(visionStatus) ? visionStatus : null;
     if (hearingStatus !== undefined)

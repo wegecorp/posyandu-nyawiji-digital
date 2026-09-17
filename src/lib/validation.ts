@@ -27,6 +27,19 @@ export interface FieldValidation {
   message: string | null;
 }
 
+// Normalisasi input desimal lokal: koma -> titik, sisakan satu titik desimal.
+// Keypad Android locale id memunculkan koma, jadi input mentah bisa "12,5".
+export function sanitizeDecimalInput(value: string): string {
+  const n = value.replace(/[^\d.,]/g, '').replace(/,/g, '.');
+  const i = n.indexOf('.');
+  return i === -1 ? n : n.slice(0, i + 1) + n.slice(i + 1).replace(/\./g, '');
+}
+
+// Input bilangan bulat: buang semua non-digit.
+export function sanitizeIntegerInput(value: string): string {
+  return value.replace(/\D/g, '');
+}
+
 // raw: string dari input. Kosong = valid (nilai tidak wajib).
 export function validateMeasurementValue(field: string, raw: string | null | undefined): FieldValidation {
   if (raw === null || raw === undefined || String(raw).trim() === '') {
@@ -38,11 +51,20 @@ export function validateMeasurementValue(field: string, raw: string | null | und
     return { valid: true, message: null };
   }
 
-  const num = Number(raw);
-  if (!Number.isFinite(num)) {
+  const t = String(raw).trim();
+  // ponytail: 3 digit setelah titik dianggap pemisah ribuan (mis. "1.000" = 1).
+  // Upgrade path: format ulang saat blur bila butuh ribuan asli.
+  if (/^[1-9]\d{0,2}\.\d{3}$/.test(t)) {
+    return {
+      valid: false,
+      message: `${rule.label}: pakai titik sbg desimal (contoh 12.5), bukan pemisah ribuan`,
+    };
+  }
+  if (!/^\d+(\.\d+)?$/.test(t)) {
     return { valid: false, message: `${rule.label} harus berupa angka` };
   }
 
+  const num = Number(t);
   if (num < rule.min || num > rule.max) {
     return {
       valid: false,

@@ -27,7 +27,13 @@ import {
   X,
 } from 'lucide-react';
 import { getCategoryBadge, todayLocalISODate } from '@/lib/utils';
-import { validateMeasurementValue, validateBloodPressure, computeImt } from '@/lib/validation';
+import {
+  validateMeasurementValue,
+  validateBloodPressure,
+  computeImt,
+  sanitizeDecimalInput,
+  sanitizeIntegerInput,
+} from '@/lib/validation';
 import {
   computeGrowth,
   ageInCompletedMonths,
@@ -549,7 +555,6 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 unit="kg"
                 value={weight}
                 onChange={(v) => handleFieldChange('weight', v)}
-                step="0.05"
                 error={errors.weight}
                 onClear={isReadOnly ? undefined : () => handleFieldChange('weight', '')}
               />
@@ -558,7 +563,6 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 unit="cm"
                 value={height}
                 onChange={(v) => handleFieldChange('height', v)}
-                step="0.1"
                 error={errors.height}
                 onClear={isReadOnly ? undefined : () => handleFieldChange('height', '')}
               />
@@ -637,7 +641,6 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 unit="cm"
                 value={headCircumference}
                 onChange={(v) => handleFieldChange('headCircumference', v)}
-                step="0.1"
                 error={errors.headCircumference}
                 onClear={isReadOnly ? undefined : () => handleFieldChange('headCircumference', '')}
               />
@@ -688,7 +691,6 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 unit="cm"
                 value={armCircumference}
                 onChange={(v) => handleFieldChange('armCircumference', v)}
-                step="0.1"
                 error={errors.armCircumference}
                 onClear={isReadOnly ? undefined : () => handleFieldChange('armCircumference', '')}
               />
@@ -697,7 +699,6 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 unit="cm"
                 value={waistCircumference}
                 onChange={(v) => handleFieldChange('waistCircumference', v)}
-                step="0.1"
                 error={errors.waistCircumference}
                 onClear={isReadOnly ? undefined : () => handleFieldChange('waistCircumference', '')}
               />
@@ -770,7 +771,6 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                   unit="minggu"
                   value={gestationalAge}
                   onChange={(v) => handleFieldChange('gestationalAge', v)}
-                  step="1"
                   inputMode="numeric"
                   placeholder="0"
                   error={errors.gestationalAge}
@@ -869,7 +869,6 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 unit="mg/dL"
                 value={bloodSugar}
                 onChange={(v) => handleFieldChange('bloodSugar', v)}
-                step="1"
                 inputMode="numeric"
                 placeholder="0"
                 size="sm"
@@ -881,7 +880,6 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 unit="mg/dL"
                 value={cholesterol}
                 onChange={(v) => handleFieldChange('cholesterol', v)}
-                step="1"
                 inputMode="numeric"
                 placeholder="0"
                 size="sm"
@@ -893,7 +891,6 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 unit="mg/dL"
                 value={uricAcid}
                 onChange={(v) => handleFieldChange('uricAcid', v)}
-                step="0.1"
                 placeholder="0.0"
                 size="sm"
                 error={errors.uricAcid}
@@ -904,7 +901,6 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 unit="g/dL"
                 value={hemoglobin}
                 onChange={(v) => handleFieldChange('hemoglobin', v)}
-                step="0.1"
                 placeholder="0.0"
                 size="sm"
                 error={errors.hemoglobin}
@@ -1204,7 +1200,6 @@ function MetricField({
   value,
   onChange,
   placeholder = '0.0',
-  step = '0.1',
   inputMode = 'decimal',
   size = 'lg',
   error,
@@ -1215,7 +1210,6 @@ function MetricField({
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  step?: string;
   inputMode?: 'decimal' | 'numeric';
   size?: 'lg' | 'sm';
   error?: string;
@@ -1235,11 +1229,12 @@ function MetricField({
             {label}
           </label>
           <input
-            type="number"
-            step={step}
+            type="text"
             inputMode={inputMode}
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) =>
+              onChange(inputMode === 'numeric' ? sanitizeIntegerInput(e.target.value) : sanitizeDecimalInput(e.target.value))
+            }
             placeholder={placeholder}
             className={`${numInputCls} ${size === 'lg' ? 'text-xl' : 'text-lg'}`}
           />
@@ -1296,19 +1291,19 @@ function BloodPressureField({
         </label>
         <div className="flex items-center gap-1.5">
           <input
-            type="number"
+            type="text"
             inputMode="numeric"
             value={systolic}
-            onChange={(e) => onSystolic(e.target.value)}
+            onChange={(e) => onSystolic(sanitizeIntegerInput(e.target.value))}
             placeholder="Sistolik"
             className={`${numInputCls} text-lg`}
           />
           <span className="text-lg font-bold text-[#8696a0] shrink-0">/</span>
           <input
-            type="number"
+            type="text"
             inputMode="numeric"
             value={diastolic}
-            onChange={(e) => onDiastolic(e.target.value)}
+            onChange={(e) => onDiastolic(sanitizeIntegerInput(e.target.value))}
             placeholder="Diastolik"
             className={`${numInputCls} text-lg`}
           />

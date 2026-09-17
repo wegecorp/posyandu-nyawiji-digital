@@ -8,7 +8,33 @@ import {
   validateTextLength,
   isMeasurementComplete,
   measurementCompletion,
+  sanitizeDecimalInput,
+  sanitizeIntegerInput,
 } from './validation';
+
+describe('sanitizeDecimalInput', () => {
+  it('ubah koma jadi titik', () => {
+    expect(sanitizeDecimalInput('12,5')).toBe('12.5');
+  });
+
+  it('sisakan satu titik, buang sisanya', () => {
+    expect(sanitizeDecimalInput('1,5,6')).toBe('1.56');
+    expect(sanitizeDecimalInput('1.2.3')).toBe('1.23');
+  });
+
+  it('buang karakter non-angka', () => {
+    expect(sanitizeDecimalInput('ab1,2')).toBe('1.2');
+    expect(sanitizeDecimalInput(' 12 ')).toBe('12');
+  });
+});
+
+describe('sanitizeIntegerInput', () => {
+  it('sisakan digit saja', () => {
+    expect(sanitizeIntegerInput('12,5')).toBe('125');
+    expect(sanitizeIntegerInput('1a2b')).toBe('12');
+  });
+});
+
 
 describe('validateMeasurementValue', () => {
   it('kosong valid (nilai tidak wajib)', () => {
@@ -25,6 +51,23 @@ describe('validateMeasurementValue', () => {
     expect(validateMeasurementValue('weight', '0.1').valid).toBe(false);
     expect(validateMeasurementValue('weight', '500').valid).toBe(false);
     expect(validateMeasurementValue('weight', '12.5').valid).toBe(true);
+  });
+
+  it('menolak titik pemisah ribuan', () => {
+    expect(validateMeasurementValue('weight', '1.000').valid).toBe(false);
+    expect(validateMeasurementValue('weight', '12.500').valid).toBe(false);
+  });
+
+  it('menolak notasi ilmiah/hex/sampah', () => {
+    expect(validateMeasurementValue('weight', '1e2').valid).toBe(false);
+    expect(validateMeasurementValue('weight', '0x1F').valid).toBe(false);
+    expect(validateMeasurementValue('weight', '12abc').valid).toBe(false);
+  });
+
+  it('terima desimal polos', () => {
+    expect(validateMeasurementValue('weight', '12.5').valid).toBe(true);
+    expect(validateMeasurementValue('height', '100.5').valid).toBe(true);
+    expect(validateMeasurementValue('weight', '0.500').valid).toBe(true);
   });
 });
 

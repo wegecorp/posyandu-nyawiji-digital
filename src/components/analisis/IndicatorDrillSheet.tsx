@@ -19,16 +19,23 @@ export function IndicatorDrillSheet({
   from,
   to,
   onClose,
+  hcId,
+  hcName,
 }: {
   indicator: string;
   label: string;
   from: string;
   to: string;
   onClose: () => void;
+  /** Bila dibuka dari konteks drill HC, langsung tampilkan posyandu HC ini. */
+  hcId?: string;
+  hcName?: string;
 }) {
   const { user } = useAuth();
   const role = user?.role;
-  const [hc, setHc] = useState<DrillUnit | null>(null);
+  const [hc, setHc] = useState<DrillUnit | null>(
+    hcId ? { unitId: hcId, unitName: hcName ?? '', count: 0, total: 0, percent: 0 } : null,
+  );
   const [posyandu, setPosyandu] = useState<DrillUnit | null>(null);
 
   const unitsBase = `/api/stats/indicator-units?indicator=${indicator}&from=${from}&to=${to}`;
@@ -38,9 +45,11 @@ export function IndicatorDrillSheet({
   const subtitle = posyandu || hc ? label : role === 'DINKES' ? 'Peringkat per Puskesmas' : 'Peringkat per Posyandu';
   const onBack =
     role === 'DINKES'
-      ? hc
-        ? () => setHc(null)
-        : undefined
+      ? hcId
+        ? undefined
+        : hc
+          ? () => setHc(null)
+          : undefined
       : posyandu
         ? () => setPosyandu(null)
         : undefined;

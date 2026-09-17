@@ -20,7 +20,7 @@ function formatYM(ym: string): string {
   return `${months[parseInt(m, 10) - 1]} ${y}`;
 }
 
-export function BreastfeedingCard({ from, to }: { from: string; to: string }) {
+export function BreastfeedingCard({ from, to, hcId }: { from: string; to: string; hcId?: string }) {
   const { user } = useAuth();
   const canDrill = user?.role === 'DINKES' || user?.role === 'PUSKESMAS';
   const [rows, setRows] = useState<Row[]>([]);
@@ -34,7 +34,9 @@ export function BreastfeedingCard({ from, to }: { from: string; to: string }) {
     const run = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/stats/breastfeeding?from=${from}&to=${to}`);
+        const res = await fetch(
+          `/api/stats/breastfeeding?from=${from}&to=${to}${hcId ? `&scope=posyandu&hcId=${hcId}` : ''}`,
+        );
         const d = await res.json();
         if (active && d.success) setRows(d.data ?? []);
       } catch (e) {
@@ -47,7 +49,7 @@ export function BreastfeedingCard({ from, to }: { from: string; to: string }) {
     return () => {
       active = false;
     };
-  }, [from, to]);
+  }, [from, to, hcId]);
 
   const latest = useMemo(() => {
     const ms = rows.filter((r) => r.assessed > 0).map((r) => r.ym);

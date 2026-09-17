@@ -32,7 +32,7 @@ function formatYM(ym: string): string {
   return `${months[parseInt(m, 10) - 1]} ${y}`;
 }
 
-export function GrowthStatusDistribution({ from, to }: { from: string; to: string }) {
+export function GrowthStatusDistribution({ from, to, hcId }: { from: string; to: string; hcId?: string }) {
   const [indicator, setIndicator] = useState('BB_U');
   const [data, setData] = useState<GrowthResp | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,7 @@ export function GrowthStatusDistribution({ from, to }: { from: string; to: strin
 
   useEffect(() => {
     let active = true;
-    fetch(`/api/stats/growth?indicator=${indicator}&from=${from}&to=${to}`)
+    fetch(`/api/stats/growth?indicator=${indicator}&from=${from}&to=${to}${hcId ? `&hcId=${hcId}` : ''}`)
       .then((r) => r.json())
       .then((d) => {
         if (active && d.success) setData(d);
@@ -54,7 +54,7 @@ export function GrowthStatusDistribution({ from, to }: { from: string; to: strin
     return () => {
       active = false;
     };
-  }, [indicator, from, to]);
+  }, [indicator, from, to, hcId]);
 
   const pie = useMemo(
     () => (data?.categories ?? []).filter((c) => c.count > 0).map((c) => ({ name: c.label, value: c.count, color: c.color })),

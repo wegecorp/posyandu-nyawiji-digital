@@ -7,7 +7,7 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireRole } from '@/lib/api-auth';
+import { requireRole, assertHcFilter } from '@/lib/api-auth';
 import { monthRange } from '@/lib/analytics';
 import { categoryCoverage } from '@/lib/coverage-analytics';
 
@@ -17,6 +17,9 @@ export async function GET(req: Request) {
     if (session instanceof NextResponse) return session;
 
     const { searchParams } = new URL(req.url);
+    const hcId = searchParams.get('hcId');
+    const denied = assertHcFilter(session, hcId);
+    if (denied) return denied;
     const now = new Date();
     const fmt = (d: Date) =>
       `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -42,6 +45,12 @@ export async function GET(req: Request) {
       }
       const ps = await prisma.posyandu.findMany({
         where: { healthCenterId: session.healthCenterId },
+        select: { id: true },
+      });
+      posyanduFilter = ps.map((p) => p.id);
+    } else if (hcId) {
+      const ps = await prisma.posyandu.findMany({
+        where: { healthCenterId: hcId },
         select: { id: true },
       });
       posyanduFilter = ps.map((p) => p.id);

@@ -59,7 +59,11 @@ export function DinkesAnalisis() {
   const [outcomeData, setOutcomeData] = useState<OutcomeData[]>([]);
   const [drillHcId, setDrillHcId] = useState<string | null>(null);
   const [drillHcName, setDrillHcName] = useState<string>('');
-  const [drillCoverage, setDrillCoverage] = useState<CoverageData[]>([]);
+  const [drill, setDrill] = useState<{ key: string; coverage: CoverageData[]; outcomes: OutcomeData[] }>({
+    key: '',
+    coverage: [],
+    outcomes: [],
+  });
   const [loading, setLoading] = useState(true);
   const [indicatorDrill, setIndicatorDrill] = useState<{ key: string; label: string } | null>(null);
 
@@ -94,31 +98,74 @@ export function DinkesAnalisis() {
   }, []);
 
   // Refetch data drill saat HC atau periode berubah (agar tidak basi setelah ganti periode).
+  // Data disimpan bersama key periode sehingga hasil lama tidak ditampilkan sebagai milik HC baru.
+  const drillKey = drillHcId ? `${drillHcId}|${from}|${to}` : '';
+  const drillCoverage = useMemo(
+    () => (drill.key === drillKey ? drill.coverage : []),
+    [drill, drillKey],
+  );
+  const drillOutcomeData = useMemo(
+    () => (drill.key === drillKey ? drill.outcomes : []),
+    [drill, drillKey],
+  );
+  const drillLoading = Boolean(drillHcId) && drill.key !== drillKey;
+
   useEffect(() => {
     if (!drillHcId) return;
     let active = true;
-    fetch(`/api/stats/coverage?scope=posyandu&hcId=${drillHcId}&from=${from}&to=${to}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (active && d.success) setDrillCoverage(d.data);
+    const key = `${drillHcId}|${from}|${to}`;
+    Promise.all([
+      fetch(`/api/stats/coverage?scope=posyandu&hcId=${drillHcId}&from=${from}&to=${to}`).then((r) => r.json()),
+      fetch(`/api/stats/outcomes?scope=kabupaten&hcId=${drillHcId}&from=${from}&to=${to}`).then((r) => r.json()),
+    ])
+      .then(([cov, out]) => {
+        if (!active) return;
+        setDrill({
+          key,
+          coverage: cov.success ? cov.data : [],
+          outcomes: out.success ? out.data : [],
+        });
       })
-      .catch(() => {});
+      .catch((e) => console.error('Gagal memuat data drill puskesmas:', e));
     return () => {
       active = false;
     };
   }, [drillHcId, from, to]);
-
-  // Trend line (kabupaten aggregate)
-  const trendData = useMemo(() =>
-    coverageData.map(d => ({ name: formatYM(d.ym), partisipasi: Math.round(d.participation * 100), terukur: d.numerator, terdaftar: d.denominator })),
-    [coverageData],
-  );
 
   // Bulan terakhir yang benar-benar punya data ukur (bukan bulan berjalan kosong).
   const latestMonth = useMemo(() => {
     const withData = coverageData.filter((d) => d.numerator > 0).map((d) => d.ym);
     return withData.sort().at(-1) ?? '';
   }, [coverageData]);
+
+  // Bulan terakhir HC yang sedang di-drill — dari data HC, bukan kabupaten.
+  const drillLatestMonth = useMemo(() => {
+    const withData = drillCoverage.filter((d) => d.numerator > 0).map((d) => d.ym);
+    return withData.sort().at(-1) ?? '';
+  }, [drillCoverage]);
+
+  // Trend line: agregat kabupaten, atau agregat HC saat di-drill.
+  const trendData = useMemo(() => {
+    if (!drillHcId) {
+      return coverageData.map(d => ({ name: formatYM(d.ym), partisipasi: Math.round(d.participation * 100), terukur: d.numerator, terdaftar: d.denominator }));
+    }
+    const byMonth = new Map<string, { numerator: number; denominator: number }>();
+    for (const d of drillCoverage) {
+      const cur = byMonth.get(d.ym) ?? { numerator: 0, denominator: 0 };
+      cur.numerator += d.numerator;
+      cur.denominator += d.denominator;
+      byMonth.set(d.ym, cur);
+    }
+    return [...byMonth.entries()]
+      .filter(([, v]) => v.denominator > 0)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([ym, v]) => ({
+        name: formatYM(ym),
+        partisipasi: Math.round((v.numerator / v.denominator) * 100),
+        terukur: v.numerator,
+        terdaftar: v.denominator,
+      }));
+  }, [drillHcId, drillCoverage, coverageData]);
 
   // Bulan pembanding: tepat sebelum latestMonth dalam rentang.
   const prevMonth = useMemo(() => {
@@ -145,20 +192,22 @@ export function DinkesAnalisis() {
     });
   }, [puskesmasCoverage, latestMonth, prevMonth]);
 
-  // Outcomes pie (latest month global)
-  const latestOutcome = outcomeData.find(d => d.ym === latestMonth);
+  // Outcomes bulan terakhir: kabupaten, atau agregat HC saat di-drill.
+  const activeOutcome = drillHcId
+    ? drillOutcomeData.find(d => d.ym === drillLatestMonth)
+    : outcomeData.find(d => d.ym === latestMonth);
   // Persentase "Normal" dihitung dari yang benar-benar dinilai (belum dinilai dipisah).
   const normalPct = useMemo(() => {
-    if (!latestOutcome) return 0;
-    const assessed = latestOutcome.normal + latestOutcome.abnormal;
-    return assessed > 0 ? Math.round((latestOutcome.normal / assessed) * 100) : 0;
-  }, [latestOutcome]);
+    if (!activeOutcome) return 0;
+    const assessed = activeOutcome.normal + activeOutcome.abnormal;
+    return assessed > 0 ? Math.round((activeOutcome.normal / assessed) * 100) : 0;
+  }, [activeOutcome]);
   // Stacked bar per indikator: Tidak Normal / Normal (hanya yang sudah dinilai).
   const indicatorOutcomeStacked = useMemo(() => {
-    if (!latestOutcome) return [];
+    if (!activeOutcome) return [];
     return INDICATORS.map((ind) => {
-      const abnormal = latestOutcome.abnormalByIndicator[ind.key] ?? 0;
-      const assessed = latestOutcome.assessedByIndicator?.[ind.key] ?? 0;
+      const abnormal = activeOutcome.abnormalByIndicator[ind.key] ?? 0;
+      const assessed = activeOutcome.assessedByIndicator?.[ind.key] ?? 0;
       return {
         key: ind.key,
         name: ind.label.length > 20 ? ind.label.slice(0, 18) + '…' : ind.label,
@@ -167,30 +216,43 @@ export function DinkesAnalisis() {
         normal: Math.max(0, assessed - abnormal),
       };
     }).filter((r) => r.abnormal + r.normal > 0);
-  }, [latestOutcome]);
+  }, [activeOutcome]);
 
-  // Abnormal by indicator (latest month, puskesmas aggregate)
+  // Abnormal by indicator (bulan terakhir, sesuai scope aktif)
   const abnormalByIndicator = useMemo(() => {
-    if (!latestOutcome) return [];
+    if (!activeOutcome) return [];
     return INDICATORS
-      .filter(ind => (latestOutcome.abnormalByIndicator[ind.key] ?? 0) > 0)
+      .filter(ind => (activeOutcome.abnormalByIndicator[ind.key] ?? 0) > 0)
       .map(ind => ({
         key: ind.key,
         name: ind.label.length > 20 ? ind.label.slice(0, 18) + '…' : ind.label,
-        jumlah: latestOutcome.abnormalByIndicator[ind.key] ?? 0,
+        jumlah: activeOutcome.abnormalByIndicator[ind.key] ?? 0,
         fill: INDICATOR_COLORS[ind.key] ?? '#8884d8',
       }));
-  }, [latestOutcome]);
+  }, [activeOutcome]);
+
+  // Total sasaran terdaftar pada bulan aktif (kabupaten atau HC).
+  const activeDenominator = useMemo(() => {
+    if (drillHcId) {
+      return drillCoverage
+        .filter(d => d.ym === drillLatestMonth)
+        .reduce((sum, d) => sum + d.denominator, 0);
+    }
+    return coverageData.find((d) => d.ym === latestMonth)?.denominator ?? 0;
+  }, [drillHcId, drillCoverage, drillLatestMonth, coverageData, latestMonth]);
 
   // Drill scoreboard (posyandu within puskesmas)
   const drillScoreboard = useMemo(() => {
     return drillCoverage
-      .filter(d => d.ym === latestMonth)
+      .filter(d => d.ym === drillLatestMonth)
       .map(d => ({
         unitId: d.unitId, unitName: d.unitName,
         participation: d.participation, numerator: d.numerator, denominator: d.denominator,
       }));
-  }, [drillCoverage, latestMonth]);
+  }, [drillCoverage, drillLatestMonth]);
+
+  // Bulan aktif untuk kartu hasil pengukuran (kabupaten atau HC).
+  const activeMonth = drillHcId ? drillLatestMonth : latestMonth;
 
   if (loading && coverageData.length === 0) {
     return (
@@ -233,24 +295,27 @@ export function DinkesAnalisis() {
       </div>
 
       {/* 0. Status gizi balita (Permenkes 2/2020) */}
-      <GrowthStatusDistribution from={from} to={to} />
+      <GrowthStatusDistribution from={from} to={to} hcId={drillHcId ?? undefined} />
 
       {/* 0a. Peringkat prevalensi masalah gizi per wilayah */}
-      <GrowthProblemRanking from={from} to={to} />
+      <GrowthProblemRanking from={from} to={to} hcId={drillHcId ?? undefined} hcName={drillHcName} />
 
       {/* 0b. Tren stunting (TB/U) */}
-      <StuntingTrendCard from={from} to={to} />
+      <StuntingTrendCard from={from} to={to} hcId={drillHcId ?? undefined} />
 
       {/* 0c. Progres berat badan (N/T & 2T) */}
-      <WeightProgressionCard from={from} to={to} />
+      <WeightProgressionCard from={from} to={to} hcId={drillHcId ?? undefined} />
 
-      <BreastfeedingCard from={from} to={to} />
-      <TbScreeningCard from={from} to={to} />
-      <CategoryCoverageCard from={from} to={to} />
+      <BreastfeedingCard from={from} to={to} hcId={drillHcId ?? undefined} />
+      <TbScreeningCard from={from} to={to} hcId={drillHcId ?? undefined} />
+      <CategoryCoverageCard from={from} to={to} hcId={drillHcId ?? undefined} />
 
-      {/* 1. Trend Line — Partisipasi Kabupaten */}
+      {/* 1. Trend Line — Partisipasi */}
       {trendData.length > 0 && (
-        <ChartCard title="Tren Partisipasi Kabupaten" subtitle={`${coverageData[0]?.numerator ?? 0}–${coverageData[coverageData.length - 1]?.numerator ?? 0} pasien terukur/bulan`}>
+        <ChartCard
+          title={drillHcId ? `Tren Partisipasi ${drillHcName}` : 'Tren Partisipasi Kabupaten'}
+          subtitle={`${trendData[0]?.terukur ?? 0}–${trendData[trendData.length - 1]?.terukur ?? 0} pasien terukur/bulan`}
+        >
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={trendData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e9edef" />
@@ -277,10 +342,24 @@ export function DinkesAnalisis() {
       )}
 
       {/* Drill: Posyandu dalam Puskesmas */}
-      {drillHcId && drillScoreboard.length > 0 && (
+      {drillHcId && drillLoading && (
+        <ChartCard title="Ranking Posyandu" subtitle={drillHcName}>
+          <p className="py-6 text-center text-xs font-bold text-[#54656f]">Memuat data...</p>
+        </ChartCard>
+      )}
+
+      {drillHcId && !drillLoading && drillLatestMonth === '' && (
+        <ChartCard title="Ranking Posyandu" subtitle={drillHcName}>
+          <p className="py-6 text-center text-xs font-bold text-[#54656f]">
+            Belum ada data pengukuran untuk {drillHcName} pada periode ini.
+          </p>
+        </ChartCard>
+      )}
+
+      {drillHcId && !drillLoading && drillScoreboard.length > 0 && (
         <ChartCard
           title="Ranking Posyandu"
-          subtitle={`${drillHcName} — bulan ${formatYM(latestMonth)}`}
+          subtitle={`${drillHcName} — bulan ${formatYM(drillLatestMonth)}`}
         >
           <UnitScoreboard data={drillScoreboard} />
         </ChartCard>
@@ -290,7 +369,7 @@ export function DinkesAnalisis() {
       {indicatorOutcomeStacked.length > 0 && (
         <ChartCard
           title="Distribusi Hasil Pengukuran per Indikator"
-          subtitle={`Bulan ${formatYM(latestMonth)} — per indikator klinis`}
+          subtitle={`Bulan ${formatYM(activeMonth)} — per indikator klinis`}
         >
           <IndicatorOutcomeStackedBar data={indicatorOutcomeStacked} />
         </ChartCard>
@@ -298,7 +377,7 @@ export function DinkesAnalisis() {
 
       {/* 4. Stacked Bar — Abnormal per Indikator */}
       {abnormalByIndicator.length > 0 && (
-        <ChartCard title="Temuan Tidak Normal per Indikator" subtitle={`Bulan ${formatYM(latestMonth)} — klik batang untuk lihat per wilayah`}>
+        <ChartCard title="Temuan Tidak Normal per Indikator" subtitle={`Bulan ${formatYM(activeMonth)} — klik batang untuk lihat per wilayah`}>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={abnormalByIndicator}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e9edef" />
@@ -327,29 +406,31 @@ export function DinkesAnalisis() {
       )}
 
       {/* 5. Ringkasan stat cards */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
-          <TrendingUp className="w-5 h-5 text-[#075e54] mx-auto mb-1" />
-          <p className="text-lg font-extrabold text-[#111b21]">
-            {normalPct}%
-          </p>
-          <p className="text-[10px] text-[#54656f] font-bold">Normal</p>
+      {!(drillHcId && activeMonth === '') && (
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
+            <TrendingUp className="w-5 h-5 text-[#075e54] mx-auto mb-1" />
+            <p className="text-lg font-extrabold text-[#111b21]">
+              {normalPct}%
+            </p>
+            <p className="text-[10px] text-[#54656f] font-bold">Normal</p>
+          </div>
+          <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
+            <AlertTriangle className="w-5 h-5 text-red-500 mx-auto mb-1" />
+            <p className="text-lg font-extrabold text-red-600">
+              {activeOutcome?.abnormal ?? 0}
+            </p>
+            <p className="text-[10px] text-[#54656f] font-bold">Tidak Normal</p>
+          </div>
+          <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
+            <Users className="w-5 h-5 text-[#075e54] mx-auto mb-1" />
+            <p className="text-lg font-extrabold text-[#111b21]">
+              {activeDenominator}
+            </p>
+            <p className="text-[10px] text-[#54656f] font-bold">Terdaftar</p>
+          </div>
         </div>
-        <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
-          <AlertTriangle className="w-5 h-5 text-red-500 mx-auto mb-1" />
-          <p className="text-lg font-extrabold text-red-600">
-            {latestOutcome?.abnormal ?? 0}
-          </p>
-          <p className="text-[10px] text-[#54656f] font-bold">Tidak Normal</p>
-        </div>
-        <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
-          <Users className="w-5 h-5 text-[#075e54] mx-auto mb-1" />
-          <p className="text-lg font-extrabold text-[#111b21]">
-            {coverageData.find((d) => d.ym === latestMonth)?.denominator ?? 0}
-          </p>
-          <p className="text-[10px] text-[#54656f] font-bold">Terdaftar</p>
-        </div>
-      </div>
+      )}
 
       {indicatorDrill && (
         <IndicatorDrillSheet
@@ -357,6 +438,8 @@ export function DinkesAnalisis() {
           label={indicatorDrill.label}
           from={from}
           to={to}
+          hcId={drillHcId ?? undefined}
+          hcName={drillHcName}
           onClose={() => setIndicatorDrill(null)}
         />
       )}

@@ -20,10 +20,20 @@ const INDICATOR_OPTIONS: { key: GrowthIndex; label: string }[] = [
  * Peringkat prevalensi masalah gizi per wilayah.
  * DINKES → per Puskesmas; PUSKESMAS → per Posyandu. Klik baris → drill.
  */
-export function GrowthProblemRanking({ from, to }: { from: string; to: string }) {
+export function GrowthProblemRanking({
+  from,
+  to,
+  hcId,
+  hcName,
+}: {
+  from: string;
+  to: string;
+  hcId?: string;
+  hcName?: string;
+}) {
   const { user } = useAuth();
   const role = user?.role;
-  const scope = role === 'DINKES' ? 'puskesmas' : 'posyandu';
+  const scope = role === 'DINKES' && !hcId ? 'puskesmas' : 'posyandu';
   const drillable = role === 'DINKES' || role === 'PUSKESMAS';
 
   const [indicator, setIndicator] = useState<GrowthIndex>('TB_U');
@@ -45,7 +55,7 @@ export function GrowthProblemRanking({ from, to }: { from: string; to: string })
     if (!drillable) return;
     let active = true;
     fetch(
-      `/api/stats/growth-units?indicator=${indicator}&category=${encodeURIComponent(categoryKey)}&scope=${scope}&from=${from}&to=${to}`,
+      `/api/stats/growth-units?indicator=${indicator}&category=${encodeURIComponent(categoryKey)}&scope=${scope}&from=${from}&to=${to}${hcId ? `&hcId=${hcId}` : ''}`,
     )
       .then((r) => r.json())
       .then((d) => {
@@ -58,7 +68,7 @@ export function GrowthProblemRanking({ from, to }: { from: string; to: string })
     return () => {
       active = false;
     };
-  }, [indicator, scope, categoryKey, from, to, drillable]);
+  }, [indicator, scope, categoryKey, from, to, drillable, hcId]);
 
   if (!drillable) return null;
 
@@ -66,7 +76,7 @@ export function GrowthProblemRanking({ from, to }: { from: string; to: string })
     <>
       <ChartCard
         title="Peringkat Masalah Gizi"
-        subtitle={role === 'DINKES' ? 'Per Puskesmas — klik untuk rincian' : 'Per Posyandu — klik untuk rincian'}
+        subtitle={scope === 'puskesmas' ? 'Per Puskesmas — klik untuk rincian' : 'Per Posyandu — klik untuk rincian'}
       >
         <div className="mb-3">
           <label className="block text-[10px] font-bold text-[#667781] uppercase tracking-wide mb-1">
@@ -137,7 +147,13 @@ export function GrowthProblemRanking({ from, to }: { from: string; to: string })
           indicatorLabel={option.label}
           from={from}
           to={to}
-          initialHc={role === 'DINKES' ? drill : undefined}
+          initialHc={
+            role === 'DINKES'
+              ? hcId
+                ? { unitId: hcId, unitName: hcName ?? '', count: 0, total: 0, percent: 0 }
+                : drill
+              : undefined
+          }
           initialPosyandu={role === 'PUSKESMAS' ? drill : undefined}
           onClose={() => setDrill(null)}
         />

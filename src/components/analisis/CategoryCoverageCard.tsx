@@ -11,7 +11,7 @@ function formatYM(ym: string): string {
   return `${months[parseInt(m, 10) - 1]} ${y}`;
 }
 
-export function CategoryCoverageCard({ from, to }: { from: string; to: string }) {
+export function CategoryCoverageCard({ from, to, hcId }: { from: string; to: string; hcId?: string }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +20,9 @@ export function CategoryCoverageCard({ from, to }: { from: string; to: string })
     const run = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/stats/category-coverage?from=${from}&to=${to}`);
+        const res = await fetch(
+          `/api/stats/category-coverage?from=${from}&to=${to}${hcId ? `&hcId=${hcId}` : ''}`,
+        );
         const d = await res.json();
         if (active && d.success) setRows(d.data ?? []);
       } catch (e) {
@@ -33,7 +35,7 @@ export function CategoryCoverageCard({ from, to }: { from: string; to: string })
     return () => {
       active = false;
     };
-  }, [from, to]);
+  }, [from, to, hcId]);
 
   const latest = useMemo(() => {
     const ms = rows.filter((r) => r.measured > 0).map((r) => r.ym);

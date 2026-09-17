@@ -7,7 +7,7 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireRole } from '@/lib/api-auth';
+import { requireRole, assertHcFilter } from '@/lib/api-auth';
 import {
   fetchCoverageBase,
   getPosyanduInfo,
@@ -28,15 +28,8 @@ export async function GET(req: Request) {
     const to = searchParams.get('to');
 
     // IDOR: non-DINKES hanya boleh mem-filter HC milik sendiri.
-    if (
-      hcIdFilter &&
-      session.role !== 'DINKES' &&
-      (session.role === 'POSYANDU' ||
-        !session.healthCenterId ||
-        session.healthCenterId !== hcIdFilter)
-    ) {
-      return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 });
-    }
+    const denied = assertHcFilter(session, hcIdFilter);
+    if (denied) return denied;
 
     const now = new Date();
     const defaultTo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -59,15 +52,17 @@ export async function GET(req: Request) {
 
     // Filter by explicit hcId (DINKES drill-down)
     let filteredBase = base;
+    let hcDrillPosyanduIds: string[] = [];
     if (hcIdFilter) {
-      const hcPosyanduIds = await prisma.posyandu.findMany({
+      const hcPosyandus = await prisma.posyandu.findMany({
         where: { healthCenterId: hcIdFilter },
         select: { id: true, name: true },
       });
-      const hcSet = new Set(hcPosyanduIds.map((p) => p.id));
+      const hcSet = new Set(hcPosyandus.map((p) => p.id));
       filteredBase = base.filter((r) => hcSet.has(r.unitId));
+      hcDrillPosyanduIds = hcPosyandus.map((p) => p.id);
       // Ensure posyanduInfo has all HC's posyandus
-      for (const p of hcPosyanduIds) {
+      for (const p of hcPosyandus) {
         if (!posyanduInfo.has(p.id)) {
           posyanduInfo.set(p.id, { id: p.id, name: p.name, healthCenterId: hcIdFilter, healthCenterName: '' });
         }
@@ -102,6 +97,8 @@ export async function GET(req: Request) {
 
     // Build allUnitIds from filtered base + role-specific additions
     const allUnitIds = new Set(filteredBase.map((r) => r.unitId));
+    // DINKES drill-down: sertakan semua posyandu HC (termasuk 0 pengukuran)
+    for (const id of hcDrillPosyanduIds) allUnitIds.add(id);
     // Ensure PUSKESMAS's own posyandus (including 0-measurement) are included
     if (session.role === 'PUSKESMAS' && session.healthCenterId) {
       const hcPosyandus = await prisma.posyandu.findMany({

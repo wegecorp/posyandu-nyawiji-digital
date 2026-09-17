@@ -43,7 +43,7 @@ function formatYM(ym: string): string {
   return `${months[parseInt(m, 10) - 1]} ${y}`;
 }
 
-export function WeightProgressionCard({ from, to }: { from: string; to: string }) {
+export function WeightProgressionCard({ from, to, hcId }: { from: string; to: string; hcId?: string }) {
   const { user } = useAuth();
   const canDrill = user?.role === 'PUSKESMAS' || user?.role === 'POSYANDU';
   const [rows, setRows] = useState<ProgressionRow[]>([]);
@@ -56,7 +56,7 @@ export function WeightProgressionCard({ from, to }: { from: string; to: string }
 
   useEffect(() => {
     let active = true;
-    fetch(`/api/stats/weight-progression?from=${from}&to=${to}`)
+    fetch(`/api/stats/weight-progression?from=${from}&to=${to}${hcId ? `&hcId=${hcId}` : ''}`)
       .then((r) => r.json())
       .then((d) => {
         if (!active || !d.success) return;
@@ -71,7 +71,7 @@ export function WeightProgressionCard({ from, to }: { from: string; to: string }
     return () => {
       active = false;
     };
-  }, [from, to]);
+  }, [from, to, hcId]);
 
   const latestMonth = useMemo(() => {
     const months = rows.filter((r) => r.total > 0).map((r) => r.ym);

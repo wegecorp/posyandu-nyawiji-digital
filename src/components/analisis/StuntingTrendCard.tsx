@@ -16,7 +16,7 @@ function formatYM(ym: string): string {
 }
 
 /** Tren prevalensi stunting (TB/U) — % balita Pendek & Sangat Pendek per bulan. */
-export function StuntingTrendCard({ from, to }: { from: string; to: string }) {
+export function StuntingTrendCard({ from, to, hcId }: { from: string; to: string; hcId?: string }) {
   const [data, setData] = useState<Resp | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -25,7 +25,7 @@ export function StuntingTrendCard({ from, to }: { from: string; to: string }) {
     const run = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/stats/growth?indicator=TB_U&from=${from}&to=${to}`);
+        const res = await fetch(`/api/stats/growth?indicator=TB_U&from=${from}&to=${to}${hcId ? `&hcId=${hcId}` : ''}`);
         const d = await res.json();
         if (active && d.success) setData(d);
       } catch (e) {
@@ -38,7 +38,7 @@ export function StuntingTrendCard({ from, to }: { from: string; to: string }) {
     return () => {
       active = false;
     };
-  }, [from, to]);
+  }, [from, to, hcId]);
 
   const trend = useMemo(
     () =>

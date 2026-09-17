@@ -6,7 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireRole } from '@/lib/api-auth';
+import { requireRole, assertHcFilter } from '@/lib/api-auth';
 import {
   fetchOutcomeBase,
   classifyOutcomes,
@@ -21,8 +21,12 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const scope = searchParams.get('scope') ?? 'kabupaten';
+    const hcId = searchParams.get('hcId');
     const from = searchParams.get('from');
     const to = searchParams.get('to');
+
+    const denied = assertHcFilter(session, hcId);
+    if (denied) return denied;
 
     const now = new Date();
     const defaultTo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -36,7 +40,12 @@ export async function GET(req: Request) {
 
     // Scope filter by role
     let filteredRaw = raw;
-    if (session.role === 'PUSKESMAS' && session.healthCenterId) {
+    if (hcId && session.role === 'DINKES') {
+      const hcSet = await prisma.posyandu
+        .findMany({ where: { healthCenterId: hcId }, select: { id: true } })
+        .then((ps) => new Set(ps.map((p) => p.id)));
+      filteredRaw = raw.filter((r) => hcSet.has(r.posyanduId));
+    } else if (session.role === 'PUSKESMAS' && session.healthCenterId) {
       const hcPosyanduIds = await prisma.posyandu.findMany({
         where: { healthCenterId: session.healthCenterId },
         select: { id: true },

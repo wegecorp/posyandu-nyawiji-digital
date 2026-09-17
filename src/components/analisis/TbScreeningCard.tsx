@@ -16,7 +16,7 @@ function formatYM(ym: string): string {
   return `${months[parseInt(m, 10) - 1]} ${y}`;
 }
 
-export function TbScreeningCard({ from, to }: { from: string; to: string }) {
+export function TbScreeningCard({ from, to, hcId }: { from: string; to: string; hcId?: string }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,7 +25,9 @@ export function TbScreeningCard({ from, to }: { from: string; to: string }) {
     const run = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/stats/outcomes?scope=posyandu&from=${from}&to=${to}`);
+        const res = await fetch(
+          `/api/stats/outcomes?scope=posyandu&from=${from}&to=${to}${hcId ? `&hcId=${hcId}` : ''}`,
+        );
         const d = await res.json();
         if (active && d.success) setRows(d.data ?? []);
       } catch (e) {
@@ -38,7 +40,7 @@ export function TbScreeningCard({ from, to }: { from: string; to: string }) {
     return () => {
       active = false;
     };
-  }, [from, to]);
+  }, [from, to, hcId]);
 
   const byMonth = useMemo(() => {
     const map = new Map<string, { assessed: number; risk: number }>();

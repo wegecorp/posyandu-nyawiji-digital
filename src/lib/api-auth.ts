@@ -52,6 +52,19 @@ export async function requireAuth(
 }
 
 /**
+ * DINKES boleh mem-filter health center mana pun. Peran lain hanya HC sendiri.
+ * Return 403 bila melanggar, null bila lolos.
+ */
+export function assertHcFilter(
+  session: SessionPayload,
+  hcId: string | null
+): NextResponse | null {
+  if (!hcId || session.role === 'DINKES') return null;
+  if (session.role === 'PUSKESMAS' && session.healthCenterId === hcId) return null;
+  return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 });
+}
+
+/**
  * Require specific role(s). Returns session or sends 401/403 response.
  */
 export async function requireRole(

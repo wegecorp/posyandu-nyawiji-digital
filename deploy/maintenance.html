@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Portal Nyawiji — Sedang Pemeliharaan</title>
+<!--
+  Halaman pemeliharaan (maintenance). Dipakai Nginx:
+    location = /maintenance.html { internal; root /var/www; }
+    location / { if (-f /var/www/maintenance.on) { return 503; } error_page 503 /maintenance.html; ... }
+  WAJIB self-contained: tanpa aset eksternal. Bila halaman ini meminta file lain
+  (logo, CSS, manifest), request itu juga kena 503 sehingga halaman tampil rusak.
+-->
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 24px; background: #f0f7ff; color: #0f172a;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    line-height: 1.55;
+  }
+  .card {
+    width: 100%; max-width: 480px; background: #fff; border-radius: 24px;
+    padding: 32px 28px; border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 4px rgba(20, 22, 26, .08);
+  }
+  .mark { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .mark svg { flex: none; }
+  .mark b { display: block; font-size: 15px; letter-spacing: .02em; color: #075e54; }
+  .mark span { display: block; font-size: 12px; color: #64748b; }
+  h1 { margin: 0 0 12px; font-size: 22px; line-height: 1.3; }
+  p { margin: 0 0 14px; font-size: 15px; }
+  .box {
+    background: #fef08a; border-radius: 12px; padding: 14px 16px;
+    font-size: 14px; margin: 0 0 16px;
+  }
+  .box strong { display: block; margin-bottom: 4px; }
+  ol { margin: 0 0 20px; padding-left: 20px; font-size: 14px; }
+  li { margin-bottom: 6px; }
+  .foot { border-top: 1px solid #e2e8f0; padding-top: 16px; font-size: 13px; color: #475569; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0f172a; color: #e2e8f0; }
+    .card { background: #1e293b; border-color: #334155; }
+    .mark b { color: #34d399; }
+    .mark span, .foot { color: #94a3b8; }
+    .box { background: #422006; color: #fde68a; }
+  }
+</style>
+</head>
+<body>
+  <main class="card">
+    <div class="mark">
+      <svg width="40" height="40" viewBox="0 0 40 40" role="img" aria-label="Portal Nyawiji">
+        <rect width="40" height="40" rx="12" fill="#075e54"></rect>
+        <path d="M12 27V13h4.6c4 0 6.4 2 6.4 5.2 0 2.2-1.2 3.8-3.2 4.6l3.4 4.2h-3.6l-2.9-3.7h-1.5V27H12zm4.9-6.4c1.5 0 2.4-.8 2.4-2.1 0-1.4-.9-2.1-2.4-2.1h-1.7v4.2h1.7z" fill="#fff"></path>
+        <circle cx="28" cy="26" r="3" fill="#34d399"></circle>
+      </svg>
+      <div>
+        <b>PORTAL NYAWIJI</b>
+        <span>Posyandu Digital Kab. Gunungkidul</span>
+      </div>
+    </div>
+
+    <h1>Aplikasi sedang dalam pemeliharaan</h1>
+    <p>
+      Untuk sementara Portal Nyawiji tidak dapat diakses karena proses pemeliharaan data.
+      Halaman ini akan otomatis memuat ulang. Bapak/Ibu tidak perlu melakukan apa pun.
+    </p>
+
+    <div class="box">
+      <strong>Jangan logout / keluar dari aplikasi.</strong>
+      Bila sebelumnya Bapak/Ibu menginput data tanpa sinyal, data itu masih tersimpan di
+      perangkat dan akan terkirim otomatis setelah pemeliharaan selesai.
+    </div>
+
+    <ol>
+      <li>Biarkan aplikasi tetap terbuka.</li>
+      <li>Tunggu 5&ndash;15 menit, lalu muat ulang halaman.</li>
+      <li>Bila masih tertutup, hubungi Puskesmas pembina.</li>
+    </ol>
+
+    <div class="foot">
+      Mohon maaf atas ketidaknyamanannya. Terima kasih atas kesabaran Bapak/Ibu.<br>
+      Dinas Kesehatan Kabupaten Gunungkidul
+    </div>
+  </main>
+</body>
+</html>

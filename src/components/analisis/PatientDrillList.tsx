@@ -35,6 +35,7 @@ export function PatientDrillList({
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Debounce pencarian; reset daftar saat query berubah.
   useEffect(() => {
@@ -43,6 +44,7 @@ export function PatientDrillList({
       setDebouncedQ(q);
       setPage(1);
       setItems([]);
+      setError(null);
       setLoading(true);
     }, 300);
     return () => clearTimeout(t);
@@ -55,13 +57,23 @@ export function PatientDrillList({
       debouncedQ ? `&q=${encodeURIComponent(debouncedQ)}` : ''
     }`;
     fetch(url)
-      .then((r) => r.json())
+      .then(async (r) => {
+        const d = await r.json();
+        if (!r.ok || !d.success) {
+          throw new Error(typeof d?.error === 'string' ? d.error : 'Gagal memuat data.');
+        }
+        return d;
+      })
       .then((d) => {
-        if (!active || !d.success) return;
+        if (!active) return;
+        setError(null);
         setTotal(typeof d.total === 'number' ? d.total : (d.data?.length ?? 0));
         setItems((prev) => (page === 1 ? (d.data ?? []) : [...prev, ...(d.data ?? [])]));
       })
-      .catch((e) => console.error('Gagal memuat detail:', e))
+      .catch((e: unknown) => {
+        if (!active) return;
+        if (page === 1) setError(e instanceof Error ? e.message : 'Gagal memuat data.');
+      })
       .finally(() => {
         if (!active) return;
         setLoading(false);
@@ -99,6 +111,8 @@ export function PatientDrillList({
           <RefreshCw className="w-5 h-5 animate-spin text-[#128c7e]" />
           Memuat data...
         </div>
+      ) : error ? (
+        <p className="py-10 text-center text-xs font-bold text-[#ef4444]">{error}</p>
       ) : items.length === 0 ? (
         <p className="py-10 text-center text-xs font-bold text-[#54656f]">{emptyText}</p>
       ) : (

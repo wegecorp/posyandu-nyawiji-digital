@@ -65,10 +65,10 @@ export function IndicatorDrillSheet({
           searchPlaceholder="Cari posyandu..."
         />
       ) : hc ? (
+        // DINKES berhenti di agregat Posyandu (tanpa nama pasien) — §9b.
         <UnitDrillList
           key={hc.unitId}
           baseUrl={`${unitsBase}&scope=posyandu&hcId=${hc.unitId}`}
-          onPick={setPosyandu}
           searchPlaceholder="Cari posyandu..."
         />
       ) : (

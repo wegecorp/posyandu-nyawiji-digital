@@ -25,7 +25,7 @@ Aplikasi web modern untuk digitalisasi pencatatan, pemantauan kesehatan balita &
 ## 🛠️ Tech Stack
 
 - **Framework**: [Next.js](https://nextjs.org/) (App Router, React 19)
-- **Database & ORM**: [Prisma](https://www.prisma.io/) + SQLite
+- **Database & ORM**: [Prisma](https://www.prisma.io/) + PostgreSQL
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
 - **Icons**: [Lucide React](https://lucide.dev/)
 - **Utilities**: QR Code Generator & Scanner, Excel (`xlsx`)
@@ -35,7 +35,9 @@ Aplikasi web modern untuk digitalisasi pencatatan, pemantauan kesehatan balita &
 ## 💻 Cara Menjalankan Project
 
 ### 1. Prasyarat
-Pastikan [Node.js](https://nodejs.org/) (v18+) dan `npm` sudah terinstal di komputer kamu.
+Pastikan [Node.js](https://nodejs.org/) (v18+) dan `npm` sudah terinstal, serta
+**PostgreSQL 16+** sudah berjalan di komputer kamu (mis. installer EDB untuk Windows,
+atau `sudo apt install postgresql` di Linux).
 
 ### 2. Clone & Install Dependency
 ```bash
@@ -50,7 +52,7 @@ Salin contoh lalu isi nilainya:
 cp .env.example .env
 ```
 ```env
-DATABASE_URL="file:./dev.db?connection_limit=1"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/nyawiji?schema=public"
 NEXT_PUBLIC_APP_NAME="PORTAL NYAWIJI"
 SESSION_SECRET="<string acak panjang, 64+ karakter>"
 DINKES_ADMIN_USERNAME="dinkes_gk"
@@ -63,12 +65,18 @@ PUSKESMAS_DEFAULT_PASSWORD="<password staf kuat, beda dari kader>"
 > memakai password acak (akun tidak bisa dipakai login) sampai diisi.
 
 ### 4. Setup Database Prisma
-Jalankan perintah berikut untuk membuat database SQLite lokal:
+Buat database kosong dulu (sekali saja):
+```bash
+createdb -U postgres nyawiji
+```
+Lalu dorong skema Prisma ke database:
 ```bash
 npx prisma db push
 npm run db:seed        # seed 18 Kapanewon + akun DINKES (tidak menimpa password lama)
 npm run db:dev         # (opsional) data uji: 1 Puskesmas + beberapa Posyandu
 ```
+
+> Untuk tes: buat `createdb -U postgres nyawiji_test` (dipakai tes integrasi).
 
 ### 5. Jalankan Development Server
 ```bash
@@ -85,7 +93,7 @@ Buka [http://localhost:3000](http://localhost:3000) di browser.
 ├── app/              # Halaman & API Routes (Next.js App Router)
 ├── components/       # Komponen UI Reusable (Modal, Form, Navbar, dll)
 ├── lib/              # Konfigurasi Prisma Client & Helper Function
-├── prisma/           # Schema Database & SQLite File
+├── prisma/           # Schema Database & Seed
 └── public/           # File Statis & Aset
 ```
 

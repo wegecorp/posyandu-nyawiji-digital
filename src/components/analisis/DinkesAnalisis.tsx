@@ -174,19 +174,30 @@ export function DinkesAnalisis() {
     return idx > 0 ? months[idx - 1] : '';
   }, [puskesmasCoverage, latestMonth]);
 
-  // Puskesmas scoreboard (bulan terakhir berdata + delta partisipasi vs bulan sebelumnya, poin %)
+  // Puskesmas scoreboard: agregat SELURUH periode terpilih (Σ terukur / Σ sasaran),
+  // supaya peringkat objektif lintas unit, bukan cuma 1 bulan. Delta tetap
+  // momentum bulan terakhir vs sebelumnya.
   const puskesmasScoreboard = useMemo(() => {
-    const latest = puskesmasCoverage.filter(d => d.ym === latestMonth);
-    return latest.map(d => {
+    const agg = new Map<string, { unitId: string; unitName: string; numerator: number; denominator: number }>();
+    for (const d of puskesmasCoverage) {
+      const cur = agg.get(d.unitId) ?? { unitId: d.unitId, unitName: d.unitName, numerator: 0, denominator: 0 };
+      cur.numerator += d.numerator;
+      cur.denominator += d.denominator;
+      cur.unitName = d.unitName;
+      agg.set(d.unitId, cur);
+    }
+    return [...agg.values()].map((d) => {
+      const last = puskesmasCoverage.find(p => p.unitId === d.unitId && p.ym === latestMonth);
       const prev = prevMonth
         ? puskesmasCoverage.find(p => p.unitId === d.unitId && p.ym === prevMonth)
         : undefined;
-      const delta = prev && prev.denominator > 0
-        ? Math.round((d.participation - prev.participation) * 100)
+      const delta = last && prev && prev.denominator > 0
+        ? Math.round((last.participation - prev.participation) * 100)
         : null;
       return {
         unitId: d.unitId, unitName: d.unitName,
-        participation: d.participation, numerator: d.numerator, denominator: d.denominator,
+        participation: d.denominator > 0 ? d.numerator / d.denominator : 0,
+        numerator: d.numerator, denominator: d.denominator,
         delta,
       };
     });
@@ -241,15 +252,22 @@ export function DinkesAnalisis() {
     return coverageData.find((d) => d.ym === latestMonth)?.denominator ?? 0;
   }, [drillHcId, drillCoverage, drillLatestMonth, coverageData, latestMonth]);
 
-  // Drill scoreboard (posyandu within puskesmas)
+  // Drill scoreboard (posyandu within puskesmas) — agregat seluruh periode drill.
   const drillScoreboard = useMemo(() => {
-    return drillCoverage
-      .filter(d => d.ym === drillLatestMonth)
-      .map(d => ({
-        unitId: d.unitId, unitName: d.unitName,
-        participation: d.participation, numerator: d.numerator, denominator: d.denominator,
-      }));
-  }, [drillCoverage, drillLatestMonth]);
+    const agg = new Map<string, { unitId: string; unitName: string; numerator: number; denominator: number }>();
+    for (const d of drillCoverage) {
+      const cur = agg.get(d.unitId) ?? { unitId: d.unitId, unitName: d.unitName, numerator: 0, denominator: 0 };
+      cur.numerator += d.numerator;
+      cur.denominator += d.denominator;
+      cur.unitName = d.unitName;
+      agg.set(d.unitId, cur);
+    }
+    return [...agg.values()].map(d => ({
+      unitId: d.unitId, unitName: d.unitName,
+      participation: d.denominator > 0 ? d.numerator / d.denominator : 0,
+      numerator: d.numerator, denominator: d.denominator,
+    }));
+  }, [drillCoverage]);
 
   // Bulan aktif untuk kartu hasil pengukuran (kabupaten atau HC).
   const activeMonth = drillHcId ? drillLatestMonth : latestMonth;
@@ -332,7 +350,7 @@ export function DinkesAnalisis() {
       {!drillHcId && puskesmasScoreboard.length > 0 && (
         <ChartCard
           title="Ranking Partisipasi Puskesmas"
-          subtitle={`Bulan ${formatYM(latestMonth)}${prevMonth ? ` vs ${formatYM(prevMonth)}` : ''} — merah < ${PARTISIPASI_BURUK_THRESHOLD * 100}%`}
+          subtitle={`Agregat ${formatYM(from.slice(0, 7))}–${formatYM(to.slice(0, 7))} — merah < ${PARTISIPASI_BURUK_THRESHOLD * 100}%`}
         >
           <UnitScoreboard
             data={puskesmasScoreboard}
@@ -359,7 +377,7 @@ export function DinkesAnalisis() {
       {drillHcId && !drillLoading && drillScoreboard.length > 0 && (
         <ChartCard
           title="Ranking Posyandu"
-          subtitle={`${drillHcName} — bulan ${formatYM(drillLatestMonth)}`}
+          subtitle={`${drillHcName} — agregat ${formatYM(from.slice(0, 7))}–${formatYM(to.slice(0, 7))}`}
         >
           <UnitScoreboard data={drillScoreboard} />
         </ChartCard>

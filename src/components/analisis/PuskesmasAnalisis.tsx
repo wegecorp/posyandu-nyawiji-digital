@@ -82,15 +82,22 @@ export function PuskesmasAnalisis() {
       }));
   }, [posyanduCoverage]);
 
-  // Scoreboard (posyandu ranking)
+  // Scoreboard (posyandu ranking) — agregat seluruh periode terpilih.
   const scoreboard = useMemo(() => {
-    return posyanduCoverage
-      .filter(d => d.ym === latestMonth)
-      .map(d => ({
-        unitId: d.unitId, unitName: d.unitName,
-        participation: d.participation, numerator: d.numerator, denominator: d.denominator,
-      }));
-  }, [posyanduCoverage, latestMonth]);
+    const agg = new Map<string, { unitId: string; unitName: string; numerator: number; denominator: number }>();
+    for (const d of posyanduCoverage) {
+      const cur = agg.get(d.unitId) ?? { unitId: d.unitId, unitName: d.unitName, numerator: 0, denominator: 0 };
+      cur.numerator += d.numerator;
+      cur.denominator += d.denominator;
+      cur.unitName = d.unitName;
+      agg.set(d.unitId, cur);
+    }
+    return [...agg.values()].map(d => ({
+      unitId: d.unitId, unitName: d.unitName,
+      participation: d.denominator > 0 ? d.numerator / d.denominator : 0,
+      numerator: d.numerator, denominator: d.denominator,
+    }));
+  }, [posyanduCoverage]);
 
   // Outcome pie — agregat SELURUH posyandu utk bulan tsb (jangan find yg ambil 1 baris)
   const latestOutcome = useMemo(() => {
@@ -191,7 +198,7 @@ export function PuskesmasAnalisis() {
       {scoreboard.length > 0 && (
         <ChartCard
           title="Ranking Partisipasi Posyandu"
-          subtitle={`Bulan terakhir: ${formatYM(latestMonth)} — merah < ${PARTISIPASI_BURUK_THRESHOLD * 100}%`}
+          subtitle={`Agregat ${formatYM(from.slice(0, 7))}–${formatYM(to.slice(0, 7))} — merah < ${PARTISIPASI_BURUK_THRESHOLD * 100}%`}
         >
           <UnitScoreboard data={scoreboard} />
         </ChartCard>

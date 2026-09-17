@@ -52,9 +52,10 @@ export function UnitScoreboard({
       {title && <h4 className="text-xs font-extrabold text-[#54656f] mb-2 uppercase tracking-wide">{title}</h4>}
       <div className="space-y-1.5">
         {sorted.map((row, idx) => {
+          const noData = row.denominator === 0; // belum ada sasaran terdaftar → bukan mangkir
           const pct = Math.round(row.participation * 100);
-          const buruk = isBuruk(row.participation);
-          const barWidth = pct; // 0% tampil kosong, jangan dibuat seolah terisi
+          const buruk = !noData && isBuruk(row.participation);
+          const barWidth = noData ? 0 : pct; // 0% tampil kosong, jangan dibuat seolah terisi
           return (
             <button
               key={row.unitId}
@@ -98,8 +99,8 @@ export function UnitScoreboard({
                       {row.abnormal} abnormal
                     </span>
                   )}
-                  <span className={`text-xs font-extrabold ${buruk ? 'text-red-600' : 'text-green-600'}`}>
-                    {pct}%
+                  <span className={`text-xs font-extrabold ${noData ? 'text-[#8696a0]' : buruk ? 'text-red-600' : 'text-green-600'}`}>
+                    {noData ? 'tanpa data' : `${pct}%`}
                   </span>
                 </div>
               </div>
@@ -113,7 +114,7 @@ export function UnitScoreboard({
               </div>
               <div className="flex justify-between mt-1">
                 <span className="text-[10px] text-[#8696a0]">
-                  {row.numerator} / {row.denominator} pasien
+                  {noData ? 'Belum ada sasaran terdaftar' : `${row.numerator} / ${row.denominator} pasien`}
                 </span>
                 {onDrill && (
                   <span className="text-[10px] text-[#075e54] font-bold">Detail →</span>

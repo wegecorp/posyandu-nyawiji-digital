@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { PatientData } from '@/lib/types';
-import QRCode from 'qrcode';
-import { Html5QrcodeScanner } from 'html5-qrcode';
 import { X, QrCode, Camera } from 'lucide-react';
 import { useBackLayer } from '@/lib/back-navigation';
 import { APP_NAME } from '@/lib/branding';
@@ -24,57 +22,69 @@ export const QRModal: React.FC<QRModalProps> = ({
   onScanSuccess,
 }) => {
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const scannerRef = useRef<{ clear: () => Promise<void> } | null>(null);
 
   // Generate QR Code image for patient card
   useEffect(() => {
+    let active = true;
     if (mode === 'view' && patient && isOpen) {
-      QRCode.toDataURL(
-        patient.regNumber,
-        {
-          width: 260,
-          margin: 2,
-          color: {
-            dark: '#0a1317',
-            light: '#ffffff',
+      import('qrcode').then((QRCodeModule) => {
+        const QRCode = QRCodeModule.default || QRCodeModule;
+        QRCode.toDataURL(
+          patient.regNumber,
+          {
+            width: 260,
+            margin: 2,
+            color: {
+              dark: '#0a1317',
+              light: '#ffffff',
+            },
           },
-        },
-        (err, url) => {
-          if (!err) setQrDataUrl(url);
-        }
-      );
+          (err, url) => {
+            if (active && !err && url) setQrDataUrl(url);
+          }
+        );
+      });
     }
+    return () => {
+      active = false;
+    };
   }, [mode, patient, isOpen]);
 
   // Handle Camera QR Scanner
   useEffect(() => {
+    let isCancelled = false;
     if (mode === 'scan' && isOpen) {
-      const scanner = new Html5QrcodeScanner(
-        'qr-reader-container',
-        {
-          fps: 10,
-          qrbox: { width: 220, height: 220 },
-          aspectRatio: 1.0,
-        },
-        /* verbose= */ false
-      );
+      import('html5-qrcode').then(({ Html5QrcodeScanner }) => {
+        if (isCancelled) return;
+        const scanner = new Html5QrcodeScanner(
+          'qr-reader-container',
+          {
+            fps: 10,
+            qrbox: { width: 220, height: 220 },
+            aspectRatio: 1.0,
+          },
+          /* verbose= */ false
+        );
 
-      scanner.render(
-        (decodedText) => {
-          if (onScanSuccess) {
-            onScanSuccess(decodedText);
+        scanner.render(
+          (decodedText) => {
+            if (onScanSuccess) {
+              onScanSuccess(decodedText);
+            }
+            scanner.clear();
+            onClose();
+          },
+          () => {
+            // scanning frame errors can be ignored
           }
-          scanner.clear();
-          onClose();
-        },
-        () => {
-          // scanning frame errors can be ignored
-        }
-      );
+        );
 
-      scannerRef.current = scanner;
+        scannerRef.current = scanner;
+      });
 
       return () => {
+        isCancelled = true;
         if (scannerRef.current) {
           scannerRef.current.clear().catch((e) => console.error(e));
         }

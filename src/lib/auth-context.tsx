@@ -21,20 +21,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Sumber kebenaran sesi = server (/api/auth/me). localStorage hanya cache
-  // agar tidak logout saat jaringan putus; tetap divalidasi tiap muat aplikasi.
+  // Sumber kebenaran sesi = server (/api/auth/me). localStorage dipakai sebagai
+  // cache instan (optimistic render) agar aplikasi langsung interaktif saat dibuka
+  // tanpa menunggu roundtrip jaringan, kemudian divalidasi di latar belakang.
   useEffect(() => {
     let cancelled = false;
+    let hadCache = false;
 
-    async function loadSession() {
-      let cached: UserSession | null = null;
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) cached = JSON.parse(raw);
-      } catch {
-        /* ignore corrupt cache */
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        if (cached && typeof cached === 'object' && cached.id) {
+          setUser(cached);
+          setIsLoading(false);
+          hadCache = true;
+        }
       }
+    } catch {
+      /* ignore corrupt cache */
+    }
 
+    async function revalidateSession() {
       try {
         const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
         if (!cancelled) {
@@ -46,23 +54,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               return;
             }
           }
-          // 401 / invalid session -> hapus cache. Antrean offline milik akun lama juga
-          // dibuang agar tidak ter-flush ke akun berikutnya (mirip logout).
-          setUser(null);
-          localStorage.removeItem(STORAGE_KEY);
-          if (res.status === 401) clearSyncQueue();
+          // 401 / 403 / invalid session -> hapus cache dan logout.
+          if (res.status === 401 || res.status === 403) {
+            setUser(null);
+            localStorage.removeItem(STORAGE_KEY);
+            clearSyncQueue();
+          }
         }
       } catch {
-        // Gagal jaringan: pakai cache bila ada, tanpa validasi server.
-        if (!cancelled) {
-          setUser(cached || null);
-        }
+        // Gagal jaringan: tetap pakai cache tanpa mengganggu user.
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled && !hadCache) {
+          setIsLoading(false);
+        }
       }
     }
 
-    loadSession();
+    revalidateSession();
     return () => {
       cancelled = true;
     };

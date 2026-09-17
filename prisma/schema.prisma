@@ -54,6 +54,9 @@ model Posyandu {
   measurements    Measurement[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+
+  @@index([healthCenterId])
+  @@index([kalurahanId])
 }
 
 model User {
@@ -90,6 +93,9 @@ model Patient {
   updatedBy     String?       // Username kader terakhir mengubah
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  @@index([posyanduId])
+  @@index([name])
 }
 
 model Measurement {
@@ -149,4 +155,6 @@ model Measurement {
 
   @@unique([patientId, sessionDate])
   @@index([sessionDate])
+  @@index([posyanduId, sessionDate])
+  @@index([patientId])
 }

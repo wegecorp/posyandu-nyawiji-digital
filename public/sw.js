@@ -8,7 +8,7 @@
  *
  * Saat versi berubah, cukup naikkan VERSION untuk membersihkan cache lama.
  */
-const VERSION = '2026.09-v3';
+const VERSION = '2026.09-v4';
 const APP_SHELL_CACHE = `nyawiji-shell-${VERSION}`;
 const STATIC_CACHE = `nyawiji-static-${VERSION}`;
 
@@ -48,22 +48,42 @@ self.addEventListener('fetch', (event) => {
   // dan aplikasi sudah punya mekanisme luring (queue sinkron) sendiri.
   if (path.startsWith('/api/')) return;
 
-  // Navigasi halaman (HTML aplikasi): network-first, fallback ke shell terakhir.
+  // Navigasi halaman (HTML aplikasi): network-first dengan timeout 2.5s -> fallback ke shell terakhir.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
+      (async () => {
+        const networkPromise = fetch(request).then((response) => {
           if (response && response.ok) {
             const copy = response.clone();
             caches.open(APP_SHELL_CACHE).then((cache) => cache.put('/', copy)).catch(() => {});
           }
           return response;
-        })
-        .catch(() =>
-          caches
+        });
+
+        const timeoutPromise = new Promise((resolve) =>
+          setTimeout(() => resolve(null), 2500)
+        );
+
+        try {
+          const result = await Promise.race([networkPromise, timeoutPromise]);
+          if (result) return result;
+
+          // Timeout tercapai: coba ambil dari cache shell instan
+          const cached = await caches
             .open(APP_SHELL_CACHE)
-            .then((cache) => cache.match('/') || cache.match(request.url))
-        )
+            .then((cache) => cache.match('/') || cache.match(request.url));
+          if (cached) return cached;
+
+          // Bila belum ada di cache, tunggu respon jaringan
+          return await networkPromise;
+        } catch {
+          const cached = await caches
+            .open(APP_SHELL_CACHE)
+            .then((cache) => cache.match('/') || cache.match(request.url));
+          if (cached) return cached;
+          return Response.error();
+        }
+      })()
     );
     return;
   }

@@ -85,13 +85,26 @@ export function AuthPage() {
   const [activationMsg, setActivationMsg] = useState('');
   const [showExitHint, setShowExitHint] = useState(false);
 
-  // Ambil daftar puskesmas saat tab posyandu aktif di step awal
+  // Ambil daftar puskesmas saat tab posyandu aktif di step awal (dengan cache instan)
   useEffect(() => {
     if (tab === 'posyandu' && step === 0 && puskesmasList.length === 0) {
+      try {
+        const cached = sessionStorage.getItem('nyawiji_pkm_list');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) setPuskesmasList(parsed);
+        }
+      } catch {}
+
       fetch('/api/public/puskesmas')
         .then((r) => r.json())
         .then((json) => {
-          if (json.success && Array.isArray(json.data)) setPuskesmasList(json.data);
+          if (json.success && Array.isArray(json.data)) {
+            setPuskesmasList(json.data);
+            try {
+              sessionStorage.setItem('nyawiji_pkm_list', JSON.stringify(json.data));
+            } catch {}
+          }
         })
         .catch((e) => console.error('Gagal memuat puskesmas:', e));
     }
@@ -119,45 +132,89 @@ export function AuthPage() {
     }
   };
 
-  // Langkah 1: pilih puskesmas -> ambil kalurahan
+  // Langkah 1: pilih puskesmas -> ambil kalurahan (cek cache dulu)
   const choosePuskesmas = async (pkm: PuskesmasItem) => {
     setSelectedPuskesmas(pkm);
     setErrorMsg('');
-    setIsLoading(true);
-    setKalurahanList([]);
-    setPosyanduList([]);
     setFilterText('');
+    const cacheKey = `nyawiji_kal_${pkm.id}`;
+    let hasCache = false;
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setKalurahanList(parsed);
+          setStep(1);
+          hasCache = true;
+        }
+      }
+    } catch {}
+
+    if (!hasCache) {
+      setIsLoading(true);
+      setKalurahanList([]);
+      setPosyanduList([]);
+    }
+
     try {
       const res = await fetch(`/api/public/puskesmas/${pkm.id}/kalurahan`);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Gagal memuat kalurahan');
       setKalurahanList(json.data);
-      setStep(1);
+      try {
+        sessionStorage.setItem(cacheKey, JSON.stringify(json.data));
+      } catch {}
+      if (!hasCache) setStep(1);
     } catch (err) {
-      setErrorMsg(getErrMsg(err));
-      setSelectedPuskesmas(null);
+      if (!hasCache) {
+        setErrorMsg(getErrMsg(err));
+        setSelectedPuskesmas(null);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Langkah 2: pilih kalurahan -> ambil posyandu
+  // Langkah 2: pilih kalurahan -> ambil posyandu (cek cache dulu)
   const chooseKalurahan = async (kal: KalurahanItem) => {
     if (!selectedPuskesmas) return;
     setSelectedKalurahan(kal);
     setErrorMsg('');
-    setIsLoading(true);
-    setPosyanduList([]);
     setFilterText('');
+    const cacheKey = `nyawiji_pos_${selectedPuskesmas.id}_${kal.id}`;
+    let hasCache = false;
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setPosyanduList(parsed);
+          setStep(2);
+          hasCache = true;
+        }
+      }
+    } catch {}
+
+    if (!hasCache) {
+      setIsLoading(true);
+      setPosyanduList([]);
+    }
+
     try {
       const res = await fetch(`/api/public/puskesmas/${selectedPuskesmas.id}/posyandu?kalurahanId=${kal.id}`);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Gagal memuat posyandu');
       setPosyanduList(json.data);
-      setStep(2);
+      try {
+        sessionStorage.setItem(cacheKey, JSON.stringify(json.data));
+      } catch {}
+      if (!hasCache) setStep(2);
     } catch (err) {
-      setErrorMsg(getErrMsg(err));
-      setSelectedKalurahan(null);
+      if (!hasCache) {
+        setErrorMsg(getErrMsg(err));
+        setSelectedKalurahan(null);
+      }
     } finally {
       setIsLoading(false);
     }

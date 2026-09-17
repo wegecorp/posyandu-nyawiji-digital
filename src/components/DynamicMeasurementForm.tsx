@@ -43,7 +43,15 @@ import {
   isKmsAge,
   type StaturePosition,
 } from '@/lib/growth';
-import { KmsChart } from '@/components/KmsChart';
+import dynamic from 'next/dynamic';
+
+const KmsChart = dynamic(() => import('@/components/KmsChart').then((m) => m.KmsChart), {
+  loading: () => (
+    <div className="h-64 flex items-center justify-center text-xs font-bold text-[#54656f] bg-slate-50/50 rounded-xl animate-pulse">
+      Memuat grafik KMS...
+    </div>
+  ),
+});
 
 /** Bulan lokal 'YYYY-MM' dari tanggal ISO. Sesi pengukuran = 1 bulan. */
 function localYearMonth(iso: string): string {

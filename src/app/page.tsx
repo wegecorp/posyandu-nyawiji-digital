@@ -1,22 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { useAuth } from '@/lib/auth-context';
 import { PatientData } from '@/lib/types';
 import { Header } from '@/components/Header';
 import { PatientCard } from '@/components/PatientCard';
-import { DynamicMeasurementForm } from '@/components/DynamicMeasurementForm';
-import { QuickRegisterModal } from '@/components/QuickRegisterModal';
-import { QRModal } from '@/components/QRModal';
-import { ExportModal } from '@/components/ExportModal';
-import { LoginModal } from '@/components/LoginModal';
-import { PuskesmasDashboard } from '@/components/PuskesmasDashboard';
-import { DinkesDashboard } from '@/components/DinkesDashboard';
-import { AnalisisPage } from '@/components/analisis/AnalisisPage';
-import { AuthPage } from '@/components/AuthPage';
-import { EditPatientModal } from '@/components/EditPatientModal';
-import { DeletePatientConfirmModal } from '@/components/DeletePatientConfirmModal';
-import { ChangePasswordModal } from '@/components/ChangePasswordModal';
 import { ExitHint } from '@/components/ExitHint';
 import { useBackLayer, useExitGuard } from '@/lib/back-navigation';
 import { clearQueuedPatient } from '@/lib/offline-sync';
@@ -36,6 +25,73 @@ import {
   LayoutGrid,
   ShieldAlert,
 } from 'lucide-react';
+
+const DynamicMeasurementForm = dynamic(
+  () => import('@/components/DynamicMeasurementForm').then((m) => m.DynamicMeasurementForm),
+  {
+    loading: () => (
+      <div className="p-12 text-center text-sm font-bold text-[#54656f] flex flex-col items-center gap-2">
+        <RefreshCw className="w-6 h-6 animate-spin text-[#075e54]" />
+        <span>Memuat form pemeriksaan...</span>
+      </div>
+    ),
+  }
+);
+
+const AnalisisPage = dynamic(
+  () => import('@/components/analisis/AnalisisPage').then((m) => m.AnalisisPage),
+  {
+    loading: () => (
+      <div className="p-12 text-center text-sm font-bold text-[#54656f] flex flex-col items-center gap-2">
+        <RefreshCw className="w-6 h-6 animate-spin text-[#075e54]" />
+        <span>Memuat analisis...</span>
+      </div>
+    ),
+  }
+);
+
+const DinkesDashboard = dynamic(
+  () => import('@/components/DinkesDashboard').then((m) => m.DinkesDashboard),
+  {
+    loading: () => (
+      <div className="p-12 text-center text-sm font-bold text-[#54656f] flex flex-col items-center gap-2">
+        <RefreshCw className="w-6 h-6 animate-spin text-[#075e54]" />
+        <span>Memuat dashboard Dinkes...</span>
+      </div>
+    ),
+  }
+);
+
+const PuskesmasDashboard = dynamic(
+  () => import('@/components/PuskesmasDashboard').then((m) => m.PuskesmasDashboard),
+  {
+    loading: () => (
+      <div className="p-12 text-center text-sm font-bold text-[#54656f] flex flex-col items-center gap-2">
+        <RefreshCw className="w-6 h-6 animate-spin text-[#075e54]" />
+        <span>Memuat dashboard Puskesmas...</span>
+      </div>
+    ),
+  }
+);
+
+const AuthPage = dynamic(() => import('@/components/AuthPage').then((m) => m.AuthPage), {
+  loading: () => (
+    <div className="min-h-screen flex items-center justify-center bg-[#f0f2f5]">
+      <div className="text-center space-y-2">
+        <RefreshCw className="w-7 h-7 animate-spin text-[#075e54] mx-auto" />
+        <p className="text-xs font-bold text-[#54656f]">Memuat portal...</p>
+      </div>
+    </div>
+  ),
+});
+
+const QRModal = dynamic(() => import('@/components/QRModal').then((m) => m.QRModal));
+const ExportModal = dynamic(() => import('@/components/ExportModal').then((m) => m.ExportModal));
+const QuickRegisterModal = dynamic(() => import('@/components/QuickRegisterModal').then((m) => m.QuickRegisterModal));
+const EditPatientModal = dynamic(() => import('@/components/EditPatientModal').then((m) => m.EditPatientModal));
+const DeletePatientConfirmModal = dynamic(() => import('@/components/DeletePatientConfirmModal').then((m) => m.DeletePatientConfirmModal));
+const ChangePasswordModal = dynamic(() => import('@/components/ChangePasswordModal').then((m) => m.ChangePasswordModal));
+const LoginModal = dynamic(() => import('@/components/LoginModal').then((m) => m.LoginModal));
 
 export default function PosyanduApp() {
   const { user, isLoading: authLoading, switchActivePosyandu } = useAuth();
@@ -93,7 +149,7 @@ export default function PosyanduApp() {
   const fetchPatients = async () => {
     if (!user?.posyanduId && user?.role === 'POSYANDU') return;
     const seq = ++fetchSeqRef.current;
-    setIsLoading(true);
+    if (patients.length === 0) setIsLoading(true);
     try {
       const posId = user?.posyanduId || '';
       const res = await fetch(`/api/patients?posyanduId=${posId}&q=${encodeURIComponent(searchQuery)}`);
@@ -101,6 +157,11 @@ export default function PosyanduApp() {
       const result = await res.json();
       if (result.success && Array.isArray(result.data)) {
         setPatients(result.data);
+        if (!searchQuery && posId) {
+          try {
+            localStorage.setItem(`nyawiji_patients_${posId}`, JSON.stringify(result.data));
+          } catch {}
+        }
 
         setSelectedPatient((prev) => {
           if (!prev) return null;
@@ -121,19 +182,36 @@ export default function PosyanduApp() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Auto-fetch saat role/lokasi/query pencarian berubah
+  // Auto-fetch saat role/lokasi/query pencarian berubah (dengan SWR local cache)
   useEffect(() => {
     if (!user?.posyanduId && user?.role === 'POSYANDU') return;
     let active = true;
     const posId = user?.posyanduId || '';
     const ctx = `${user?.role}:${posId}`;
-    // Ganti akun/posyandu: kosongkan daftar lama segera (cegah kartu posyandu lain
-    // tampil sementara / bertahan saat jaringan gagal).
+
+    // SWR: Jika berganti posyandu tanpa search query, tampilkan cache instan bila ada
     if (ctx !== prevCtxRef.current) {
       prevCtxRef.current = ctx;
-      setPatients([]);
-      setIsLoading(true);
+      let hasCachedData = false;
+      if (!debouncedSearchQuery && posId) {
+        try {
+          const cachedRaw = localStorage.getItem(`nyawiji_patients_${posId}`);
+          if (cachedRaw) {
+            const cachedParsed = JSON.parse(cachedRaw);
+            if (Array.isArray(cachedParsed) && cachedParsed.length > 0) {
+              setPatients(cachedParsed);
+              setIsLoading(false);
+              hasCachedData = true;
+            }
+          }
+        } catch {}
+      }
+      if (!hasCachedData) {
+        setPatients([]);
+        setIsLoading(true);
+      }
     }
+
     const seq = ++fetchSeqRef.current;
     fetch(`/api/patients?posyanduId=${posId}&q=${encodeURIComponent(debouncedSearchQuery)}`)
       .then((r) => r.json())
@@ -141,6 +219,11 @@ export default function PosyanduApp() {
         if (!active || seq !== fetchSeqRef.current || !result.success || !Array.isArray(result.data))
           return;
         setPatients(result.data);
+        if (!debouncedSearchQuery && posId) {
+          try {
+            localStorage.setItem(`nyawiji_patients_${posId}`, JSON.stringify(result.data));
+          } catch {}
+        }
         setSelectedPatient((prev) => {
           if (!prev) return null;
           return result.data.find((p: PatientData) => p.id === prev.id) || prev;
@@ -510,67 +593,83 @@ export default function PosyanduApp() {
 
       {/* MODALS */}
       {/* 1. Quick Registration Modal */}
-      <QuickRegisterModal
-        isOpen={isRegisterOpen}
-        onClose={() => setIsRegisterOpen(false)}
-        onSuccess={handleRegisterSuccess}
-      />
+      {isRegisterOpen && (
+        <QuickRegisterModal
+          isOpen={isRegisterOpen}
+          onClose={() => setIsRegisterOpen(false)}
+          onSuccess={handleRegisterSuccess}
+        />
+      )}
 
       {/* 2. QR Code Camera Scanner Modal */}
-      <QRModal
-        mode="scan"
-        isOpen={isQRScanOpen}
-        onClose={() => setIsQRScanOpen(false)}
-        onScanSuccess={handleQRScanResult}
-      />
+      {isQRScanOpen && (
+        <QRModal
+          mode="scan"
+          isOpen={isQRScanOpen}
+          onClose={() => setIsQRScanOpen(false)}
+          onScanSuccess={handleQRScanResult}
+        />
+      )}
 
       {/* 3. QR Code View Card Modal */}
-      <QRModal
-        mode="view"
-        patient={qrPatientTarget}
-        isOpen={isQRViewOpen}
-        onClose={() => setIsQRViewOpen(false)}
-      />
+      {isQRViewOpen && (
+        <QRModal
+          mode="view"
+          patient={qrPatientTarget}
+          isOpen={isQRViewOpen}
+          onClose={() => setIsQRViewOpen(false)}
+        />
+      )}
 
       {/* 4. Rekap Ringkas / Export */}
-      <ExportModal
-        isOpen={isExportOpen}
-        onClose={() => setIsExportOpen(false)}
-      />
+      {isExportOpen && (
+        <ExportModal
+          isOpen={isExportOpen}
+          onClose={() => setIsExportOpen(false)}
+        />
+      )}
 
       {/* 5. Login & Account Switcher Modal */}
-      <LoginModal
-        isOpen={isLoginOpen}
-        onClose={() => {
-          setIsLoginOpen(false);
-          fetchPatients();
-        }}
-        onChangePassword={() => setIsChangePassOpen(true)}
-      />
+      {isLoginOpen && (
+        <LoginModal
+          isOpen={isLoginOpen}
+          onClose={() => {
+            setIsLoginOpen(false);
+            fetchPatients();
+          }}
+          onChangePassword={() => setIsChangePassOpen(true)}
+        />
+      )}
 
       {/* 6. Change Password Modal (Self Service) */}
-      <ChangePasswordModal
-        isOpen={isChangePassOpen}
-        onClose={() => setIsChangePassOpen(false)}
-      />
+      {isChangePassOpen && (
+        <ChangePasswordModal
+          isOpen={isChangePassOpen}
+          onClose={() => setIsChangePassOpen(false)}
+        />
+      )}
 
       {/* 7. Edit Patient Modal */}
-      <EditPatientModal
-        key={editingPatient?.id || 'edit-closed'}
-        isOpen={Boolean(editingPatient)}
-        patient={editingPatient}
-        onClose={() => setEditingPatient(null)}
-        onSuccess={handleEditSuccess}
-        onRequestDelete={(p) => setDeletingPatient(p)}
-      />
+      {Boolean(editingPatient) && (
+        <EditPatientModal
+          key={editingPatient?.id || 'edit-closed'}
+          isOpen={Boolean(editingPatient)}
+          patient={editingPatient}
+          onClose={() => setEditingPatient(null)}
+          onSuccess={handleEditSuccess}
+          onRequestDelete={(p) => setDeletingPatient(p)}
+        />
+      )}
 
       {/* 7b. Delete Patient Confirm Modal */}
-      <DeletePatientConfirmModal
-        isOpen={Boolean(deletingPatient)}
-        patient={deletingPatient}
-        onClose={() => setDeletingPatient(null)}
-        onSuccess={handleDeleteSuccess}
-      />
+      {Boolean(deletingPatient) && (
+        <DeletePatientConfirmModal
+          isOpen={Boolean(deletingPatient)}
+          patient={deletingPatient}
+          onClose={() => setDeletingPatient(null)}
+          onSuccess={handleDeleteSuccess}
+        />
+      )}
 
       {/* 8. Hint keluar aplikasi (back dua kali di layar root, mode standalone) */}
       <ExitHint show={showExitHint} onHide={() => setShowExitHint(false)} />

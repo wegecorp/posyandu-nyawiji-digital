@@ -19,6 +19,7 @@ import * as XLSX from 'xlsx';
 import { prisma } from '@/lib/prisma';
 import { requireRole } from '@/lib/api-auth';
 import { resolveReportPosyanduIds } from '@/lib/patient-scope';
+import { canViewPatientDetail } from '@/lib/stats-access';
 import { getPatientCategory } from '@/lib/utils';
 import { INDICATORS, checkIndicator, type IndicatorDef } from '@/lib/clinical';
 import { computeGrowth, ageInCompletedMonths, isKmsAge, type StaturePosition } from '@/lib/growth';
@@ -106,7 +107,7 @@ export async function GET(req: Request) {
       .map((s) => s.trim())
       .filter(Boolean);
     // Data per pasien hanya untuk POSYANDU & PUSKESMAS.
-    const canDetails = session.role !== 'DINKES';
+    const canDetails = canViewPatientDetail(session.role);
     const wantRoster = canDetails && includeParam.includes('anggota');
     const wantDetails = canDetails && includeParam.includes('detail');
     const wantRisk = canDetails && includeParam.includes('beresiko');
@@ -412,9 +413,14 @@ function flatRow(no: number | string, r: ReportRow) {
     'Gizi Kurang': r.balita.underweight,
     'Gizi Sangat Kurang': r.balita.severelyUnderweight,
     'Gizi Risiko Lebih': r.balita.riskOverweight,
+    'Gizi Belum Dinilai':
+      r.balita.total -
+      (r.balita.normal + r.balita.underweight + r.balita.severelyUnderweight + r.balita.riskOverweight),
     'Perawakan Normal': r.balita.statureNormal,
     'Pendek (TB/U)': r.balita.stunted,
     'Sangat Pendek (TB/U)': r.balita.severelyStunted,
+    'Perawakan Belum Dinilai':
+      r.balita.total - (r.balita.statureNormal + r.balita.stunted + r.balita.severelyStunted),
     'N (naik)': r.nt.naik,
     'T (tidak naik)': r.nt.tidakNaik,
     '2T (rujuk)': r.nt.duaT,

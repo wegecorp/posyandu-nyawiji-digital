@@ -6,7 +6,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { requireRole } from '@/lib/api-auth';
+import { requireRole, requireSessionScope } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
 import { INDICATORS, type IndicatorKey } from '@/lib/clinical';
 import {
@@ -22,6 +22,8 @@ export async function GET(req: Request) {
   try {
     const session = await requireRole(req, ['DINKES', 'PUSKESMAS', 'POSYANDU']);
     if (session instanceof NextResponse) return session;
+    const scopeDenied = requireSessionScope(session);
+    if (scopeDenied) return scopeDenied;
 
     const { searchParams } = new URL(req.url);
     const indicator = searchParams.get('indicator') as IndicatorKey | null;

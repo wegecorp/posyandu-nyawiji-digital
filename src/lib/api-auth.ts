@@ -65,6 +65,27 @@ export function assertHcFilter(
 }
 
 /**
+ * Peran lokasi (POSYANDU/PUSKESMAS) WAJIB punya id cakupan. Bila sesi kehilangan
+ * id (akun orphan / sesi lama), JANGAN jatuh ke "semua unit" — tolak (fail-closed).
+ * DINKES tidak dibatasi. Return 403 bila melanggar, null bila lolos.
+ */
+export function requireSessionScope(session: SessionPayload): NextResponse | null {
+  if (session.role === 'POSYANDU' && !session.posyanduId) {
+    return NextResponse.json(
+      { error: 'Akses ditolak — sesi tanpa cakupan posyandu.' },
+      { status: 403 },
+    );
+  }
+  if (session.role === 'PUSKESMAS' && !session.healthCenterId) {
+    return NextResponse.json(
+      { error: 'Akses ditolak — sesi tanpa cakupan puskesmas.' },
+      { status: 403 },
+    );
+  }
+  return null;
+}
+
+/**
  * Require specific role(s). Returns session or sends 401/403 response.
  */
 export async function requireRole(

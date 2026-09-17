@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { assertHcFilter } from './api-auth';
+import { assertHcFilter, requireSessionScope } from './api-auth';
 import type { SessionPayload } from './session';
 
 function session(role: SessionPayload['role'], healthCenterId: string | null = null): SessionPayload {
@@ -23,5 +23,27 @@ describe('assertHcFilter', () => {
 
   it('POSYANDU ditolak walau HC sama', () => {
     expect(assertHcFilter(session('POSYANDU', 'hc-1'), 'hc-1')?.status).toBe(403);
+  });
+});
+
+describe('requireSessionScope (fail-closed)', () => {
+  it('POSYANDU tanpa posyanduId ditolak 403', () => {
+    expect(requireSessionScope(session('POSYANDU'))?.status).toBe(403);
+  });
+
+  it('POSYANDU dengan posyanduId lolos', () => {
+    expect(requireSessionScope({ ...session('POSYANDU'), posyanduId: 'p1' })).toBeNull();
+  });
+
+  it('PUSKESMAS tanpa healthCenterId ditolak 403', () => {
+    expect(requireSessionScope(session('PUSKESMAS'))?.status).toBe(403);
+  });
+
+  it('PUSKESMAS dengan healthCenterId lolos', () => {
+    expect(requireSessionScope(session('PUSKESMAS', 'hc-1'))).toBeNull();
+  });
+
+  it('DINKES tanpa id lokasi lolos', () => {
+    expect(requireSessionScope(session('DINKES'))).toBeNull();
   });
 });

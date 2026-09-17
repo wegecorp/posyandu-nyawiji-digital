@@ -6,7 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireRole, assertHcFilter } from '@/lib/api-auth';
+import { requireRole, assertHcFilter, requireSessionScope } from '@/lib/api-auth';
 import {
   fetchOutcomeBase,
   classifyOutcomes,
@@ -18,6 +18,8 @@ export async function GET(req: Request) {
   try {
     const session = await requireRole(req, ['DINKES', 'PUSKESMAS', 'POSYANDU']);
     if (session instanceof NextResponse) return session;
+    const scopeDenied = requireSessionScope(session);
+    if (scopeDenied) return scopeDenied;
 
     const { searchParams } = new URL(req.url);
     const scope = searchParams.get('scope') ?? 'kabupaten';

@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { requireRole } from '@/lib/api-auth';
+import { requireRole, requireSessionScope } from '@/lib/api-auth';
 import { canViewPatientDetail } from '@/lib/stats-access';
 import { prisma } from '@/lib/prisma';
 import { INDICATORS, checkIndicator } from '@/lib/clinical';
@@ -16,6 +16,8 @@ export async function GET(req: Request) {
   try {
     const session = await requireRole(req, ['DINKES', 'PUSKESMAS', 'POSYANDU']);
     if (session instanceof NextResponse) return session;
+    const scopeDenied = requireSessionScope(session);
+    if (scopeDenied) return scopeDenied;
     if (!canViewPatientDetail(session.role)) {
       return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 });
     }

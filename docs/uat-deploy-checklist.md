@@ -47,6 +47,8 @@ pm2 logs posyandu-nyawiji --lines 50   # pastikan tidak ada error
 
 - [ ] Sama seperti Puskesmas, plus drill puskesmas → posyandu.
 - [ ] Donut **"Distribusi Hasil Pengukuran"** punya segmen **Belum Dinilai** (abu) di samping Normal/Tidak Normal.
+- [ ] Stacked bar **"Distribusi Hasil Pengukuran per Indikator"** hanya **Normal/Tidak Normal** (tanpa Belum Dinilai).
+- [ ] Ranking partisipasi **Puskesmas** menampilkan delta **↑/↓ poin** vs bulan sebelumnya; bulan tanpa pembanding → tanpa badge.
 - [ ] Kartu ringkasan menampilkan **bulan terakhir yang ada datanya**, bukan bulan berjalan 0%.
 - [ ] Drill kabupaten → puskesmas → posyandu berjalan.
 

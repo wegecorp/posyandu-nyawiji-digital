@@ -12,6 +12,8 @@ interface ScoreboardRow {
   /** Optional extra fields for drill / detail */
   abnormal?: number;
   total?: number;
+  /** Perubahan partisipasi vs bulan sebelumnya, dalam poin persen. null bila tak ada pembanding. */
+  delta?: number | null;
 }
 
 interface UnitScoreboardProps {
@@ -74,6 +76,21 @@ export function UnitScoreboard({
                   {row.unitName}
                 </span>
                 <div className="flex items-center gap-2 shrink-0">
+                  {row.delta != null && (
+                    <span
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                        row.delta > 0
+                          ? 'bg-green-100 text-green-700'
+                          : row.delta < 0
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-[#f0f2f5] text-[#54656f]'
+                      }`}
+                      title="Perubahan vs bulan sebelumnya"
+                    >
+                      {row.delta > 0 ? '↑' : row.delta < 0 ? '↓' : '–'}
+                      {Math.abs(row.delta)} pts
+                    </span>
+                  )}
                   {showAbnormal && row.abnormal != null && (
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                       row.abnormal > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'

@@ -11,18 +11,16 @@ export type IndicatorOutcomeRow = {
   fullLabel: string;
   abnormal: number;
   normal: number;
-  notAssessed: number;
 };
 
 const SEGMENTS = [
   { key: 'abnormal', label: 'Tidak Normal', color: '#ef4444' },
   { key: 'normal', label: 'Normal', color: '#22c55e' },
-  { key: 'notAssessed', label: 'Belum Dinilai', color: '#cbd5e1' },
 ] as const;
 
 /**
- * Stacked bar per indikator klinis: Tidak Normal / Normal / Belum Dinilai.
- * Lebih spesifik dari donut ringkasan — menunjukkan temuan "tentang apa".
+ * Stacked bar per indikator klinis: Tidak Normal / Normal.
+ * Hanya pasien yang sudah dinilai — belum dinilai tidak ditampilkan.
  */
 export function IndicatorOutcomeStackedBar({
   data,
@@ -31,7 +29,7 @@ export function IndicatorOutcomeStackedBar({
   data: IndicatorOutcomeRow[];
   ariaLabel?: string;
 }) {
-  const rows = data.filter((d) => d.abnormal + d.normal + d.notAssessed > 0);
+  const rows = data.filter((d) => d.abnormal + d.normal > 0);
   if (rows.length === 0) return null;
 
   return (
@@ -56,12 +54,11 @@ export function IndicatorOutcomeStackedBar({
               }}
             />
             <Bar dataKey="normal" name="Normal" stackId="a" fill="#22c55e" isAnimationActive={false} />
-            <Bar dataKey="abnormal" name="Tidak Normal" stackId="a" fill="#ef4444" isAnimationActive={false} />
             <Bar
-              dataKey="notAssessed"
-              name="Belum Dinilai"
+              dataKey="abnormal"
+              name="Tidak Normal"
               stackId="a"
-              fill="#cbd5e1"
+              fill="#ef4444"
               isAnimationActive={false}
               radius={[0, 4, 4, 0]}
             />

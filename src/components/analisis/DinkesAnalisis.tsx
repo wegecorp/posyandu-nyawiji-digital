@@ -120,14 +120,30 @@ export function DinkesAnalisis() {
     return withData.sort().at(-1) ?? '';
   }, [coverageData]);
 
-  // Puskesmas scoreboard (latest month with data)
+  // Bulan pembanding: tepat sebelum latestMonth dalam rentang.
+  const prevMonth = useMemo(() => {
+    const months = [...new Set(puskesmasCoverage.map((d) => d.ym))].sort();
+    const idx = months.indexOf(latestMonth);
+    return idx > 0 ? months[idx - 1] : '';
+  }, [puskesmasCoverage, latestMonth]);
+
+  // Puskesmas scoreboard (bulan terakhir berdata + delta partisipasi vs bulan sebelumnya, poin %)
   const puskesmasScoreboard = useMemo(() => {
     const latest = puskesmasCoverage.filter(d => d.ym === latestMonth);
-    return latest.map(d => ({
-      unitId: d.unitId, unitName: d.unitName,
-      participation: d.participation, numerator: d.numerator, denominator: d.denominator,
-    }));
-  }, [puskesmasCoverage, latestMonth]);
+    return latest.map(d => {
+      const prev = prevMonth
+        ? puskesmasCoverage.find(p => p.unitId === d.unitId && p.ym === prevMonth)
+        : undefined;
+      const delta = prev && prev.denominator > 0
+        ? Math.round((d.participation - prev.participation) * 100)
+        : null;
+      return {
+        unitId: d.unitId, unitName: d.unitName,
+        participation: d.participation, numerator: d.numerator, denominator: d.denominator,
+        delta,
+      };
+    });
+  }, [puskesmasCoverage, latestMonth, prevMonth]);
 
   // Outcomes pie (latest month global)
   const latestOutcome = outcomeData.find(d => d.ym === latestMonth);
@@ -137,22 +153,20 @@ export function DinkesAnalisis() {
     const assessed = latestOutcome.normal + latestOutcome.abnormal;
     return assessed > 0 ? Math.round((latestOutcome.normal / assessed) * 100) : 0;
   }, [latestOutcome]);
-  // Stacked bar per indikator: Tidak Normal / Normal / Belum Dinilai.
+  // Stacked bar per indikator: Tidak Normal / Normal (hanya yang sudah dinilai).
   const indicatorOutcomeStacked = useMemo(() => {
     if (!latestOutcome) return [];
     return INDICATORS.map((ind) => {
       const abnormal = latestOutcome.abnormalByIndicator[ind.key] ?? 0;
       const assessed = latestOutcome.assessedByIndicator?.[ind.key] ?? 0;
-      const eligible = latestOutcome.eligibleByIndicator?.[ind.key] ?? 0;
       return {
         key: ind.key,
         name: ind.label.length > 20 ? ind.label.slice(0, 18) + '…' : ind.label,
         fullLabel: ind.label,
         abnormal,
         normal: Math.max(0, assessed - abnormal),
-        notAssessed: Math.max(0, eligible - assessed),
       };
-    }).filter((r) => r.abnormal + r.normal + r.notAssessed > 0);
+    }).filter((r) => r.abnormal + r.normal > 0);
   }, [latestOutcome]);
 
   // Abnormal by indicator (latest month, puskesmas aggregate)
@@ -253,7 +267,7 @@ export function DinkesAnalisis() {
       {!drillHcId && puskesmasScoreboard.length > 0 && (
         <ChartCard
           title="Ranking Partisipasi Puskesmas"
-          subtitle={`Bulan terakhir: ${formatYM(latestMonth)} — merah < ${PARTISIPASI_BURUK_THRESHOLD * 100}%`}
+          subtitle={`Bulan ${formatYM(latestMonth)}${prevMonth ? ` vs ${formatYM(prevMonth)}` : ''} — merah < ${PARTISIPASI_BURUK_THRESHOLD * 100}%`}
         >
           <UnitScoreboard
             data={puskesmasScoreboard}

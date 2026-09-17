@@ -15,8 +15,8 @@ Asumsi jalur: repo `/opt/nyawiji`, PM2 `posyandu-nyawiji`, app `127.0.0.1:3001`.
 
 ## 0. Prasyarat & pembekuan data
 
-1. Cabang kode `feat/migrasi-postgresql` sudah di-merge ke `main` (berisi perubahan
-   provider Prisma, query `analytics.ts`, skrip backup/restore, dan tes integrasi).
+1. Kode migrasi PostgreSQL sudah ada di `main` (commit `a012f46`): provider Prisma
+   `postgresql`, query `analytics.ts`, skrip backup/restore, dan tes integrasi.
 2. PostgreSQL 16 + `postgresql-client` terpasang di server.
 3. Timezone server **Asia/Jakarta** (WAJIB):
    ```bash
@@ -115,8 +115,8 @@ Nilai yang perlu diperhatikan (akan dikonversi skrip impor):
 
 ## 3. Impor JSON → PostgreSQL
 
-Simpan skrip berikut sebagai `scripts/import-sqlite-to-postgres.mjs` saat eksekusi
-(belum ada di repo karena tidak dapat diuji tanpa PostgreSQL):
+Skrip impor sudah tersedia di repo: `scripts/import-sqlite-to-postgres.mjs`. Isinya
+disalin di bawah sebagai referensi:
 
 ```js
 // scripts/import-sqlite-to-postgres.mjs
@@ -352,5 +352,5 @@ membuka akses.
   sebelum yakin tidak ada yang perlu di-rollback.
 - **PWA tidak perlu install ulang** bila hanya database yang dipindah (domain tetap).
   Install ulang hanya bila domain/origin berubah (`docs/DEPLOY-BARU.md §8`).
-- Perbarui dokumentasi operasional setelah migrasi berhasil: `README.md`,
-  `DEPLOY-UPDATE.md`, `docs/DEPLOY-BARU.md`, `CONTEXT.md`.
+- Dokumentasi operasional sudah disesuaikan ke PostgreSQL: `README.md`,
+  `DEPLOY-VPS.md`, `docs/DEPLOY-BARU.md`, `CONTEXT.md`, serta `docs/ded/`.

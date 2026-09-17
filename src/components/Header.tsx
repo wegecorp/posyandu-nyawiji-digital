@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { APP_NAME } from '@/lib/branding';
@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Download,
   BookOpen,
+  EllipsisVertical,
 } from 'lucide-react';
 import { getSyncQueue, flushSyncQueue } from '@/lib/offline-sync';
 import { usePwaInstall, type InstallGuide } from '@/lib/pwa';
@@ -50,6 +51,26 @@ export const Header: React.FC<HeaderProps> = ({
     const result = await install();
     if (result?.action === 'guide') setInstallGuide(result.guide);
   };
+
+  // Overflow menu (layar kecil) — Scan QR & Export
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
     const updateStatus = () => {
@@ -103,12 +124,12 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Account Info Button */}
         <button
           onClick={onOpenLogin}
-          className="flex items-center gap-2.5 text-left hover:bg-white/10 rounded-xl px-2 py-1 transition-all touch-press"
+          className="flex items-center gap-2.5 text-left hover:bg-white/10 rounded-xl px-2 py-1 transition-all touch-press min-w-0 flex-1"
         >
           <div className="w-9 h-9 rounded-full bg-[#128c7e] text-white flex items-center justify-center font-black text-sm shrink-0 border border-white/20 shadow-xs">
             {user?.role === 'DINKES' ? 'DK' : user?.role === 'PUSKESMAS' ? 'PK' : 'PS'}
           </div>
-          <div className="truncate max-w-[140px] sm:max-w-[220px]">
+          <div className="truncate min-w-0 sm:max-w-[220px]">
             <div className="font-extrabold text-white truncate text-sm leading-tight">
               {user?.name || user?.posyanduName || APP_NAME}
             </div>
@@ -122,40 +143,37 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         {/* Header Action Buttons */}
-        <div className="flex items-center gap-2">
-          {/* Install Aplikasi (PWA) ke Layar Utama */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Install Aplikasi (PWA) ke Layar Utama — icon-only di layar kecil */}
           {showInstallButton && (
             <button
               onClick={handleInstallTap}
               aria-label="Install Aplikasi"
-              className="h-11 px-3.5 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center gap-2 border border-white/20 shrink-0"
+              className="h-11 w-11 sm:w-auto px-0 sm:px-3.5 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center gap-2 border border-white/20 shrink-0"
               title="Install / Simpan Aplikasi di Layar Utama"
             >
               <Download className="w-5 h-5 text-[#25d366] shrink-0" />
-              <span className="text-xs font-bold leading-tight">
-                <span className="hidden sm:inline">Install Aplikasi</span>
-                <span className="sm:hidden">Install</span>
-              </span>
+              <span className="hidden sm:inline text-xs font-bold leading-tight">Install Aplikasi</span>
             </button>
           )}
 
-          {/* Scan QR Button */}
+          {/* Scan QR Button — desktop/tablet saja */}
           {showTools && (
             <button
               onClick={onOpenScanQR}
               aria-label="Scan QR Pasien"
-              className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
+              className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press hidden sm:flex items-center justify-center border border-white/20 shrink-0"
               title="Scan QR Code Pasien"
             >
               <QrCode className="w-5 h-5 text-white" />
             </button>
           )}
 
-          {/* Export Data (semua peran) */}
+          {/* Export Data (semua peran) — desktop/tablet saja */}
           <button
             onClick={onOpenExport}
             aria-label="Export Data"
-            className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
+            className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press hidden sm:flex items-center justify-center border border-white/20 shrink-0"
             title="Export Data (Excel)"
           >
             <FileSpreadsheet className="w-5 h-5 text-[#25d366]" />
@@ -171,6 +189,52 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <BookOpen className="w-5 h-5 text-white" />
           </Link>
+
+          {/* Overflow menu — layar kecil: Scan QR & Export */}
+          <div ref={menuRef} className="relative sm:hidden">
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label="Menu lainnya"
+              aria-expanded={menuOpen}
+              aria-haspopup="menu"
+              className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
+              title="Menu lainnya"
+            >
+              <EllipsisVertical className="w-5 h-5 text-white" />
+            </button>
+
+            {menuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-full mt-2 w-52 rounded-xl bg-white shadow-lg border border-black/5 overflow-hidden z-50"
+              >
+                {showTools && (
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onOpenScanQR();
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-[#111b21] hover:bg-[#f0f2f5] transition-colors"
+                  >
+                    <QrCode className="w-5 h-5 text-[#075e54] shrink-0" />
+                    Scan QR Pasien
+                  </button>
+                )}
+                <button
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenExport();
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-[#111b21] hover:bg-[#f0f2f5] transition-colors"
+                >
+                  <FileSpreadsheet className="w-5 h-5 text-[#075e54] shrink-0" />
+                  Export Data (Excel)
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

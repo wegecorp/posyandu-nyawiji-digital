@@ -90,12 +90,24 @@ Buka [http://localhost:3000](http://localhost:3000) di browser.
 ## 📁 Struktur Folder Utama
 
 ```text
-├── app/              # Halaman & API Routes (Next.js App Router)
-├── components/       # Komponen UI Reusable (Modal, Form, Navbar, dll)
-├── lib/              # Konfigurasi Prisma Client & Helper Function
+├── src/app/          # Halaman & API Routes (Next.js App Router)
+├── src/components/   # Komponen UI Reusable (Modal, Form, Navbar, dll)
+├── src/lib/          # Konfigurasi Prisma Client & Helper Function
 ├── prisma/           # Schema Database & Seed
+├── scripts/          # Skrip operasional (backup/restore, impor, verifikasi)
+├── docs/             # Dokumentasi teknis (DED, runbook migrasi, ADR)
 └── public/           # File Statis & Aset
 ```
+
+---
+
+## 📚 Dokumentasi Teknis
+
+- `docs/ded/` — DED, DFD, ERD, flowchart, dan `RUNBOOK-MIGRASI-POSTGRESQL.md`
+  (pindah database SQLite → PostgreSQL + verifikasi paritas).
+- `CONTEXT.md` — glosarium domain & aturan kunci.
+- `docs/adr/` — keputusan arsitektur (ADR-0001 s.d. 0004).
+- `PANDUAN-PENGGUNA.md` — panduan untuk kader/staf Posyandu.
 
 ---
 

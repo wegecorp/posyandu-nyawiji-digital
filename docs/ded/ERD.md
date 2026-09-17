@@ -2,8 +2,8 @@
 
 Model data Portal Nyawiji. Sumber tunggal: **`prisma/schema.prisma`**.
 
-- **Database**: PostgreSQL (desain target; `main` masih SQLite sampai cutover —
-  lihat blok "Status implementasi" di `DED.md` dan `docs/ded/RUNBOOK-MIGRASI-POSTGRESQL.md`).
+- **Database**: PostgreSQL (`provider = "postgresql"`, aktif di `main` — lihat blok
+  "Status implementasi" di `DED.md` dan `docs/ded/RUNBOOK-MIGRASI-POSTGRESQL.md`).
 - **ORM**: Prisma Client (`prisma-client-js`).
 - **Konvensi**: nama tabel & kolom mengikuti nama model/field Prisma apa adanya
   (`"Measurement"`, `"sessionDate"`), sehingga **identifier camelCase wajib di-quote**
@@ -145,9 +145,9 @@ erDiagram
 
 ## 2. Pemetaan Tipe Prisma → PostgreSQL
 
-> Berlaku **setelah cutover** (branch `feat/migrasi-postgresql` di-merge dan data
-> dipindahkan). Selama `main` masih SQLite, tipe yang dipakai adalah tipe bawaan
-> SQLite (DateTime = epoch-milidetik). Lihat blok "Status implementasi" di `DED.md`.
+> Berlaku untuk `main` (provider PostgreSQL aktif sejak migrasi `a012f46`). Tipe lama
+> SQLite (DateTime = epoch-milidetik) hanya relevan saat membaca arsip `dev.db` lama.
+> Lihat blok "Status implementasi" di `DED.md`.
 
 | Prisma | PostgreSQL | Catatan |
 |---|---|---|

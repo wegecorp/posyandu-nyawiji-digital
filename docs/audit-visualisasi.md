@@ -344,7 +344,7 @@ label/legend/aria), F21 (tren menyambung lintasi bulan tanpa data).
 
 **Verifikasi (diperkuat):**
 - `src/lib/month-range.test.ts` — loop merah/hijau lintas TZ (`Asia/Jakarta`/`UTC`/`America/New_York`).
-- `src/lib/analytics.integration.test.ts` — DB SQLite sementara: `fetchOutcomeBase`+`classifyOutcomes`
+- `src/lib/analytics.integration.test.ts` — DB PostgreSQL test (`nyawiji_test`): `fetchOutcomeBase`+`classifyOutcomes`
   (dedupe/belum-dinilai/`appliesTo`), `fetchCoverageBase` (denominator historis), dan rantai
   `recomputePatientWeightProgression` (N/T/2T + hitung ulang setelah edit pengukuran lama).
 - Ops: `npm run db:backfill` ditambahkan ke `package.json` + `DEPLOY-VPS.md` §7.

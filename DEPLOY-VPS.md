@@ -4,8 +4,9 @@ Panduan ringkas migrasi aplikasi + data (30 Puskesmas & ±1.400 Posyandu Gunungk
 ke VPS. Satu perintah saja untuk data: `npm run data:gunungkidul -- file.csv` — **idempotent**,
 aman dijalankan ulang saat data berubah.
 
-> Aplikasi ini memakai **SQLite** (1 file DB). Cocok untuk skala tahap awal.
-> Bila nanti butuh banyak penulis bersamaan, migrasikan `provider` Prisma ke PostgreSQL.
+> Aplikasi ini memakai **PostgreSQL**. Prasyarat: paket `postgresql` +
+> `postgresql-client` terpasang dan database sudah dibuat (`createdb nyawiji`)
+> sebelum langkah 4.
 
 ---
 
@@ -13,12 +14,17 @@ aman dijalankan ulang saat data berubah.
 
 - Ubuntu 22.04 / 24.04 (min. 1 GB RAM)
 - Node.js **20+** (disarankan 22 LTS)
+- PostgreSQL 16 (`postgresql` + `postgresql-client`)
 - PM2
+- Timezone server **Asia/Jakarta** (WAJIB — perhitungan bulan sesi memakai zona ini)
 
 ```bash
 # Node 22
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt-get install -y nodejs git
+sudo apt-get install -y nodejs git postgresql postgresql-client
+
+# Timezone (WAJIB): sesi posyandu dikelompokkan per bulan waktu Jakarta.
+sudo timedatectl set-timezone Asia/Jakarta
 
 # PM2 global
 sudo npm i -g pm2
@@ -39,7 +45,7 @@ npm ci
 Buat `.env` di folder project:
 
 ```env
-DATABASE_URL="file:./dev.db?connection_limit=1"
+DATABASE_URL="postgresql://nyawiji:<password>@localhost:5432/nyawiji?schema=public"
 NEXT_PUBLIC_APP_NAME="PORTAL NYAWIJI"
 SESSION_SECRET="<string acak sangat panjang — WAJIB beda dari dev>"
 DINKES_ADMIN_USERNAME="dinkes_gk"
@@ -53,6 +59,8 @@ PUSKESMAS_DEFAULT_PASSWORD="<password default staf puskesmas — WAJIB beda dari
 ## 4. Siapkan database + data awal
 
 ```bash
+sudo -u postgres createuser --pwprompt nyawiji      # sekali saja; catat passwordnya
+sudo -u postgres createdb -O nyawiji nyawiji
 npx prisma db push
 npm run db:seed                                   # 18 Kapanewon + akun DINKES
 npm run data:gunungkidul -- /tmp/daftarposyandu.csv   # 30 Puskesmas + akun staf + Posyandu + akun kader
@@ -138,9 +146,8 @@ Cek: `free -h` (baris `Swap:` harus 2.0Gi).
 
 ## 9. Backup & pemulihan database
 
-Semua data ada di satu file: `prisma/dev.db`. Mode `WAL` sudah aktif otomatis
-(aplikasi menjalankan `PRAGMA journal_mode=WAL` + `busy_timeout=5000` saat start),
-sehingga penulis tidak lagi langsung gagal `database is locked`.
+Semua data ada di database PostgreSQL `nyawiji`. Backup memakai `pg_dump` format
+custom (`.dump`) lalu digzip — portable, bisa dibaca ulang oleh `pg_restore`.
 
 **Retensi:** 7 backup harian + 6 backup bulanan (harian ke-8 dan bulanan ke-7 dihapus
 otomatis). Total kecil, tapi cukup menutup kasus kesalahan yang baru ketahuan lama.
@@ -148,8 +155,8 @@ otomatis). Total kecil, tapi cukup menutup kasus kesalahan yang baru ketahuan la
 ### 9a. Siapkan script
 
 Script otomatis mendeteksi lokasi repo (dari letak dirinya sendiri), jadi bisa
-di-clone di path mana pun — tidak harus `/opt/nyawiji`. Jalankan dari
-dalam folder repo:
+di-clone di path mana pun — tidak harus `/opt/nyawiji`. Script membaca `DATABASE_URL`
+dari `.env`. Jalankan dari dalam folder repo:
 
 ```bash
 chmod +x scripts/backup-db.sh scripts/restore-db.sh
@@ -212,7 +219,7 @@ Lihat hasilnya: `sudo tail -n 20 /var/log/posyandu-backup.log`.
 ### 9d. Pemulihan (restore)
 
 **Peringatan:** restore menimpa database yang sedang aktif. Aplikasi dihentikan
-sementara, database lama disimpan sebagai `dev.db.bak-<timestamp>`.
+sementara, database lama disimpan sebagai `posyandu-sebelum-restore-<timestamp>.dump`.
 
 ```bash
 cd /opt/nyawiji

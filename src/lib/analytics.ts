@@ -1,11 +1,14 @@
 /**
  * Server-side aggregation helpers untuk statistik pemaparan data.
  *
- * CATATAN: Prisma menyimpan DateTime SQLite sebagai INTEGER epoch-milliseconds.
- * Jadi semua perbandingan tanggal di $queryRaw WAJIB pakai rentang numeric ms,
- * dan konversi ke bulan harus sessionDate/1000,'unixepoch','localtime'.
- * Membandingkan kolom integer dengan string tanggal ("YYYY-MM-DD") SELALU 0 baris,
- * dan date(sessionDate) rusak karena integer itu bukan Julian day.
+ * CATATAN (PostgreSQL): Prisma menyimpan DateTime sebagai `timestamp(3)` (UTC).
+ * Di $queryRaw, identifier camelCase WAJIB di-quote (`"Measurement"`,
+ * `"sessionDate"`, `"posyanduId"`) — tanpa quote, Postgres me-lowercase-kan dan
+ * kolom/tabel tidak ditemukan. Perbandingan tanggal pakai parameter `Date`.
+ *
+ * Bulan dihitung `to_char("sessionDate" AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM')`.
+ * Timestamp UTC dikonversi ke waktu lokal Jakarta dulu supaya sesi tanggal 1
+ * pukul 00:00 WIB TIDAK tergeser ke bulan sebelumnya.
  */
 
 import { prisma } from './prisma';
@@ -53,31 +56,30 @@ export async function fetchCoverageBase(from: string, to: string): Promise<Cover
   const { fromMs, toMs } = dateRangeMs(from, to);
   const months = monthRange(from, to);
 
-  // NOTE: ekspresi strftime DITULIS LANGSUNG (bukan ${...}) — Prisma mengikat ${} sbg parameter, bukan inline SQL.
   const rows = await prisma.$queryRaw<
     Array<{ ym: string; unitId: string; numerator: bigint }>
   >`
     SELECT
-      strftime('%Y-%m', m.sessionDate/1000, 'unixepoch', 'localtime') AS ym,
-      m.posyanduId AS unitId,
-      COUNT(DISTINCT m.patientId) AS numerator
-    FROM Measurement m
-    WHERE m.sessionDate >= ${fromMs}
-      AND m.sessionDate < ${toMs}
-    GROUP BY ym, unitId
+      to_char(m."sessionDate" AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM') AS ym,
+      m."posyanduId" AS "unitId",
+      COUNT(DISTINCT m."patientId") AS numerator
+    FROM "Measurement" m
+    WHERE m."sessionDate" >= ${new Date(fromMs)}
+      AND m."sessionDate" < ${new Date(toMs)}
+    GROUP BY ym, m."posyanduId"
   `;
 
   const patRows = await prisma.$queryRaw<
-    Array<{ posyanduId: string; createdAt: number | bigint }>
+    Array<{ posyanduId: string; createdAt: Date }>
   >`
-    SELECT posyanduId, createdAt FROM Patient
+    SELECT "posyanduId", "createdAt" FROM "Patient"
   `;
 
   // unitId → daftar epoch-ms waktu registrasi pasien.
   const createdAtByUnit = new Map<string, number[]>();
   for (const p of patRows) {
     const list = createdAtByUnit.get(p.posyanduId) ?? [];
-    list.push(Number(p.createdAt));
+    list.push(p.createdAt.getTime());
     createdAtByUnit.set(p.posyanduId, list);
   }
 
@@ -283,25 +285,25 @@ export async function fetchOutcomeBase(from: string, to: string): Promise<Outcom
   const { fromMs, toMs } = dateRangeMs(from, to);
   return prisma.$queryRaw<OutcomeBaseRow[]>`
     SELECT
-      strftime('%Y-%m', m.sessionDate/1000, 'unixepoch', 'localtime') AS ym,
-      m.posyanduId,
-      m.patientId,
-      m.sessionDate,
-      m.category,
-      p.gender,
-      m.systolic,
-      m.diastolic,
-      m.hemoglobin,
-      m.bloodSugar,
-      m.cholesterol,
-      m.uricAcid,
-      m.visionStatus,
-      m.hearingStatus,
-      m.tbScreeningStatus
-    FROM Measurement m
-    JOIN Patient p ON p.id = m.patientId
-    WHERE m.sessionDate >= ${fromMs}
-      AND m.sessionDate < ${toMs}
+      to_char(m."sessionDate" AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM') AS ym,
+      m."posyanduId",
+      m."patientId",
+      m."sessionDate",
+      m."category",
+      p."gender",
+      m."systolic",
+      m."diastolic",
+      m."hemoglobin",
+      m."bloodSugar",
+      m."cholesterol",
+      m."uricAcid",
+      m."visionStatus",
+      m."hearingStatus",
+      m."tbScreeningStatus"
+    FROM "Measurement" m
+    JOIN "Patient" p ON p."id" = m."patientId"
+    WHERE m."sessionDate" >= ${new Date(fromMs)}
+      AND m."sessionDate" < ${new Date(toMs)}
   `;
 }
 

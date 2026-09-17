@@ -1,23 +1,26 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { execSync } from 'node:child_process';
-import fs from 'node:fs';
-import path from 'node:path';
 
 /**
  * Tes integrasi untuk pipeline yang menyentuh DB (raw query + agregasi),
- * yang TIDAK tercakup oleh tes murni. Memakai DB SQLite sementara
- * (prisma/test-integration.db) agar tidak mengotori dev.db.
+ * yang TIDAK tercakup oleh tes murni. Memakai database PostgreSQL terpisah
+ * (`nyawiji_test`) agar tidak mengotori data dev/produksi.
+ *
+ * Siapkan sekali: createdb -U postgres nyawiji_test
+ * Bisa ditimpa lewat env TEST_DATABASE_URL.
  */
-vi.hoisted(() => {
+const TEST_DATABASE_URL = vi.hoisted(() => {
   (globalThis as { prisma?: unknown }).prisma = undefined;
-  process.env.DATABASE_URL = 'file:./test-integration.db?connection_limit=1';
+  const url =
+    process.env.TEST_DATABASE_URL ||
+    'postgresql://postgres:postgres@localhost:5432/nyawiji_test?schema=public';
+  process.env.DATABASE_URL = url;
+  return url;
 });
 
 import { prisma } from '@/lib/prisma';
 import { fetchOutcomeBase, classifyOutcomes, fetchCoverageBase } from '@/lib/analytics';
 import { recomputePatientWeightProgression } from '@/lib/weight-progression-db';
-
-const DB_FILE = 'test-integration.db';
 
 async function makePosyandu(suffix: string): Promise<string> {
   const kap = await prisma.kapanewon.create({ data: { code: `KAP-${suffix}`, name: `Kapanewon ${suffix}` } });
@@ -78,7 +81,7 @@ async function addMeasurement(
 
 beforeAll(async () => {
   execSync('npx prisma db push --skip-generate --accept-data-loss', {
-    env: { ...process.env, DATABASE_URL: `file:./${DB_FILE}` },
+    env: { ...process.env, DATABASE_URL: TEST_DATABASE_URL },
     stdio: 'ignore',
   });
   await prisma.$connect();
@@ -93,9 +96,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await prisma.$disconnect();
-  for (const f of [DB_FILE, `${DB_FILE}-wal`, `${DB_FILE}-shm`]) {
-    fs.rmSync(path.resolve(process.cwd(), 'prisma', f), { force: true });
-  }
 });
 
 describe('fetchOutcomeBase + classifyOutcomes (DB nyata)', () => {
@@ -161,8 +161,7 @@ describe('fetchCoverageBase (denominator historis)', () => {
   });
 });
 
-describe('recomputePatientWeightProgression (rantai N/T & 2T)', () => {
-  it('menandai N/T/2T dan menghitung ulang setelah edit pengukuran lama', async () => {
+describe('recomputePatientWeightProgression (rantai N/T & 2T)', () => {  it('menandai N/T/2T dan menghitung ulang setelah edit pengukuran lama', async () => {
     const pos = await makePosyandu('WP');
     const z = await makePatient(pos, 'WP-Z', '2023-01-15', '2026-01-15');
     const m1 = await addMeasurement(z, pos, '2026-02-10', { weight: 8.0 });
@@ -216,5 +215,31 @@ describe('recomputePatientWeightProgression (rantai N/T & 2T)', () => {
     const rows = await prisma.measurement.findMany({ where: { patientId: z }, orderBy: { sessionDate: 'asc' } });
     expect(rows.map((r) => r.weightStatus)).toEqual([null, 'TIDAK_NAIK', 'TIDAK_NAIK', null]);
     expect(rows.map((r) => r.weightFaltering2T)).toEqual([false, false, true, false]);
+  });
+});
+
+describe('konversi bulan lintas zona waktu (Asia/Jakarta)', () => {
+  it('sesi tanggal 1 pukul 00:00 lokal tidak tergeser ke bulan sebelumnya', async () => {
+    const pos = await makePosyandu('TZ');
+    const p = await makePatient(pos, 'TZ-A', '2020-01-15', '2025-12-01');
+    // 1 Maret 2026 00:00 waktu lokal (WIB) = 28 Feb 17:00 UTC.
+    // Query SQLite lama (`unixepoch`,`localtime`) dan `to_char(... Asia/Jakarta)`
+    // harus sama-sama menghasilkan '2026-03', bukan '2026-02'.
+    await prisma.measurement.create({
+      data: {
+        patientId: p,
+        posyanduId: pos,
+        sessionDate: new Date(2026, 2, 1, 0, 0, 0),
+        ageInMonths: 12,
+        category: 'BALITA_APRAS',
+        weight: 8,
+      },
+    });
+
+    const rows = await fetchCoverageBase('2026-03-01', '2026-03-31');
+    const mar = rows.find((r) => r.unitId === pos && r.ym === '2026-03');
+
+    expect(mar).toBeDefined();
+    expect(mar!.numerator).toBe(1);
   });
 });

@@ -66,7 +66,7 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs
-sudo apt install -y git sqlite3 nginx rclone certbot python3-certbot-nginx
+sudo apt install -y git postgresql postgresql-client nginx rclone certbot python3-certbot-nginx
 sudo npm i -g pm2
 node -v && pm2 -v
 ```
@@ -87,7 +87,7 @@ openssl rand -hex 32   # -> SESSION_SECRET
 Isi `.env` (semua password **baru & kuat**, bukan default lama):
 
 ```env
-DATABASE_URL="file:./dev.db?connection_limit=1"
+DATABASE_URL="postgresql://nyawiji:<password>@localhost:5432/nyawiji?schema=public"
 NEXT_PUBLIC_APP_NAME="PORTAL NYAWIJI"
 SESSION_SECRET="<hasil openssl rand -hex 32>"
 DINKES_ADMIN_USERNAME="dinkes_gk"
@@ -107,6 +107,8 @@ Seed + build:
 ```bash
 cd /opt/nyawiji
 npm ci
+sudo -u postgres createuser --pwprompt nyawiji      # sekali saja; catat passwordnya
+sudo -u postgres createdb -O nyawiji nyawiji
 npx prisma db push
 npm run db:seed
 npm run data:gunungkidul -- /tmp/daftarposyandu.csv
@@ -275,7 +277,7 @@ Tetap jalankan sslip.io untuk sementara; saat domain siap:
 Terakhir diperbarui: 2026-09-17.
 
 - [x] VPS Ubuntu 24.04 + hardening (ufw, fail2ban) + swap 2 GB
-- [x] Node 22, PM2, Nginx, sqlite3, certbot
+- [x] Node 22, PM2, Nginx, postgresql, certbot
 - [x] App live dengan HTTPS + domain sendiri
 - [x] PM2 autostart (`pm2 save` + `pm2 startup`, terbukti setelah reboot)
 - [x] Backup lokal harian (cron) ke `/var/backups/posyandu`

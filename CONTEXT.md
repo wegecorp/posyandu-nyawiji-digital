@@ -1,7 +1,7 @@
 # CONTEXT — Portal Nyawiji
 
 Satu konteks: aplikasi digitalisasi Posyandu Kabupaten Gunungkidul (Next.js + Prisma +
-SQLite). Dokumen ini adalah **glosarium + aturan domain**. Keputusan arsitektur ada di
+PostgreSQL). Dokumen ini adalah **glosarium + aturan domain**. Keputusan arsitektur ada di
 `docs/adr/`.
 
 ## Aktor & peran

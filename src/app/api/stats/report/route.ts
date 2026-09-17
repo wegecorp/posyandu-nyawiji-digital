@@ -341,6 +341,19 @@ export async function GET(req: Request) {
 
       if (anyPerPatient && posyanduIds.length > 0) {
         const data = await memberSheets(posyanduIds, fromObj, toExclusive);
+
+        // Batas bawah pasti (tanpa baris risiko) — tolak awal sebelum menyusun sheet.
+        const lowerBound =
+          (wantRoster ? data.patients.length : 0) + (wantDetails ? data.measurements.length : 0);
+        if (lowerBound > MAX_EXPORT_ROWS) {
+          return NextResponse.json(
+            {
+              error: `Data terlalu besar (±${lowerBound} baris). Maksimal ${MAX_EXPORT_ROWS} baris — persempit periode atau pilihan posyandu.`,
+            },
+            { status: 413 },
+          );
+        }
+
         const periodEnd = new Date(toExclusive.getTime() - 1);
         if (wantMembers) {
           members = {};

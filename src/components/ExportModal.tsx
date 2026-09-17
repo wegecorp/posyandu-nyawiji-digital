@@ -88,8 +88,9 @@ export function ExportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 
   const wantNames = include.has('anggota') || include.has('detail') || include.has('beresiko');
   const overUnits = wantNames && !!preview && preview.estimates.units > preview.limits.units;
-  const overRows = wantNames && !!preview && preview.estimates.rows > preview.limits.rows;
-  const blocked = overUnits || overRows || (wantNames && role === 'PUSKESMAS' && !scopeAll && selected.size === 0);
+  // Baris pasien tak dipakai sbg pengunci: angka ini perkiraan (sheet Berisiko bisa
+  // >1 baris/pasien). Batas sesungguhnya dicek server saat unduh (413).
+  const blocked = overUnits || (wantNames && role === 'PUSKESMAS' && !scopeAll && selected.size === 0);
 
   const toggleInclude = (key: Include) => {
     setInclude((prev) => {
@@ -248,9 +249,9 @@ export function ExportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                   <span>2T: <strong className="text-[#dc2626]">{preview.global.nt.duaT}</strong></span>
                 </div>
                 {wantNames && (
-                  <p className={`font-bold ${overRows || overUnits ? 'text-[#dc2626]' : 'text-[#075e54]'}`}>
-                    Estimasi baris data pasien: {preview.estimates.rows.toLocaleString('id-ID')}
-                    {overRows && ` — melebihi batas ${preview.limits.rows.toLocaleString('id-ID')}`}
+                  <p className={`font-bold ${overUnits ? 'text-[#dc2626]' : 'text-[#075e54]'}`}>
+                    Perkiraan baris: {preview.estimates.rows.toLocaleString('id-ID')} — batas{' '}
+                    {preview.limits.rows.toLocaleString('id-ID')} diperiksa saat unduh
                     {overUnits && ` — posyandu melebihi batas ${preview.limits.units}`}
                   </p>
                 )}

@@ -21,11 +21,15 @@ export function UnitDrillList({
   onPick,
   emptyText = 'Tidak ada unit dengan data pada filter ini.',
   searchPlaceholder = 'Cari unit...',
+  mapRaw,
 }: {
   baseUrl: string;
-  onPick: (u: DrillUnit) => void;
+  /** Bila kosong, baris bersifat statis (level terdalam drill). */
+  onPick?: (u: DrillUnit) => void;
   emptyText?: string;
   searchPlaceholder?: string;
+  /** Normalisasi payload API → DrillUnit (mis. ASI: exclusive/assessed). */
+  mapRaw?: (raw: Record<string, unknown>) => DrillUnit;
 }) {
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
@@ -48,7 +52,10 @@ export function UnitDrillList({
     fetch(url)
       .then((r) => r.json())
       .then((d) => {
-        if (active && d.success) setUnits(d.data ?? []);
+        if (active && d.success) {
+          const raw = (d.data ?? []) as Record<string, unknown>[];
+          setUnits(mapRaw ? raw.map(mapRaw) : (raw as unknown as DrillUnit[]));
+        }
       })
       .catch((e) => console.error('Gagal memuat unit:', e))
       .finally(() => {
@@ -57,7 +64,7 @@ export function UnitDrillList({
     return () => {
       active = false;
     };
-  }, [baseUrl, debouncedQ]);
+  }, [baseUrl, debouncedQ, mapRaw]);
 
   if (loading) {
     return (
@@ -93,26 +100,39 @@ export function UnitDrillList({
       {units.length === 0 ? (
         <p className="py-10 text-center text-xs font-bold text-[#54656f]">{emptyText}</p>
       ) : (
-        units.map((u) => (
-          <button
-            key={u.unitId}
-            type="button"
-            onClick={() => onPick(u)}
-            className="w-full flex items-center justify-between gap-2 bg-white rounded-xl border border-[#e9edef] p-2.5 text-left hover:bg-[#f0f2f5] transition-colors"
-          >
-            <div className="min-w-0">
-              <p className="text-xs font-bold text-[#111b21] truncate">{u.unitName}</p>
-              <p className="text-[10px] text-[#8696a0]">
-                {u.count} / {u.total} dinilai
-                {u.smallSample && <span className="text-amber-600 font-bold"> · sampel kecil</span>}
-              </p>
+        units.map((u) => {
+          const body = (
+            <>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-[#111b21] truncate">{u.unitName}</p>
+                <p className="text-[10px] text-[#8696a0]">
+                  {u.count} / {u.total} dinilai
+                  {u.smallSample && <span className="text-amber-600 font-bold"> · sampel kecil</span>}
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-sm font-extrabold text-[#111b21]">{Math.round(u.percent * 100)}%</p>
+                {onPick && <p className="text-[10px] text-[#128c7e] font-bold">lihat ›</p>}
+              </div>
+            </>
+          );
+          const rowCls =
+            'w-full flex items-center justify-between gap-2 bg-white rounded-xl border border-[#e9edef] p-2.5 text-left transition-colors';
+          return onPick ? (
+            <button
+              key={u.unitId}
+              type="button"
+              onClick={() => onPick(u)}
+              className={`${rowCls} hover:bg-[#f0f2f5]`}
+            >
+              {body}
+            </button>
+          ) : (
+            <div key={u.unitId} className={rowCls}>
+              {body}
             </div>
-            <div className="text-right shrink-0">
-              <p className="text-sm font-extrabold text-[#111b21]">{Math.round(u.percent * 100)}%</p>
-              <p className="text-[10px] text-[#128c7e] font-bold">lihat ›</p>
-            </div>
-          </button>
-        ))
+          );
+        })
       )}
     </div>
   );

@@ -974,6 +974,11 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
               m.weight != null &&
               isKmsAge(ageInCompletedMonths(patient.birthDate, m.sessionDate)),
           ) && <KmsChart measurements={historyList} gender={patient.gender} />}
+          {historyList.some(
+            (m) =>
+              m.height != null &&
+              isKmsAge(ageInCompletedMonths(patient.birthDate, m.sessionDate)),
+          ) && <KmsChart measurements={historyList} gender={patient.gender} index="TB_U" />}
           {historyByMonth.length === 0 ? (
             <div className="p-8 text-center bg-white rounded-2xl border border-[#e9edef] text-[#54656f] text-xs font-medium">
               Belum ada riwayat pengukuran sebelumnya untuk pasien ini.

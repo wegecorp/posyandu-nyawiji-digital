@@ -39,7 +39,11 @@ export async function GET(req: Request) {
     const indicator = (INDICATORS as string[]).includes(rawIndicator)
       ? (rawIndicator as GrowthIndex)
       : 'BB_U';
-    const category = searchParams.get('category');
+    const categoryParam = searchParams.get('category');
+    const categories = (categoryParam ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
 
     const now = new Date();
     const fmt = (d: Date) =>
@@ -82,7 +86,7 @@ export async function GET(req: Request) {
     }
 
     if (posyanduIds.length === 0) {
-      return NextResponse.json({ success: true, indicator, category, scope, data: [] });
+      return NextResponse.json({ success: true, indicator, category: categoryParam, scope, data: [] });
     }
 
     const [posyandus, meas, pats] = await Promise.all([
@@ -153,11 +157,12 @@ export async function GET(req: Request) {
       if (!idx) continue;
       u.total++;
       const key = surveyCategoryKey(indicator, idx.categoryKey);
-      if (!category || key === category) u.count++;
+      if (categories.length === 0 || categories.includes(key)) u.count++;
     }
 
     const data = [...units.values()]
-      .filter((u) => u.total > 0 && (!q || u.unitName.toLowerCase().includes(q)))
+      // Saat menyaring kategori, sembunyikan unit tanpa kasus (0%) — list ini peringkat kasus.
+      .filter((u) => u.total > 0 && (categories.length === 0 || u.count > 0) && (!q || u.unitName.toLowerCase().includes(q)))
       .map((u) => ({
         ...u,
         percent: u.total > 0 ? u.count / u.total : 0,
@@ -165,7 +170,7 @@ export async function GET(req: Request) {
       }))
       .sort((a, b) => b.percent - a.percent || b.count - a.count);
 
-    return NextResponse.json({ success: true, indicator, category, scope, from: fromDate, to: toDate, data });
+    return NextResponse.json({ success: true, indicator, category: categoryParam, scope, from: fromDate, to: toDate, data });
   } catch (error) {
     console.error('Stats growth-units error:', error);
     return NextResponse.json({ error: 'Gagal memuat agregat status gizi per unit' }, { status: 500 });

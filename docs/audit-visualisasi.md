@@ -373,3 +373,25 @@ Endpoint:
 
 Catatan: keputusan ini mengubah prinsip lama (§1 poin KMS) yang sempat mengizinkan DINKES
 melihat KMS individual saat drill ke pasien. Kini DINKES berhenti di agregat unit.
+
+### 9c. Batch peningkatan tampilan analisis (SELESAI)
+
+- **Filter unit 0% di drill**: `growth-units` hanya menampilkan unit dengan kasus saat difilter
+  kategori; `indicator-units` hanya unit dengan temuan (`abnormal > 0`).
+- **ASI Eksklusif berjenjang**: `/api/stats/breastfeeding` mendukung `scope=puskesmas|posyandu`,
+  `hcId`, `q`; `BreastfeedingDrillSheet` (DINKES Puskesmas → Posyandu; PUSKESMAS Posyandu).
+- **DINKES pie → stacked bar**: `IndicatorOutcomeStackedBar` (Tidak Normal / Normal / Belum Dinilai
+  per indikator). Dasar baru `eligibleByIndicator` di `classifyOutcomes`. `OutcomeDonut` tetap di
+  Puskesmas & Posyandu.
+- **Kartu baru**: `GrowthProblemRanking` (peringkat masalah gizi per wilayah, `category` daftar koma)
+  dan `StuntingTrendCard` (tren TB/U) di ketiga analisis.
+- **Kurva KMS TB/U per individu**: `KmsChart` menerima prop `index` (`BB_U`/`TB_U`); dirender di tab
+  Riwayat berdampingan dengan BB/U.
+- **Kebijakan akses**: `canViewPatientDetail` kembali agregat-untuk-DINKES (hanya PUSKESMAS/POSYANDU),
+  menyelaraskan kode dengan §9b.
+
+### 9d. Backlog (belum dikerjakan)
+
+- **Peringkat masalah gizi per kalurahan (DINKES).** Butuh `scope=kalurahan` di `growth-units`
+  (group by `posyandu.kalurahanId`) + drill Kalurahan → Posyandu (`initialKalurahan` di
+  `GrowthDrillSheet`). Ditunda; catat di sini karena CLI `gh` tidak tersedia di lingkungan ini.

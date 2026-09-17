@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Baby } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
+import { BreastfeedingDrillSheet } from './BreastfeedingDrillSheet';
+import { useBackLayer } from '@/lib/back-navigation';
 
 type Row = {
   ym: string;
@@ -18,8 +21,13 @@ function formatYM(ym: string): string {
 }
 
 export function BreastfeedingCard({ from, to }: { from: string; to: string }) {
+  const { user } = useAuth();
+  const canDrill = user?.role === 'DINKES' || user?.role === 'PUSKESMAS';
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [drill, setDrill] = useState(false);
+
+  useBackLayer(drill, () => setDrill(false));
 
   useEffect(() => {
     let active = true;
@@ -81,7 +89,8 @@ export function BreastfeedingCard({ from, to }: { from: string; to: string }) {
   }
 
   return (
-    <ChartCard title="ASI Eksklusif (Bayi)" subtitle={`Bulan ${formatYM(latest)} — bayi 0–5 bulan`}>
+    <>
+      <ChartCard title="ASI Eksklusif (Bayi)" subtitle={`Bulan ${formatYM(latest)} — bayi 0–5 bulan`}>
       <div className="flex items-center gap-3 p-3 rounded-xl border border-[#e9edef] bg-[#f0f2f5] mb-3">
         <div className="w-10 h-10 rounded-full bg-[#075e54] text-white flex items-center justify-center shrink-0">
           <Baby className="w-5 h-5" />
@@ -98,18 +107,42 @@ export function BreastfeedingCard({ from, to }: { from: string; to: string }) {
         <div className="h-full bg-[#25d366] rounded-full" style={{ width: `${pct}%` }} />
       </div>
 
-      {unitRows.length > 1 && (
+      {unitRows.length > (canDrill ? 0 : 1) && (
         <div className="space-y-1.5">
-          {unitRows.slice(0, 10).map((r) => (
-            <div key={r.unitId} className="flex items-center justify-between p-2 rounded-xl border border-[#e9edef]">
-              <span className="text-xs font-bold text-[#111b21] truncate">{r.unitName || r.unitId}</span>
-              <span className="text-[11px] font-bold text-[#54656f] shrink-0">
-                {r.exclusive}/{r.assessed} · <strong className="text-[#075e54]">{r.percent}%</strong>
-              </span>
-            </div>
-          ))}
+          {unitRows.slice(0, 10).map((r) => {
+            const body = (
+              <>
+                <span className="text-xs font-bold text-[#111b21] truncate">{r.unitName || r.unitId}</span>
+                <span className="text-[11px] font-bold text-[#54656f] shrink-0">
+                  {r.exclusive}/{r.assessed} · <strong className="text-[#075e54]">{r.percent}%</strong>
+                  {canDrill && <span className="text-[#128c7e]"> ›</span>}
+                </span>
+              </>
+            );
+            const rowCls =
+              'w-full flex items-center justify-between gap-2 p-2 rounded-xl border border-[#e9edef] text-left';
+            return canDrill ? (
+              <button
+                key={r.unitId}
+                type="button"
+                onClick={() => setDrill(true)}
+                className={`${rowCls} hover:bg-[#f0f2f5] transition-colors`}
+              >
+                {body}
+              </button>
+            ) : (
+              <div key={r.unitId} className={rowCls}>
+                {body}
+              </div>
+            );
+          })}
         </div>
       )}
     </ChartCard>
+
+      {drill && canDrill && (
+        <BreastfeedingDrillSheet from={from} to={to} onClose={() => setDrill(false)} />
+      )}
+    </>
   );
 }

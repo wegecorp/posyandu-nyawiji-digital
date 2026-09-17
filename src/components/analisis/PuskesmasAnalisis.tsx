@@ -9,6 +9,8 @@ import { TrendingUp, Users, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
 import { GrowthStatusDistribution } from './GrowthStatusDistribution';
+import { GrowthProblemRanking } from './GrowthProblemRanking';
+import { StuntingTrendCard } from './StuntingTrendCard';
 import { WeightProgressionCard } from './WeightProgressionCard';
 import { BreastfeedingCard } from './BreastfeedingCard';
 import { CategoryCoverageCard } from './CategoryCoverageCard';
@@ -157,7 +159,13 @@ export function PuskesmasAnalisis() {
       {/* 0. Status gizi balita (Permenkes 2/2020) */}
       <GrowthStatusDistribution from={from} to={to} />
 
-      {/* 0b. Progres berat badan (N/T & 2T) */}
+      {/* 0a. Peringkat prevalensi masalah gizi per wilayah */}
+      <GrowthProblemRanking from={from} to={to} />
+
+      {/* 0b. Tren stunting (TB/U) */}
+      <StuntingTrendCard from={from} to={to} />
+
+      {/* 0c. Progres berat badan (N/T & 2T) */}
       <WeightProgressionCard from={from} to={to} />
 
       <BreastfeedingCard from={from} to={to} />

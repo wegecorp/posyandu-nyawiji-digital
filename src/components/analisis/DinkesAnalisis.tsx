@@ -8,11 +8,13 @@ import {
 import { TrendingUp, Users, AlertTriangle } from 'lucide-react';
 import { ChartCard } from './ChartCard';
 import { GrowthStatusDistribution } from './GrowthStatusDistribution';
+import { GrowthProblemRanking } from './GrowthProblemRanking';
+import { StuntingTrendCard } from './StuntingTrendCard';
 import { WeightProgressionCard } from './WeightProgressionCard';
 import { BreastfeedingCard } from './BreastfeedingCard';
 import { CategoryCoverageCard } from './CategoryCoverageCard';
 import { TbScreeningCard } from './TbScreeningCard';
-import { OutcomeDonut } from './OutcomeDonut';
+import { IndicatorOutcomeStackedBar } from './IndicatorOutcomeStackedBar';
 import { IndicatorDrillSheet } from './IndicatorDrillSheet';
 import { PeriodControl, periodToRange } from './PeriodControl';
 import { UnitScoreboard } from './UnitScoreboard';
@@ -22,7 +24,18 @@ import { PARTISIPASI_BURUK_THRESHOLD } from '@/lib/clinical';
 import { useBackLayer } from '@/lib/back-navigation';
 
 type CoverageData = { ym: string; unitId: string; unitName: string; numerator: number; denominator: number; participation: number };
-type OutcomeData = { ym: string; unitId: string; unitName: string; total: number; normal: number; abnormal: number; notAssessed: number; abnormalByIndicator: Record<string, number> };
+type OutcomeData = {
+  ym: string;
+  unitId: string;
+  unitName: string;
+  total: number;
+  normal: number;
+  abnormal: number;
+  notAssessed: number;
+  abnormalByIndicator: Record<string, number>;
+  assessedByIndicator: Record<string, number>;
+  eligibleByIndicator: Record<string, number>;
+};
 
 const INDICATOR_COLORS: Record<string, string> = {
   hypertension: '#ef4444',
@@ -124,13 +137,22 @@ export function DinkesAnalisis() {
     const assessed = latestOutcome.normal + latestOutcome.abnormal;
     return assessed > 0 ? Math.round((latestOutcome.normal / assessed) * 100) : 0;
   }, [latestOutcome]);
-  const pieData = useMemo(() => {
+  // Stacked bar per indikator: Tidak Normal / Normal / Belum Dinilai.
+  const indicatorOutcomeStacked = useMemo(() => {
     if (!latestOutcome) return [];
-    return [
-      { name: 'Normal', value: latestOutcome.normal },
-      { name: 'Tidak Normal', value: latestOutcome.abnormal },
-      { name: 'Belum Dinilai', value: latestOutcome.notAssessed },
-    ];
+    return INDICATORS.map((ind) => {
+      const abnormal = latestOutcome.abnormalByIndicator[ind.key] ?? 0;
+      const assessed = latestOutcome.assessedByIndicator?.[ind.key] ?? 0;
+      const eligible = latestOutcome.eligibleByIndicator?.[ind.key] ?? 0;
+      return {
+        key: ind.key,
+        name: ind.label.length > 20 ? ind.label.slice(0, 18) + '…' : ind.label,
+        fullLabel: ind.label,
+        abnormal,
+        normal: Math.max(0, assessed - abnormal),
+        notAssessed: Math.max(0, eligible - assessed),
+      };
+    }).filter((r) => r.abnormal + r.normal + r.notAssessed > 0);
   }, [latestOutcome]);
 
   // Abnormal by indicator (latest month, puskesmas aggregate)
@@ -199,7 +221,13 @@ export function DinkesAnalisis() {
       {/* 0. Status gizi balita (Permenkes 2/2020) */}
       <GrowthStatusDistribution from={from} to={to} />
 
-      {/* 0b. Progres berat badan (N/T & 2T) */}
+      {/* 0a. Peringkat prevalensi masalah gizi per wilayah */}
+      <GrowthProblemRanking from={from} to={to} />
+
+      {/* 0b. Tren stunting (TB/U) */}
+      <StuntingTrendCard from={from} to={to} />
+
+      {/* 0c. Progres berat badan (N/T & 2T) */}
       <WeightProgressionCard from={from} to={to} />
 
       <BreastfeedingCard from={from} to={to} />
@@ -244,10 +272,13 @@ export function DinkesAnalisis() {
         </ChartCard>
       )}
 
-      {/* 3. Donut — Distribusi Normal vs Tidak Normal */}
-      {pieData.length > 0 && pieData.some(d => d.value > 0) && (
-        <ChartCard title="Distribusi Hasil Pengukuran" subtitle={`Bulan ${formatYM(latestMonth)}`}>
-          <OutcomeDonut data={pieData} />
+      {/* 3. Stacked bar — Distribusi per indikator */}
+      {indicatorOutcomeStacked.length > 0 && (
+        <ChartCard
+          title="Distribusi Hasil Pengukuran per Indikator"
+          subtitle={`Bulan ${formatYM(latestMonth)} — per indikator klinis`}
+        >
+          <IndicatorOutcomeStackedBar data={indicatorOutcomeStacked} />
         </ChartCard>
       )}
 

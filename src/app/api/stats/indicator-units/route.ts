@@ -110,7 +110,7 @@ export async function GET(req: Request) {
         prevalence: v.assessed > 0 ? v.abnormal / v.assessed : 0,
         smallSample: v.assessed < SMALL_SAMPLE,
       }))
-      .filter((u) => u.assessed > 0)
+      .filter((u) => u.assessed > 0 && u.abnormal > 0)
       .filter((u) => !q || u.unitName.toLowerCase().includes(q))
       .sort((a, b) => b.prevalence - a.prevalence || b.abnormal - a.abnormal);
 

@@ -65,6 +65,44 @@ export function aggregateBreastfeeding(rows: BreastfeedingRaw[]): BreastfeedingR
   }));
 }
 
+export interface BreastfeedingWithHc extends BreastfeedingRow {
+  unitName: string;
+  healthCenterId: string | null;
+  healthCenterName: string | null;
+}
+
+export interface BreastfeedingUnitRow extends BreastfeedingRow {
+  unitName: string;
+}
+
+/**
+ * Rollup cakupan ASI per posyandu → per puskesmas (jumlahkan pembilang & pembagi,
+ * lalu hitung ulang persen). Unit tanpa HC tak digabung ke unit lain.
+ */
+export function rollupBreastfeedingToHealthCenter(rows: BreastfeedingWithHc[]): BreastfeedingUnitRow[] {
+  const map = new Map<string, { ym: string; unitId: string; unitName: string; assessed: number; exclusive: number }>();
+  for (const r of rows) {
+    const key = `${r.healthCenterId ?? 'unknown'}|${r.ym}`;
+    let u = map.get(key);
+    if (!u) {
+      u = {
+        ym: r.ym,
+        unitId: r.healthCenterId ?? 'unknown',
+        unitName: r.healthCenterName ?? 'Tidak diketahui',
+        assessed: 0,
+        exclusive: 0,
+      };
+      map.set(key, u);
+    }
+    u.assessed += r.assessed;
+    u.exclusive += r.exclusive;
+  }
+  return [...map.values()].map((u) => ({
+    ...u,
+    percent: u.assessed > 0 ? Math.round((u.exclusive / u.assessed) * 100) : 0,
+  }));
+}
+
 export interface CoveragePatient {
   id: string;
   createdAt: Date;

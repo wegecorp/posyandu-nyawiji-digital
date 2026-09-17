@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { aggregateBreastfeeding, categoryCoverage, type CoveragePatient } from './coverage-analytics';
+import {
+  aggregateBreastfeeding,
+  categoryCoverage,
+  rollupBreastfeedingToHealthCenter,
+  type CoveragePatient,
+} from './coverage-analytics';
 
 describe('aggregateBreastfeeding', () => {
   it('ambil pengukuran terakhir per pasien per bulan, hitung persen dari yang dinilai', () => {
@@ -24,6 +29,19 @@ describe('aggregateBreastfeeding', () => {
     expect(rows).toHaveLength(2);
     expect(rows.find((r) => r.unitId === 'a')!.percent).toBe(100);
     expect(rows.find((r) => r.unitId === 'b')!.percent).toBe(0);
+  });
+});
+
+describe('rollupBreastfeedingToHealthCenter', () => {
+  it('gabungkan posyandu per puskesmas & hitung ulang persen', () => {
+    const rows = rollupBreastfeedingToHealthCenter([
+      { ym: '2026-01', unitId: 'posA', unitName: 'A', assessed: 4, exclusive: 2, percent: 50, healthCenterId: 'hc1', healthCenterName: 'HC 1' },
+      { ym: '2026-01', unitId: 'posB', unitName: 'B', assessed: 6, exclusive: 1, percent: 17, healthCenterId: 'hc1', healthCenterName: 'HC 1' },
+      { ym: '2026-01', unitId: 'posC', unitName: 'C', assessed: 2, exclusive: 2, percent: 100, healthCenterId: 'hc2', healthCenterName: 'HC 2' },
+    ]);
+    expect(rows).toHaveLength(2);
+    expect(rows.find((r) => r.unitId === 'hc1')).toMatchObject({ assessed: 10, exclusive: 3, percent: 30 });
+    expect(rows.find((r) => r.unitId === 'hc2')).toMatchObject({ assessed: 2, exclusive: 2, percent: 100 });
   });
 });
 

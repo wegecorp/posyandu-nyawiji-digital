@@ -274,6 +274,8 @@ export interface UnitOutcomeAgg {
   abnormalByIndicator: Record<string, number>;
   /** Jumlah pasien yang PUNYA nilai untuk indikator tsb (dasar hitung prevalensi). */
   assessedByIndicator: Record<string, number>;
+  /** Jumlah pasien yang kategorinya membuat indikator tsb BERLAKU (dasar "belum dinilai"). */
+  eligibleByIndicator: Record<string, number>;
 }
 
 /** Fetch raw measurements for outcome classification. */
@@ -322,6 +324,7 @@ type OutcomeTotals = {
   notAssessed: number;
   abnormalByIndicator: Record<string, number>;
   assessedByIndicator: Record<string, number>;
+  eligibleByIndicator: Record<string, number>;
 };
 
 /** Classify raw outcome rows → per-unit + global aggregates. */
@@ -336,7 +339,7 @@ export function classifyOutcomes(rows: OutcomeBaseRow[]): {
     if (!unitMap.has(posId)) unitMap.set(posId, []);
     let agg = unitMap.get(posId)!.find((a) => a.ym === ym);
     if (!agg) {
-      agg = { ym, unitId: posId, unitName: '', total: 0, normal: 0, abnormal: 0, notAssessed: 0, abnormalByIndicator: {}, assessedByIndicator: {} };
+      agg = { ym, unitId: posId, unitName: '', total: 0, normal: 0, abnormal: 0, notAssessed: 0, abnormalByIndicator: {}, assessedByIndicator: {}, eligibleByIndicator: {} };
       unitMap.get(posId)!.push(agg);
     }
     return agg;
@@ -345,7 +348,7 @@ export function classifyOutcomes(rows: OutcomeBaseRow[]): {
   function getOrCreateGlobal(ym: string): OutcomeTotals {
     let agg = globalMap.get(ym);
     if (!agg) {
-      agg = { ym, total: 0, normal: 0, abnormal: 0, notAssessed: 0, abnormalByIndicator: {}, assessedByIndicator: {} };
+      agg = { ym, total: 0, normal: 0, abnormal: 0, notAssessed: 0, abnormalByIndicator: {}, assessedByIndicator: {}, eligibleByIndicator: {} };
       globalMap.set(ym, agg);
     }
     return agg;
@@ -374,6 +377,8 @@ export function classifyOutcomes(rows: OutcomeBaseRow[]): {
     let assessable = false;
     let hasAbnormal = false;
     for (const ind of applicable) {
+      aggU.eligibleByIndicator[ind.key] = (aggU.eligibleByIndicator[ind.key] ?? 0) + 1;
+      aggG.eligibleByIndicator[ind.key] = (aggG.eligibleByIndicator[ind.key] ?? 0) + 1;
       if (!indicatorHasData(r, ind)) continue;
       assessable = true;
       aggU.assessedByIndicator[ind.key] = (aggU.assessedByIndicator[ind.key] ?? 0) + 1;
@@ -417,7 +422,7 @@ export function outcomesToHealthCenter(
       const key = `${hcId}|${r.ym}`;
       let agg = hcYmMap.get(key);
       if (!agg) {
-        agg = { ym: r.ym, unitId: hcId, unitName: hcName, total: 0, normal: 0, abnormal: 0, notAssessed: 0, abnormalByIndicator: {}, assessedByIndicator: {} };
+        agg = { ym: r.ym, unitId: hcId, unitName: hcName, total: 0, normal: 0, abnormal: 0, notAssessed: 0, abnormalByIndicator: {}, assessedByIndicator: {}, eligibleByIndicator: {} };
         hcYmMap.set(key, agg);
       }
       agg.total += r.total;
@@ -429,6 +434,9 @@ export function outcomesToHealthCenter(
       }
       for (const [k, v] of Object.entries(r.assessedByIndicator)) {
         agg.assessedByIndicator[k] = (agg.assessedByIndicator[k] ?? 0) + v;
+      }
+      for (const [k, v] of Object.entries(r.eligibleByIndicator)) {
+        agg.eligibleByIndicator[k] = (agg.eligibleByIndicator[k] ?? 0) + v;
       }
     }
   }

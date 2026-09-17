@@ -21,6 +21,8 @@ export function GrowthDrillSheet({
   from,
   to,
   onClose,
+  initialHc,
+  initialPosyandu,
 }: {
   indicator: string;
   categoryKey: string;
@@ -29,11 +31,14 @@ export function GrowthDrillSheet({
   from: string;
   to: string;
   onClose: () => void;
+  /** Buka langsung pada unit tertentu (mis. dari kartu peringkat wilayah). */
+  initialHc?: DrillUnit;
+  initialPosyandu?: DrillUnit;
 }) {
   const { user } = useAuth();
   const role = user?.role;
-  const [hc, setHc] = useState<DrillUnit | null>(null);
-  const [posyandu, setPosyandu] = useState<DrillUnit | null>(null);
+  const [hc, setHc] = useState<DrillUnit | null>(initialHc ?? null);
+  const [posyandu, setPosyandu] = useState<DrillUnit | null>(initialPosyandu ?? null);
 
   const base = `/api/stats/growth-units?indicator=${indicator}&category=${categoryKey}&from=${from}&to=${to}`;
   const patientBase = `/api/stats/growth-patients?indicator=${indicator}&category=${categoryKey}&from=${from}&to=${to}`;

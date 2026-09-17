@@ -9,6 +9,7 @@ import { TrendingUp, AlertTriangle, User } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
 import { GrowthStatusDistribution } from './GrowthStatusDistribution';
+import { StuntingTrendCard } from './StuntingTrendCard';
 import { WeightProgressionCard } from './WeightProgressionCard';
 import { BreastfeedingCard } from './BreastfeedingCard';
 import { CategoryCoverageCard } from './CategoryCoverageCard';
@@ -147,6 +148,9 @@ export function PosyanduAnalisis() {
 
       {/* 0. Status gizi balita (Permenkes 2/2020) */}
       <GrowthStatusDistribution from={from} to={to} />
+
+      {/* 0a. Tren stunting (TB/U) */}
+      <StuntingTrendCard from={from} to={to} />
 
       {/* 0b. Progres berat badan (N/T & 2T) */}
       <WeightProgressionCard from={from} to={to} />

@@ -58,6 +58,15 @@ describe('classifyOutcomes', () => {
     expect(totals[0].normal).toBe(1);
   });
 
+  it('eligibleByIndicator menghitung pasien yang indikatornya berlaku (dasar Belum Dinilai)', () => {
+    const { totals } = classifyOutcomes([row()]);
+    // tbRisk berlaku untuk balita → eligible 1, tanpa nilai → belum dinilai.
+    expect(totals[0].eligibleByIndicator.tbRisk).toBe(1);
+    expect(totals[0].assessedByIndicator.tbRisk).toBeUndefined();
+    // gula darah tidak berlaku untuk balita → tidak masuk eligible.
+    expect(totals[0].eligibleByIndicator.bloodSugar).toBeUndefined();
+  });
+
   it('dedupe per pasien per bulan (ambil pengukuran terakhir)', () => {
     const { totals } = classifyOutcomes([
       row({ sessionDate: new Date('2026-01-05T08:00:00'), hemoglobin: 8 }),

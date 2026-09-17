@@ -43,7 +43,11 @@ export async function GET(req: Request) {
     const indicator = (INDICATORS as string[]).includes(rawIndicator)
       ? (rawIndicator as GrowthIndex)
       : 'BB_U';
-    const category = searchParams.get('category');
+    const categoryParam = searchParams.get('category');
+    const categories = (categoryParam ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
 
     const now = new Date();
     const fmt = (d: Date) =>
@@ -85,7 +89,7 @@ export async function GET(req: Request) {
     }
 
     if (posyanduIds.length === 0) {
-      return NextResponse.json({ success: true, data: [], total: 0, indicator, category });
+      return NextResponse.json({ success: true, data: [], total: 0, indicator, category: categoryParam });
     }
 
     const [meas, pats] = await Promise.all([
@@ -161,7 +165,7 @@ export async function GET(req: Request) {
         const idx = res[indicator];
         if (!idx) return null;
         const key = surveyCategoryKey(indicator, idx.categoryKey);
-        if (category && key !== category) return null;
+        if (categories.length > 0 && !categories.includes(key)) return null;
         const info = infoByPatient.get(r.patientId);
         if (!info) return null;
         return {
@@ -185,7 +189,7 @@ export async function GET(req: Request) {
     return NextResponse.json({
       success: true,
       indicator,
-      category,
+      category: categoryParam,
       from: fromDate,
       to: toDate,
       total,

@@ -118,7 +118,7 @@ export default function PrivasiPage() {
 
       <p className="text-xs text-[#54656f] pt-2 border-t border-[#e9edef]">
         Lihat juga{' '}
-        <Link href="/syarat" className="font-bold text-[#075e54] hover:underline">
+        <Link href="/syarat" prefetch={false} className="font-bold text-[#075e54] hover:underline">
           Syarat &amp; Ketentuan
         </Link>
         .

@@ -9,6 +9,7 @@ export type PatientCategory =
 export interface PatientData {
   id: string;
   regNumber: string;
+  clientId?: string | null;
   name: string;
   birthDate: string; // ISO date
   gender?: string | null;

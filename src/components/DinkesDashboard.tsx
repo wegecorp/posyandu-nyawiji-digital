@@ -61,6 +61,8 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showAllPos, setShowAllPos] = useState<Record<string, boolean>>({});
+  const [posyandusByPuskesmas, setPosyandusByPuskesmas] = useState<Record<string, PosyanduRow[]>>({});
+  const [loadingPosByPkm, setLoadingPosByPkm] = useState<Record<string, boolean>>({});
 
   const [kapanewonList, setKapanewonList] = useState<KapanewonRef[]>([]);
 
@@ -202,20 +204,9 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
   };
 
   // Totals
-  const totalPosyandu = puskesmasList.reduce((acc, p) => acc + (p.posyandus?.length || 0), 0);
-  const totalPasien = puskesmasList.reduce(
-    (acc, p) => acc + (p.posyandus?.reduce((a, pos) => a + (pos._count?.patients || 0), 0) || 0),
-    0
-  );
-  const totalPengukuran = puskesmasList.reduce(
-    (acc, p) => acc + (p.posyandus?.reduce((a, pos) => a + (pos._count?.measurements || 0), 0) || 0),
-    0
-  );
+  const totalPosyandu = puskesmasList.reduce((acc, p) => acc + (p._count?.posyandus ?? p.posyandus?.length ?? 0), 0);
   const totalPending = puskesmasList.reduce(
-    (acc, p) =>
-      acc +
-      (p.users?.[0]?.mustChangePassword ? 1 : 0) +
-      (p.posyandus?.filter((pos) => pos.users?.[0]?.mustChangePassword).length || 0),
+    (acc, p) => acc + (p.users?.[0]?.mustChangePassword ? 1 : 0),
     0
   );
 
@@ -223,7 +214,8 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
   const q = searchQuery.trim().toLowerCase();
   const filteredPuskesmas = q ? puskesmasList.filter((pkm) => {
     const pkmMatch = pkm.name.toLowerCase().includes(q) || pkm.kapanewon.toLowerCase().includes(q);
-    const posMatch = pkm.posyandus?.some(
+    const pkmPos = posyandusByPuskesmas[pkm.id] || pkm.posyandus;
+    const posMatch = pkmPos?.some(
       (pos) => pos.name.toLowerCase().includes(q) || pos.code.toLowerCase().includes(q) || pos.kalurahan.toLowerCase().includes(q)
     );
     return pkmMatch || posMatch;
@@ -256,7 +248,24 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
       </span>
     );
 
-  const toggleExpand = (id: string) => setExpandedId((prev) => (prev === id ? null : id));
+  const toggleExpand = async (id: string) => {
+    const next = expandedId === id ? null : id;
+    setExpandedId(next);
+    if (next && !posyandusByPuskesmas[next]) {
+      setLoadingPosByPkm((prev) => ({ ...prev, [next]: true }));
+      try {
+        const res = await fetch(`/api/posyandus?healthCenterId=${next}`);
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data[0]?.posyandus) {
+          setPosyandusByPuskesmas((prev) => ({ ...prev, [next]: json.data[0].posyandus }));
+        }
+      } catch (e) {
+        console.error('Failed to load posyandus for puskesmas', e);
+      } finally {
+        setLoadingPosByPkm((prev) => ({ ...prev, [next]: false }));
+      }
+    }
+  };
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto pb-20">
@@ -275,10 +284,9 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="grid grid-cols-2 gap-2 text-center">
           <SummaryStat label="Puskesmas" value={puskesmasList.length} />
-          <SummaryStat label="Posyandu" value={totalPosyandu} />
-          <SummaryStat label="Pasien" value={totalPasien} />
+          <SummaryStat label="Total Posyandu" value={totalPosyandu} />
         </div>
 
         {totalPending > 0 && (
@@ -291,8 +299,8 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
         )}
         <div className="flex items-center justify-between text-xs border-t border-white/15 pt-3">
           <span className="text-[#d1fae5] flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5 text-[#25d366]" />
-            Total pengukuran tercatat: <strong className="text-white">{totalPengukuran}</strong>
+            <Building className="w-3.5 h-3.5 text-[#25d366]" />
+            Wilayah: <strong className="text-white">Kabupaten Gunungkidul</strong>
           </span>
           <button
             onClick={onExportAll}
@@ -373,9 +381,11 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
             const pkmUser = pkm.users?.[0];
             const pkmPending = !!pkmUser?.mustChangePassword;
             const isOpen = expandedId === pkm.id;
-            const posCount = pkm.posyandus?.length || 0;
-            const matchCount = q ? (pkm.posyandus ?? []).filter(posMatches).length : 0;
-            const allGroups = groupByKalurahan(pkm.posyandus);
+            const pkmPosyandus = posyandusByPuskesmas[pkm.id] || pkm.posyandus || [];
+            const isLoadingPos = !!loadingPosByPkm[pkm.id];
+            const posCount = pkm._count?.posyandus ?? pkmPosyandus.length;
+            const matchCount = q ? pkmPosyandus.filter(posMatches).length : 0;
+            const allGroups = groupByKalurahan(pkmPosyandus);
             const showAllGroups = !!showAllPos[pkm.id] || !!q;
             let groups = allGroups;
             let hiddenCount = 0;
@@ -448,7 +458,12 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
                       </div>
                     )}
 
-                    {groups.length === 0 ? (
+                    {isLoadingPos ? (
+                      <div className="py-6 flex flex-col items-center justify-center gap-2 text-xs font-bold text-[#54656f]">
+                        <RefreshCw className="w-5 h-5 animate-spin text-[#128c7e]" />
+                        <span>Memuat data posyandu...</span>
+                      </div>
+                    ) : groups.length === 0 ? (
                       <p className="text-center text-xs text-[#8696a0] font-medium py-4">
                         Belum ada posyandu terdaftar di bawah puskesmas ini.
                       </p>

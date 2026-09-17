@@ -286,7 +286,7 @@ export function useAutoSave(patientId: string, posyanduId: string, recordedBy?: 
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10_000);
+        const timeoutId = setTimeout(() => controller.abort(), 4_000);
         const res = await fetch('/api/measurements/autosave', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

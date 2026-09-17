@@ -107,7 +107,7 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
       force,
     };
 
-    // Offline: simpan ke antrean lokal, kirim otomatis saat kembali online.
+    // Offline: simpan ke antrean lokal, buat data pasien optimis, dan langsung buka form
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       addToSyncQueue({
         kind: 'patient',
@@ -116,10 +116,29 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
         payload: payload as unknown as Record<string, string | number | null | undefined>,
         timestamp: Date.now(),
       });
-      setInfoMsg('Tersimpan offline — data akan dikirim otomatis saat koneksi kembali.');
-      setErrorMsg('');
-      setIsSubmitting(false);
+      const age = calculateAge(birthDate);
+      const cat = getPatientCategory(birthDate, gender === 'L' ? false : isPregnant, gender);
+      const optimisticPatient: PatientData = {
+        id: clientId,
+        regNumber: `OFFLINE-${clientId.slice(0, 6).toUpperCase()}`,
+        clientId,
+        name: name.trim(),
+        birthDate: new Date(birthDate).toISOString(),
+        gender,
+        address: address.trim() || undefined,
+        guardianName: guardianName.trim() || undefined,
+        phone: phone.trim() || undefined,
+        isPregnant: gender === 'L' ? false : isPregnant,
+        posyanduId: user.posyanduId,
+        category: cat,
+        ageYears: age.years,
+        ageMonths: age.totalMonths,
+        ageDisplay: age.display,
+        createdAt: new Date().toISOString(),
+      };
       resetForm();
+      onSuccess(optimisticPatient);
+      onClose();
       return;
     }
 

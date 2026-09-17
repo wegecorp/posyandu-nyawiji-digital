@@ -164,6 +164,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Panduan Pengguna */}
           <Link
             href="/panduan"
+            prefetch={false}
             aria-label="Panduan Pengguna"
             className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
             title="Panduan Pengguna"

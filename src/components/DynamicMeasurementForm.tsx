@@ -86,26 +86,29 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
   // Engine antropometri hanya 0-60 bln → status gizi/LK/posisi untuk Bayi & Balita/Apras.
   const isUnderFive = category === 'BAYI' || category === 'BALITA_APRAS';
 
-  // Form Fields State
-  const [weight, setWeight] = useState<string>('');
-  const [height, setHeight] = useState<string>('');
-  const [position, setPosition] = useState<string>('');
-  const [headCircumference, setHeadCircumference] = useState<string>('');
-  const [armCircumference, setArmCircumference] = useState<string>('');
-  const [systolic, setSystolic] = useState<string>('');
-  const [diastolic, setDiastolic] = useState<string>('');
-  const [gestationalAge, setGestationalAge] = useState<string>('');
-  const [bloodSugar, setBloodSugar] = useState<string>('');
-  const [cholesterol, setCholesterol] = useState<string>('');
-  const [uricAcid, setUricAcid] = useState<string>('');
-  const [hemoglobin, setHemoglobin] = useState<string>('');
-  const [waistCircumference, setWaistCircumference] = useState<string>('');
-  const [visionStatus, setVisionStatus] = useState<string>('');
-  const [hearingStatus, setHearingStatus] = useState<string>('');
-  const [tbScreeningStatus, setTbScreeningStatus] = useState<string>('');
-  const [exclusiveBreastfeeding, setExclusiveBreastfeeding] = useState<string>('');
-  const [noteSource, setNoteSource] = useState<string>('Kader');
-  const [notes, setNotes] = useState<string>('');
+  // Form Fields State — inisialisasi instan (0ms) dari data pengukuran yang sudah ada
+  const tmInit = patient.todayMeasurement;
+  const [weight, setWeight] = useState<string>(() => tmInit?.weight != null ? String(tmInit.weight) : '');
+  const [height, setHeight] = useState<string>(() => tmInit?.height != null ? String(tmInit.height) : '');
+  const [position, setPosition] = useState<string>(() => tmInit?.position || '');
+  const [headCircumference, setHeadCircumference] = useState<string>(() => tmInit?.headCircumference != null ? String(tmInit.headCircumference) : '');
+  const [armCircumference, setArmCircumference] = useState<string>(() => tmInit?.armCircumference != null ? String(tmInit.armCircumference) : '');
+  const [systolic, setSystolic] = useState<string>(() => tmInit?.systolic != null ? String(tmInit.systolic) : '');
+  const [diastolic, setDiastolic] = useState<string>(() => tmInit?.diastolic != null ? String(tmInit.diastolic) : '');
+  const [gestationalAge, setGestationalAge] = useState<string>(() => tmInit?.gestationalAge != null ? String(tmInit.gestationalAge) : '');
+  const [bloodSugar, setBloodSugar] = useState<string>(() => tmInit?.bloodSugar != null ? String(tmInit.bloodSugar) : '');
+  const [cholesterol, setCholesterol] = useState<string>(() => tmInit?.cholesterol != null ? String(tmInit.cholesterol) : '');
+  const [uricAcid, setUricAcid] = useState<string>(() => tmInit?.uricAcid != null ? String(tmInit.uricAcid) : '');
+  const [hemoglobin, setHemoglobin] = useState<string>(() => tmInit?.hemoglobin != null ? String(tmInit.hemoglobin) : '');
+  const [waistCircumference, setWaistCircumference] = useState<string>(() => tmInit?.waistCircumference != null ? String(tmInit.waistCircumference) : '');
+  const [visionStatus, setVisionStatus] = useState<string>(() => tmInit?.visionStatus || '');
+  const [hearingStatus, setHearingStatus] = useState<string>(() => tmInit?.hearingStatus || '');
+  const [tbScreeningStatus, setTbScreeningStatus] = useState<string>(() => tmInit?.tbScreeningStatus || '');
+  const [exclusiveBreastfeeding, setExclusiveBreastfeeding] = useState<string>(() =>
+    tmInit?.exclusiveBreastfeeding === true ? 'Ya' : tmInit?.exclusiveBreastfeeding === false ? 'Tidak' : '',
+  );
+  const [noteSource, setNoteSource] = useState<string>(() => tmInit?.noteSource || 'Kader');
+  const [notes, setNotes] = useState<string>(() => tmInit?.notes || '');
   const [sessionDate, setSessionDate] = useState<string>(
     () => `${todayLocalISODate().slice(0, 7)}-01`,
   );

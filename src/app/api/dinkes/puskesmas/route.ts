@@ -17,14 +17,6 @@ export async function GET() {
     const healthCenters = await prisma.healthCenter.findMany({
       include: {
         kapanewon: { select: { name: true } },
-        posyandus: {
-          include: {
-            kalurahan: { select: { name: true } },
-            users: { select: { id: true, username: true, mustChangePassword: true, disabledAt: true } },
-            _count: { select: { patients: true, measurements: true } },
-          },
-          orderBy: [{ kalurahan: { name: 'asc' } }, { name: 'asc' }],
-        },
         users: {
           select: { id: true, username: true, mustChangePassword: true, disabledAt: true },
         },
@@ -36,13 +28,11 @@ export async function GET() {
     });
 
     // Flatten relasi agar bentuk respons tetap stabil utk konsumen (dashboard).
+    // Posyandu di-load secara on-demand saat kartu puskesmas di-expand.
     const data = healthCenters.map((hc) => ({
       ...hc,
       kapanewon: hc.kapanewon.name,
-      posyandus: hc.posyandus.map((pos) => ({
-        ...pos,
-        kalurahan: pos.kalurahan.name,
-      })),
+      posyandus: [],
     }));
 
     return NextResponse.json({ success: true, data });

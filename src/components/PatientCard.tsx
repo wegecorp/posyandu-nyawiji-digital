@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { PatientData } from '@/lib/types';
 import { getCategoryBadge } from '@/lib/utils';
 import {
@@ -34,27 +34,8 @@ export const PatientCard: React.FC<PatientCardProps> = ({
   const hasData = percent > 0;
   const isComplete = percent === 100;
 
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Close menu on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
-    if (isMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isMenuOpen]);
-
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsMenuOpen(false);
     if (onEdit) onEdit(patient);
   };
 

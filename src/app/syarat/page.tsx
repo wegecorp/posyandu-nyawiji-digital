@@ -97,7 +97,7 @@ export default function SyaratPage() {
 
       <p className="text-xs text-[#54656f] pt-2 border-t border-[#e9edef]">
         Lihat juga{' '}
-        <Link href="/privasi" className="font-bold text-[#075e54] hover:underline">
+        <Link href="/privasi" prefetch={false} className="font-bold text-[#075e54] hover:underline">
           Kebijakan Privasi
         </Link>
         .

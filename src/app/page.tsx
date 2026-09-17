@@ -147,7 +147,9 @@ export default function PosyanduApp() {
 
   // Fetch patients for active Posyandu (dipanggil dari event handler/refresh)
   const fetchPatients = async () => {
-    if (!user?.posyanduId && user?.role === 'POSYANDU') return;
+    const shouldFetch = user?.role === 'POSYANDU' || activeViewMode === 'posyandu_table';
+    if (!shouldFetch) return;
+    if (user?.role === 'POSYANDU' && !user?.posyanduId) return;
     const seq = ++fetchSeqRef.current;
     if (patients.length === 0) setIsLoading(true);
     try {
@@ -184,10 +186,12 @@ export default function PosyanduApp() {
 
   // Auto-fetch saat role/lokasi/query pencarian berubah (dengan SWR local cache)
   useEffect(() => {
-    if (!user?.posyanduId && user?.role === 'POSYANDU') return;
+    const shouldFetch = user?.role === 'POSYANDU' || activeViewMode === 'posyandu_table';
+    if (!shouldFetch) return;
+    if (user?.role === 'POSYANDU' && !user?.posyanduId) return;
     let active = true;
     const posId = user?.posyanduId || '';
-    const ctx = `${user?.role}:${posId}`;
+    const ctx = `${user?.role}:${posId}:${activeViewMode}`;
 
     // SWR: Jika berganti posyandu tanpa search query, tampilkan cache instan bila ada
     if (ctx !== prevCtxRef.current) {
@@ -239,7 +243,7 @@ export default function PosyanduApp() {
     return () => {
       active = false;
     };
-  }, [user?.posyanduId, user?.role, debouncedSearchQuery]);
+  }, [user?.posyanduId, user?.role, debouncedSearchQuery, activeViewMode]);
 
   // Filtered patients list
   const filteredPatients = useMemo(() => {

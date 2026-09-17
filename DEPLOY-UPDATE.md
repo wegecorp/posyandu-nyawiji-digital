@@ -86,6 +86,50 @@ sudo scripts/restore-db.sh monthly:<tanggal> --from-drive   # dari Google Drive
 
 ---
 
+## 4. Menutup akses sementara (jendela maintenance)
+
+Dipakai saat cutover/migrasi database: seluruh pengguna (termasuk kader) diblokir,
+hanya melihat halaman pemeliharaan. Tidak perlu menghentikan PM2 untuk mengaktifkannya.
+
+File terkait (di repo, ikut ter-version):
+
+- `deploy/maintenance.html` — halaman pemeliharaan (self-contained, tanpa aset eksternal).
+- `deploy/nginx-posyandu.conf` — konfigurasi Nginx lengkap (`error_page 503` + saklar).
+
+Pemasangan sekali per server:
+
+```bash
+cd /opt/nyawiji && git pull
+sudo cp deploy/maintenance.html /var/www/maintenance.html
+sudo cp /etc/nginx/sites-available/posyandu /etc/nginx/sites-available/posyandu.bak
+sudo cp deploy/nginx-posyandu.conf /etc/nginx/sites-available/posyandu
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Membuka/menutup akses (tidak perlu reload Nginx):
+
+```bash
+sudo touch /var/www/maintenance.on   # BLOKIR — semua path, termasuk /api/*
+sudo rm    /var/www/maintenance.on   # normal kembali
+```
+
+Verifikasi:
+
+```bash
+curl -sI --resolve posyandunyawiji.my.id:443:127.0.0.1 https://posyandunyawiji.my.id | head -1
+# tanpa penanda -> 200 ; dengan penanda -> 503
+curl -sI --resolve posyandunyawiji.my.id:443:127.0.0.1 https://posyandunyawiji.my.id/maintenance.html | head -1
+# -> 404 (halaman `internal`, tidak bisa dibuka langsung)
+```
+
+> Bila `nginx -t` gagal, **jangan** reload. Pulihkan:
+> `sudo cp /etc/nginx/sites-available/posyandu.bak /etc/nginx/sites-available/posyandu`.
+
+> Jangan tinggalkan `/var/www/maintenance.on` menyala. Sebelum menutup, pastikan migrasi
+> sudah siap; jendela panjang tanpa pengumuman = kader tidak bisa input.
+
+---
+
 ## Jebakan (sering kejadian)
 
 - **`pm2 restart` sebelum `npm run build` sukses** → crash-loop

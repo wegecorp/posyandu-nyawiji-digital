@@ -6,6 +6,13 @@ Gunungkidul** yang akan meneruskan atau mengoperasikan Portal Nyawiji.
 Semua diagram memakai **Mermaid** — ter-render otomatis di GitHub, VS Code, dan GitLab.
 Tidak butuh alat tambahan.
 
+> **Status (per 17 September 2026).** Dokumen di folder ini menggambarkan **desain
+> target**: database PostgreSQL. Kondisi nyata: `main` masih SQLite, seluruh perubahan
+> PostgreSQL ada di branch `feat/migrasi-postgresql` (belum di-merge), dan cutover
+> belum dijalankan. Alur proses, model data, dan API di dokumen ini **tidak berubah**
+> karena migrasi; hanya penyimpanan yang berpindah. Rincian: `DED.md` blok
+> "Status implementasi" dan `RUNBOOK-MIGRASI-POSTGRESQL.md`.
+
 ## Daftar dokumen
 
 | Dokumen | Isi | Untuk pertanyaan |

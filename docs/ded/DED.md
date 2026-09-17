@@ -14,6 +14,21 @@ Dokumen pendamping: `docs/ded/DFD.md` (aliran data), `docs/ded/ERD.md` (model da
 `docs/ded/FLOWCHART.md` (alur proses & sistem),
 `docs/ded/RUNBOOK-MIGRASI-POSTGRESQL.md` (migrasi database), `CONTEXT.md` (glosarium domain).
 
+> **STATUS IMPLEMENTASI (per 17 September 2026).**
+>
+> Dokumen ini menggambarkan **desain target**, bukan kondisi *as-built*.
+>
+> - `main` **masih memakai SQLite** (`provider = "sqlite"`).
+> - Seluruh perubahan PostgreSQL **sudah selesai tetapi belum di-merge** — ada di
+>   branch `feat/migrasi-postgresql` (provider Prisma, query `analytics.ts`,
+>   skrip `pg_dump`/`pg_restore`, database uji `nyawiji_test`).
+> - **Cutover belum dijalankan.** Prosedur lengkapnya:
+>   `docs/ded/RUNBOOK-MIGRASI-POSTGRESQL.md`.
+>
+> Praktisnya: perilaku sistem, alur proses, model data, dan daftar API di dokumen ini
+> **sudah final** dan tidak berubah karena migrasi. Setelah cutover dijalankan,
+> perbarui blok ini menjadi "sudah berjalan di PostgreSQL" — sisanya tidak perlu diubah.
+
 ---
 
 ## 1. Ringkasan
@@ -378,11 +393,15 @@ bukan kerusakan data).
 
 ## 13. Migrasi Database
 
-Aplikasi semula memakai SQLite (berkas tunggal `prisma/dev.db`), kini
-**PostgreSQL**. Alasan: banyak penulis (ratusan posyandu) dan pemisahan database
-dari berkas aplikasi.
+Aplikasi semula memakai SQLite (berkas tunggal `prisma/dev.db`); **target arsitektur
+adalah PostgreSQL**, dengan alasan banyak penulis (ratusan posyandu) dan pemisahan
+database dari berkas aplikasi.
 
-Perubahan kode yang menyertainya (sudah ada di branch `feat/migrasi-postgresql`):
+> Status: perubahan kode sudah selesai di branch `feat/migrasi-postgresql` tetapi
+> **belum di-merge ke `main`**, dan cutover belum dijalankan. Lihat blok
+> "Status implementasi" di kepala dokumen ini.
+
+Perubahan kode yang menyertainya (ada di branch `feat/migrasi-postgresql`):
 
 1. `prisma/schema.prisma` → `provider = "postgresql"`.
 2. `src/lib/prisma.ts` → blok `PRAGMA` SQLite dihapus.

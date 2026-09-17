@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Baby } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
-import { BreastfeedingDrillSheet } from './BreastfeedingDrillSheet';
+import { BreastfeedingDrillSheet, formatYM } from './BreastfeedingDrillSheet';
 import { useBackLayer } from '@/lib/back-navigation';
 
 type Row = {
@@ -14,20 +14,24 @@ type Row = {
   percent: number;
 };
 
-function formatYM(ym: string): string {
-  const [y, m] = ym.split('-');
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-  return `${months[parseInt(m, 10) - 1]} ${y}`;
-}
-
-export function BreastfeedingCard({ from, to, hcId }: { from: string; to: string; hcId?: string }) {
+export function BreastfeedingCard({
+  from,
+  to,
+  hcId,
+  hcName,
+}: {
+  from: string;
+  to: string;
+  hcId?: string;
+  hcName?: string;
+}) {
   const { user } = useAuth();
   const canDrill = user?.role === 'DINKES' || user?.role === 'PUSKESMAS';
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
-  const [drill, setDrill] = useState(false);
+  const [drill, setDrill] = useState<{ unitId: string; unitName: string } | null>(null);
 
-  useBackLayer(drill, () => setDrill(false));
+  useBackLayer(Boolean(drill), () => setDrill(null));
 
   useEffect(() => {
     let active = true;
@@ -55,6 +59,8 @@ export function BreastfeedingCard({ from, to, hcId }: { from: string; to: string
     const ms = rows.filter((r) => r.assessed > 0).map((r) => r.ym);
     return ms.sort().at(-1) ?? '';
   }, [rows]);
+
+  const months = useMemo(() => [...new Set(rows.map((r) => r.ym))].sort(), [rows]);
 
   const monthRows = useMemo(() => rows.filter((r) => r.ym === latest), [rows, latest]);
   const totals = useMemo(
@@ -127,7 +133,7 @@ export function BreastfeedingCard({ from, to, hcId }: { from: string; to: string
               <button
                 key={r.unitId}
                 type="button"
-                onClick={() => setDrill(true)}
+                onClick={() => setDrill({ unitId: r.unitId, unitName: r.unitName || r.unitId })}
                 className={`${rowCls} hover:bg-[#f0f2f5] transition-colors`}
               >
                 {body}
@@ -143,7 +149,12 @@ export function BreastfeedingCard({ from, to, hcId }: { from: string; to: string
     </ChartCard>
 
       {drill && canDrill && (
-        <BreastfeedingDrillSheet from={from} to={to} onClose={() => setDrill(false)} />
+        <BreastfeedingDrillSheet
+          months={months}
+          initialYm={latest}
+          initialHc={hcId ? { unitId: hcId, unitName: hcName ?? '' } : user?.role === 'DINKES' ? drill : undefined}
+          onClose={() => setDrill(null)}
+        />
       )}
     </>
   );

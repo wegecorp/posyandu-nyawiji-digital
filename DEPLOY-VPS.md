@@ -116,36 +116,8 @@ sudo certbot --nginx -d posyandu.domain.id
 
 ## 7. Update aplikasi (rutin)
 
-```bash
-cd /opt/nyawiji
-git pull
-npm ci
-pm2 stop posyandu-nyawiji   # stop dulu: cegah crash-loop saat .next dihapus
-rm -rf .next                # WAJIB bila ada route yang dihapus/diganti (cegah tipe basi)
-npx prisma db push          # WAJIB bila ada perubahan skema: tambah kolom + REGENERATE Prisma Client
-npm run db:backfill         # isi kolom turunan (N/T & 2T) utk data lama — idempoten
-npm run data:gunungkidul -- /tmp/daftarposyandu.csv   # data terbaru (opsional) — atau Import via web DINKES
-npm run build               # prisma generate jalan otomatis; HARUS sukses sebelum start
-pm2 start posyandu-nyawiji
-pm2 save
-```
-
-> **Jangan `pm2 restart` sebelum `npm run build` sukses** — `next start` tanpa `.next/BUILD_ID`
-> akan crash-loop dengan `Could not find a production build in the '.next' directory`.
-> Setelah `rm -rf .next`, build ulang dulu; kalau build OOM, tambah swap (§8).
-
-> **Bila `npm run build` gagal dengan `Property '...' does not exist` atau
-> `does not exist in type 'MeasurementSelect'`:** Prisma Client masih basi — jalankan
-> `npx prisma db push` (menambah kolom DB **dan** regenerate client), lalu build ulang.
-> `npm run build` sudah menjalankan `prisma generate` lebih dulu, tapi kolom di DB tetap
-> butuh `db push` agar aplikasi tidak gagal saat runtime.
-
-> Rilis tanpa perubahan skema (mis. hanya UI/endpoint): `prisma db push` dan `db:backfill`
-> boleh dilewati. `rm -rf .next` tetap disarankan bila ada route lama yang dihapus.
-
-> Rilis yang mengubah kategori umur / data turunan: setelah aplikasi naik, login **DINKES**
-> lalu panggil `POST /api/dinkes/backfill-growth` untuk menghitung ulang snapshot
-> (`Measurement.category`, status gizi, N/T & 2T) pada data lama.
+> Panduan update satu halaman: **`DEPLOY-UPDATE.md`** (cek schema → jalur frontend-only /
+> jalur ada schema → verifikasi → rollback → jebakan).
 
 Checklist verifikasi lengkap (UAT per peran + rollback): `docs/uat-deploy-checklist.md`.
 

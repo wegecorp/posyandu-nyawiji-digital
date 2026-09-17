@@ -224,45 +224,11 @@ Solusi:
 
 ## 7. Update rutin
 
-```bash
-cd /opt/nyawiji
-git pull
-npm ci
-pm2 stop posyandu-nyawiji
-rm -rf .next
-npx prisma db push       # kolom baru + REGENERATE Prisma Client (WAJIB sebelum build)
-npm run db:backfill
-npm run build            # prisma generate otomatis; HARUS sukses sebelum start
-pm2 start posyandu-nyawiji
-pm2 save
-```
-
-### 7b. Update frontend-only (tanpa perubahan schema)
-
-Bila diff hanya menyentuh UI/komponen (mis. commit peringkat partisipasi `ce85e48` —
-`DinkesAnalisis.tsx`, `PuskesmasAnalisis.tsx`, `UnitScoreboard.tsx`), **lewati**
-`prisma db push` & `db:backfill`:
-
-```bash
-cd /opt/nyawiji
-git pull
-npm ci
-npm run build            # HARUS sukses sebelum restart
-pm2 restart posyandu-nyawiji
-pm2 logs posyandu-nyawiji --lines 50   # pastikan tidak ada error
-```
-
-Cek dulu apakah ada perubahan schema:
-
-```bash
-git diff --name-only HEAD@{1} HEAD -- prisma/   # kosong = aman jalur frontend-only
-```
-
-Rollback cepat:
-
-```bash
-cd /opt/nyawiji && git revert <commit> --no-edit && npm run build && pm2 restart posyandu-nyawiji
-```
+> Panduan update satu halaman: **`../DEPLOY-UPDATE.md`**.
+> Intinya: cek perubahan schema (`git diff --name-only HEAD@{1} HEAD -- prisma/`), lalu pilih
+> jalur frontend-only (`npm run build` + `pm2 restart`) atau jalur ada schema
+> (`pm2 stop` → `rm -rf .next` → `npx prisma db push` → `npm run db:backfill` → `npm run build`
+> → `pm2 start`). Rollback kode & database juga ada di file itu.
 
 ---
 

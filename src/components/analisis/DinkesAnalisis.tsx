@@ -324,7 +324,7 @@ export function DinkesAnalisis() {
       {/* 0c. Progres berat badan (N/T & 2T) */}
       <WeightProgressionCard from={from} to={to} hcId={drillHcId ?? undefined} />
 
-      <BreastfeedingCard from={from} to={to} hcId={drillHcId ?? undefined} />
+      <BreastfeedingCard from={from} to={to} hcId={drillHcId ?? undefined} hcName={drillHcName} />
       <TbScreeningCard from={from} to={to} hcId={drillHcId ?? undefined} />
       <CategoryCoverageCard from={from} to={to} hcId={drillHcId ?? undefined} />
 

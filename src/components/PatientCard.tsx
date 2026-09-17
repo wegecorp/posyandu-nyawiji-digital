@@ -79,7 +79,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
           <div className="mt-1 space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
               {isComplete ? (
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-[#0f766e] bg-[#f0fdf4] px-2.5 py-0.5 rounded-full border border-[#bbf7d0]">
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-[#0f766e] bg-[#f0fdf4] px-2.5 py-0.5 rounded-full border border-[#bbf7d0] animate-pop">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#16a34a]" />
                   <span>
                     Data lengkap · {percent}%
@@ -101,7 +101,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
                 </span>
               )}
               {patient.faltering2T && (
-                <span className="inline-flex items-center gap-1 text-xs font-bold text-red-700 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-red-700 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200 animate-pop">
                   <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
                   <span>2T — perlu rujuk</span>
                 </span>
@@ -109,7 +109,10 @@ export const PatientCard: React.FC<PatientCardProps> = ({
             </div>
             {hasData && !isComplete && (
               <div className="h-1 w-full max-w-[140px] bg-[#f0f2f5] rounded-full overflow-hidden">
-                <div className="h-full bg-[#d97706] rounded-full" style={{ width: `${percent}%` }} />
+                <div
+                  className="h-full bg-[#d97706] rounded-full transition-[width] duration-300 ease-out"
+                  style={{ width: `${percent}%` }}
+                />
               </div>
             )}
           </div>

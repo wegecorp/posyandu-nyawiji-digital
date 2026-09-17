@@ -10,6 +10,7 @@ import { ExitHint } from '@/components/ExitHint';
 import { useBackLayer, useExitGuard } from '@/lib/back-navigation';
 import { clearQueuedPatient } from '@/lib/offline-sync';
 import { isStandaloneMode } from '@/lib/pwa';
+import { PatientListSkeleton, FormLoadingSkeleton } from '@/components/Skeleton';
 import {
   Search,
   UserPlus,
@@ -29,12 +30,7 @@ import {
 const DynamicMeasurementForm = dynamic(
   () => import('@/components/DynamicMeasurementForm').then((m) => m.DynamicMeasurementForm),
   {
-    loading: () => (
-      <div className="p-12 text-center text-sm font-bold text-[#54656f] flex flex-col items-center gap-2">
-        <RefreshCw className="w-6 h-6 animate-spin text-[#075e54]" />
-        <span>Memuat form pemeriksaan...</span>
-      </div>
-    ),
+    loading: () => <FormLoadingSkeleton />,
   }
 );
 
@@ -475,7 +471,10 @@ export default function PosyanduApp() {
                 <span className="text-[#075e54]">{statusCounts.percent}%</span>
               </div>
               <div className="h-1.5 w-full bg-[#f0f2f5] rounded-full overflow-hidden">
-                <div className="h-full bg-[#25d366] rounded-full" style={{ width: `${statusCounts.percent}%` }} />
+                <div
+                  className="h-full bg-[#25d366] rounded-full transition-[width] duration-500 ease-out"
+                  style={{ width: `${statusCounts.percent}%` }}
+                />
               </div>
             </div>
 
@@ -518,9 +517,9 @@ export default function PosyanduApp() {
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-1.5 touch-press ${
                       isActive
-                        ? 'bg-[#075e54] text-white border-[#075e54] shadow-xs scale-102'
+                        ? 'bg-[#075e54] text-white border-[#075e54] shadow-xs scale-[1.02]'
                         : 'bg-white text-[#111b21] border-[#e9edef] hover:bg-[#f0f2f5]'
                     }`}
                   >
@@ -533,10 +532,7 @@ export default function PosyanduApp() {
 
             {/* Patient Cards List */}
             {isLoading ? (
-              <div className="p-12 text-center text-sm font-bold text-[#54656f] flex flex-col items-center gap-2">
-                <RefreshCw className="w-6 h-6 animate-spin text-[#075e54]" />
-                <span>Memuat data pasien...</span>
-              </div>
+              <PatientListSkeleton count={4} />
             ) : filteredPatients.length === 0 ? (
               <div className="bg-white rounded-2xl p-8 border border-[#e9edef] text-center space-y-4 shadow-xs">
                 <div className="w-14 h-14 bg-[#e7fceb] text-[#075e54] rounded-full flex items-center justify-center mx-auto">

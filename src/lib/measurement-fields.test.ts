@@ -40,12 +40,17 @@ describe('fieldAppliesTo (kolom input sesuai sasaran)', () => {
     }
   });
 
-  it('bumil: usia kehamilan, tensi, LiLA; tanpa lingkar perut/kolesterol', () => {
+  it('bumil: ikut kategori umur (lab PTM) + usia kehamilan/LiLA; tanpa lingkar perut', () => {
     expect(fieldAppliesTo('gestationalAge', 'BUMIL')).toBe(true);
     expect(fieldAppliesTo('systolic', 'BUMIL')).toBe(true);
     expect(fieldAppliesTo('armCircumference', 'BUMIL')).toBe(true);
+    // Laboratorium: BUMIL disamakan dengan umur (REMAJA/DEWASA/LANSIA).
+    expect(fieldAppliesTo('bloodSugar', 'BUMIL')).toBe(true);
+    expect(fieldAppliesTo('cholesterol', 'BUMIL')).toBe(true);
+    expect(fieldAppliesTo('uricAcid', 'BUMIL')).toBe(true);
+    expect(fieldAppliesTo('hemoglobin', 'BUMIL')).toBe(true);
+    // Lingkar perut tidak bermakna saat hamil.
     expect(fieldAppliesTo('waistCircumference', 'BUMIL')).toBe(false);
-    expect(fieldAppliesTo('cholesterol', 'BUMIL')).toBe(false);
     expect(fieldAppliesTo('exclusiveBreastfeeding', 'BUMIL')).toBe(false);
   });
 

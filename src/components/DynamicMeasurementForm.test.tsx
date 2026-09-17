@@ -28,6 +28,18 @@ const lansiaPatient: PatientData = {
   ageDisplay: '66 Tahun',
 };
 
+const bumilPatient: PatientData = {
+  ...patient,
+  id: 'p3',
+  regNumber: 'POS-WNS-01-2026-0003',
+  name: 'Siti Aminah',
+  birthDate: '1996-01-01T00:00:00.000Z',
+  gender: 'P',
+  isPregnant: true,
+  category: 'BUMIL',
+  ageDisplay: '30 Tahun',
+};
+
 const calls: Array<{ url: string; method: string }> = [];
 
 function fetchMock(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
@@ -47,7 +59,11 @@ function fetchMock(input: RequestInfo | URL, init?: RequestInit): Promise<Respon
     );
   }
   if (method === 'GET' && url.includes('/api/patients/')) {
-    const p = url.includes('/api/patients/p2') ? lansiaPatient : patient;
+    const p = url.includes('/api/patients/p2')
+      ? lansiaPatient
+      : url.includes('/api/patients/p3')
+        ? bumilPatient
+        : patient;
     return Promise.resolve(
       new Response(
         JSON.stringify({
@@ -129,5 +145,19 @@ describe('DynamicMeasurementForm kolom sesuai sasaran', () => {
 
     expect(screen.getByText('Gula Darah (GDS)')).toBeTruthy();
     expect(screen.getByText('Lingkar Perut')).toBeTruthy();
+  });
+
+  it('bumil: lab ikut umur (Kolesterol/GDS/Asam Urat) + Usia Kehamilan, tanpa Lingkar Perut', async () => {
+    render(
+      <AuthProvider>
+        <DynamicMeasurementForm patient={bumilPatient} onBackToList={() => {}} onShowQR={() => {}} />
+      </AuthProvider>
+    );
+    await waitFor(() => expect(screen.getByText('Kolesterol Total')).toBeTruthy());
+
+    expect(screen.getByText('Gula Darah (GDS)')).toBeTruthy();
+    expect(screen.getByText('Asam Urat')).toBeTruthy();
+    expect(screen.getByText('Usia Kehamilan')).toBeTruthy();
+    expect(screen.queryByText('Lingkar Perut')).toBeNull();
   });
 });

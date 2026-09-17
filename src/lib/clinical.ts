@@ -82,7 +82,9 @@ export const INDICATORS: IndicatorDef[] = [
     label: 'Gula Darah Tinggi',
     field: 'bloodSugar',
     unit: 'mg/dL',
-    appliesTo: ['REMAJA', 'DEWASA', 'LANSIA'],
+    // BUMIL ikut kategori umurnya (REMAJA/DEWASA/LANSIA): bila alat tersedia,
+    // GDS bumil tetap tercatat & dinilai. Ambang anemia hamil tetap <11 g/dL.
+    appliesTo: ['REMAJA', 'DEWASA', 'LANSIA', 'BUMIL'],
     // Kemenkes RI / PERKENI (2019): GD puasa ≥126 mg/dL
     isAbnormal: (val) => val >= 126,
     source: 'PERKENI (2019); Permenkes RI',
@@ -92,7 +94,8 @@ export const INDICATORS: IndicatorDef[] = [
     label: 'Kolesterol Tinggi',
     field: 'cholesterol',
     unit: 'mg/dL',
-    appliesTo: ['REMAJA', 'DEWASA', 'LANSIA'],
+    // BUMIL: disamakan dengan kategori umurnya (bila alat tersedia).
+    appliesTo: ['REMAJA', 'DEWASA', 'LANSIA', 'BUMIL'],
     // ATP III / Kemenkes RI: total cholesterol ≥200 mg/dL
     isAbnormal: (val) => val >= 200,
     source: 'ATP III; Kemenkes RI Pedoman Pengelolaan Dislipidemia',
@@ -102,7 +105,8 @@ export const INDICATORS: IndicatorDef[] = [
     label: 'Asam Urat Tinggi',
     field: 'uricAcid',
     unit: 'mg/dL',
-    appliesTo: ['REMAJA', 'DEWASA', 'LANSIA'],
+    // BUMIL: disamakan dengan kategori umurnya (bila alat tersedia).
+    appliesTo: ['REMAJA', 'DEWASA', 'LANSIA', 'BUMIL'],
     // EULAR/ACR: L >7.0, P >6.0 mg/dL
     isAbnormal: (val, gender) => {
       return gender === 'L' ? val > 7.0 : val > 6.0;

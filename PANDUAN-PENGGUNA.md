@@ -329,9 +329,9 @@ Form pengukuran menyesuaikan kolomnya **secara otomatis** dengan umur pasien (di
 | **Remaja (7-17 th)** | 7–17 tahun | Tekanan Darah (Tensi); LiLA; lab PTM (GDS, Kolesterol, Asam Urat) bila alat tersedia; HB |
 | **Dewasa (18-59 th)** | 18–59 tahun | Tekanan Darah (Tensi); LiLA; Lingkar Perut; lab PTM; HB |
 | **Lansia (60+ th)** | 60 tahun ke atas | Tekanan Darah (Tensi); LiLA; Lingkar Perut; lab PTM; HB |
-| **Ibu Hamil (Bumil)** | semua umur | Usia Kehamilan + Tekanan Darah; LiLA (KEK); HB |
+| **Ibu Hamil (Bumil)** | semua umur | Usia Kehamilan + Tekanan Darah; LiLA (KEK); HB; lab PTM (GDS, Kolesterol, Asam Urat) bila alat tersedia |
 
-> Kolom **Laboratorium Sederhana** ikut menyesuaikan sasaran: **Kolesterol, Gula Darah, dan Asam Urat** hanya muncul untuk **Remaja, Dewasa, dan Lansia** (skrining PTM). Bayi & Balita hanya melihat **Hemoglobin (HB)**. Jadi tidak ada lagi kolom kolesterol untuk bayi.
+> Kolom **Laboratorium Sederhana** ikut menyesuaikan sasaran: **Kolesterol, Gula Darah, dan Asam Urat** muncul untuk **Remaja, Dewasa, Lansia, dan Ibu Hamil** (skrining PTM; ibu hamil disamakan dengan kelompok umurnya). Bayi & Balita hanya melihat **Hemoglobin (HB)**. Jadi tidak ada lagi kolom kolesterol untuk bayi.
 
 > Batas kelompok memakai **bulan penuh**: 6 bulan 1 hari sudah masuk **Balita & Apras** (bukan Bayi lagi); tepat 7 tahun masuk **Remaja**; tepat 60 tahun masuk **Lansia**.
 >
@@ -352,9 +352,9 @@ Form pengukuran menyesuaikan kolomnya **secara otomatis** dengan umur pasien (di
 | Lingkar Perut | cm | Dewasa, Lansia | Opsional |
 | Tekanan Darah (Tensi) | mmHg | Remaja, Dewasa, Lansia, Ibu Hamil | Opsional |
 | Usia Kehamilan | minggu | Ibu Hamil | Opsional |
-| Gula Darah (GDS) | mg/dL | Remaja, Dewasa, Lansia (jika alat tersedia) | Opsional |
-| Kolesterol Total | mg/dL | Remaja, Dewasa, Lansia (jika alat tersedia) | Opsional |
-| Asam Urat | mg/dL | Remaja, Dewasa, Lansia (jika alat tersedia) | Opsional |
+| Gula Darah (GDS) | mg/dL | Remaja, Dewasa, Lansia, Ibu Hamil (jika alat tersedia) | Opsional |
+| Kolesterol Total | mg/dL | Remaja, Dewasa, Lansia, Ibu Hamil (jika alat tersedia) | Opsional |
+| Asam Urat | mg/dL | Remaja, Dewasa, Lansia, Ibu Hamil (jika alat tersedia) | Opsional |
 | Hemoglobin (HB) | g/dL | Semua kelompok (jika alat tersedia) | Opsional |
 | Skrining Mata | Normal / Tidak Normal | Semua kelompok | Opsional |
 | Skrining Telinga | Normal / Tidak Normal | Semua kelompok | Opsional |

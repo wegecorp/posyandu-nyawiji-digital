@@ -33,7 +33,7 @@ Dasar kebijakan:
    eksplisit.
 2. **Form hanya menampilkan field yang berlaku** (`fieldAppliesTo`), dan
    menyembunyikan section bila kosong. Bayi/Balita hanya melihat HB pada
-   section lab; GDS/Kolesterol/Asam Urat hanya Remaja/Dewasa/Lansia.
+   section lab; GDS/Kolesterol/Asam Urat hanya Remaja/Dewasa/Lansia/Bumil.
 3. **LiLA**: Balita & Apras, Remaja, Dewasa, Lansia, Bumil (KEK). **Lingkar
    perut**: Dewasa & Lansia (obesitas sentral/PTM).
 4. **Kategori dihitung live** dari `birthDate` + bulan sesi (via
@@ -41,6 +41,13 @@ Dasar kebijakan:
    tanggal lahir / memilih sesi lampau otomatis mengubah kolom yang muncul.
 5. **Nilai lama yang tak lagi berlaku dibiarkan tersimpan**; analitik sudah
    mengabaikannya lewat `appliesTo`. Field tersembunyi tidak dikirim autosave.
+6. **BUMIL = BUMIL ∪ kategori umurnya untuk field lab.** Ibu hamil boleh
+   mengisi GDS/Kolesterol/Asam Urat bila alat tersedia (data tetap masuk base),
+   tanpa mengubah label kategorinya. Label `BUMIL` **tetap** dipakai agar:
+   - ambang anemia hamil tetap `<11 g/dL` (`clinical.ts`), bukan ambang umur;
+   - pelaporan/cakupan "Ibu Hamil" tetap utuh (tidak dobel-hitung).
+   **Lingkar perut dikecualikan** untuk BUMIL (tidak bermakna saat hamil; yang
+   dipakai LiLA untuk KEK).
 
 ## Konsekuensi
 

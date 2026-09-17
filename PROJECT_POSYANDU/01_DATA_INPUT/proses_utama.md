@@ -14,7 +14,7 @@
 - **Trigger**: Kedatangan ibu hamil pada sesi Posyandu.
 - **Aktor Utama**: Ibu Hamil, Kader Pendaftaran, Bidan Desa / Kader Posyandu, Tenaga Kesehatan Puskesmas.
 - **Frekuensi**: Bulanan selama masa kehamilan.
-- **Output**: Data BB, TB, LiLA, Usia Kehamilan, Tensi, Skrining TB, Status KEK, Rekomendasi/Rujukan ANC Terpadu ke Puskesmas.
+- **Output**: Data BB, TB, LiLA, Usia Kehamilan, Tensi, HB, Skrining TB, lab opsional (GDS, Kolesterol, Asam Urat) bila alat tersedia, Status KEK, Rekomendasi/Rujukan ANC Terpadu ke Puskesmas.
 
 ### Proses 3: Pelayanan Kesehatan Usia Sekolah dan Remaja (7–17 Tahun)
 - **Tujuan**: Skrining status gizi, deteksi dini anemia (terutama remaja putri), hipertensi dini, dan gangguan indra penglihatan/pendengaran.

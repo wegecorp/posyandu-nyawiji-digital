@@ -139,7 +139,7 @@
 - **Sasaran Peserta**: Seluruh ibu hamil di wilayah padukuhan/kalurahan pada trimester 1, 2, dan 3.
 - **Frekuensi**: 1 kali per bulan selama masa kehamilan.
 - **Output Utama**:
-  - Catatan fisik maternal: Berat Badan, Tinggi Badan, Lingkar Lengan Atas (LiLA), Usia Kehamilan (minggu), Tekanan Darah (Sistolik/Diastolik), dan Kadar Hemoglobin (HB).
+  - Catatan fisik maternal: Berat Badan, Tinggi Badan, Lingkar Lengan Atas (LiLA), Usia Kehamilan (minggu), Tekanan Darah (Sistolik/Diastolik), dan Kadar Hemoglobin (HB). Bila alat tersedia, ditambah lab opsional: Gula Darah (GDS), Kolesterol, dan Asam Urat.
   - Penilaian status risiko: Status KEK (LiLA < 23,5 cm), Hipertensi (Tensi ≥ 140/90 mmHg), Anemia (HB < 11 g/dL).
   - Suplementasi Tablet Tambah Darah (TTD) dan edukasi Program Perencanaan Persalinan dan Pencegahan Komplikasi (P4K).
   - Surat rujukan terencana ke Puskesmas/Rumah Sakit.
@@ -148,7 +148,7 @@
 
 1. **Kedatangan Ibu Hamil (`Start Event`)**: Ibu hamil tiba di posyandu dengan membawa Buku KIA.
 2. **Pendaftaran & Identifikasi Profil (`Task`)**: Kader memverifikasi identitas ibu hamil pada Portal Nyawiji dan memastikan tanda penanda (*flag*) `Pasien Ibu Hamil (Bumil)` aktif.
-3. **Pengukuran Fisik & Tanda Vital (`Task`)**: Kader dan Bidan mengukur BB, TB, LiLA, usia kehamilan dalam minggu, tekanan darah, dan pemeriksaan kadar HB menggunakan strip uji POCT.
+3. **Pengukuran Fisik & Tanda Vital (`Task`)**: Kader dan Bidan mengukur BB, TB, LiLA, usia kehamilan dalam minggu, tekanan darah, dan pemeriksaan kadar HB menggunakan strip uji POCT. Bila alat tersedia, ditambah GDS, kolesterol, dan asam urat (ibu hamil disamakan dengan kelompok umurnya).
 4. **Pencatatan & Skrining Maternal (`Task`)**: Kader menginput hasil ukur ke sistem, mencatat keluhan kehamilan, dan melakukan skrining gejala batuk/TB.
 5. **Analisis Ambang Batas Risiko Otomatis (`Task`)**: Sistem memproses nilai LiLA, tensi, dan HB terhadap ambang batas standar klinis.
 6. **DECISION POINT: Penentuan Status Risiko Maternal (`Gateway`)**:
@@ -166,7 +166,7 @@
 - **Puskesmas**: Fasilitas rujukan penerima kasus ibu hamil risiko tinggi.
 
 ### Data & Dokumen yang Digunakan
-- **Input**: Identitas bumil, tanggal HPHT/usia kehamilan, BB, TB, LiLA, Tensi Sistolik/Diastolik, HB, keluhan, skrining TB.
+- **Input**: Identitas bumil, tanggal HPHT/usia kehamilan, BB, TB, LiLA, Tensi Sistolik/Diastolik, HB, keluhan, skrining TB, serta lab opsional (GDS, Kolesterol, Asam Urat) bila alat tersedia.
 - **Output**: Status risiko KEK, status risiko hipertensi kehamilan, status anemia, rekomendasi suplemen, surat rujukan ANC terpadu.
 - **Penyimpanan**: Basis data Portal Nyawiji dan Buku KIA fisik.
 

@@ -153,7 +153,8 @@ Verifikasi cepat (login **POSYANDU**, buka input pengukuran):
 
 1. Pasien **Bayi / Balita** → Lab hanya **Hemoglobin (HB)**; tak ada Kolesterol/GDS/Asam Urat.
 2. Pasien **Lansia** → ada **Gula Darah, Kolesterol, Asam Urat, Lingkar Perut**.
-3. Pasien **Ibu Hamil** → ada **Usia Kehamilan** + Tensi + LiLA.
+3. Pasien **Ibu Hamil** → ada **Usia Kehamilan** + Tensi + LiLA + lab
+   (GDS, Kolesterol, Asam Urat bila alat tersedia); **tanpa** Lingkar Perut.
 4. Edit sesi **bulan lampau** (saat pasien masih bayi) → kolom ikut menyesuaikan.
 
 Rollback (frontend-only, tanpa DB):

@@ -18,6 +18,7 @@ import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import { prisma } from '@/lib/prisma';
 import { requireRole } from '@/lib/api-auth';
+import { resolveReportPosyanduIds } from '@/lib/patient-scope';
 import { getPatientCategory } from '@/lib/utils';
 import { INDICATORS, checkIndicator, type IndicatorDef } from '@/lib/clinical';
 import { computeGrowth, ageInCompletedMonths, isKmsAge, type StaturePosition } from '@/lib/growth';
@@ -101,27 +102,31 @@ export async function GET(req: Request) {
     const toExclusive = new Date(toObj.getTime() + 86_400_000);
 
     // Scope posyandu ids (fail-closed per peran).
-    let posyanduIds: string[] = [];
-    if (session.role === 'POSYANDU' && session.posyanduId) {
-      posyanduIds = [session.posyanduId];
-    } else if (session.role === 'PUSKESMAS' && session.healthCenterId) {
+    const requestedIds = (unitIdsParam ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    let ownedIds: string[] = [];
+    if (session.role === 'PUSKESMAS' && session.healthCenterId) {
       const ps = await prisma.posyandu.findMany({
         where: { healthCenterId: session.healthCenterId },
         select: { id: true },
       });
-      const own = new Set(ps.map((p) => p.id));
-      if (unitIdsParam) {
-        posyanduIds = unitIdsParam
-          .split(',')
-          .map((s) => s.trim())
-          .filter((id) => own.has(id));
-      } else {
-        posyanduIds = [...own];
-      }
-    } else {
+      ownedIds = ps.map((p) => p.id);
+    } else if (session.role === 'DINKES') {
       const ps = await prisma.posyandu.findMany({ select: { id: true } });
-      posyanduIds = ps.map((p) => p.id);
+      ownedIds = ps.map((p) => p.id);
     }
+
+    const scope = resolveReportPosyanduIds(session, ownedIds, requestedIds);
+    if (!scope.ok) {
+      return NextResponse.json(
+        { error: 'Akses ditolak — sesi tanpa cakupan unit.' },
+        { status: 403 },
+      );
+    }
+    const posyanduIds = scope.ids;
 
     if ((wantMembers || wantRisk) && posyanduIds.length > MAX_EXPORT_UNITS) {
       return NextResponse.json(

@@ -5,6 +5,7 @@ import { PatientData } from '@/lib/types';
 import { X, QrCode, Camera } from 'lucide-react';
 import { useBackLayer } from '@/lib/back-navigation';
 import { APP_NAME } from '@/lib/branding';
+import { PatientAvatar } from '@/components/PatientAvatar';
 
 interface QRModalProps {
   mode: 'view' | 'scan';
@@ -122,11 +123,21 @@ export const QRModal: React.FC<QRModalProps> = ({
         {/* VIEW MODE: QR CARD */}
         {mode === 'view' && patient && (
           <div className="p-6 text-center space-y-4">
-            <div className="border border-[#e9edef] rounded-[24px] p-4.5 bg-[#f0f2f5]">
-              <h3 className="font-black text-[#111b21] text-base">{patient.name}</h3>
-              <p className="font-mono text-xs text-[#075e54] font-bold mt-0.5">
-                {patient.regNumber}
-              </p>
+            <div className="border border-[#e9edef] rounded-[24px] p-4.5 bg-[#f0f2f5] space-y-3">
+              <div className="flex items-center justify-center gap-3">
+                <PatientAvatar
+                  name={patient.name}
+                  gender={patient.gender}
+                  category={patient.category}
+                  size={44}
+                />
+                <div className="text-left min-w-0">
+                  <h3 className="font-black text-[#111b21] text-base truncate">{patient.name}</h3>
+                  <p className="font-mono text-xs text-[#075e54] font-bold">
+                    {patient.regNumber}
+                  </p>
+                </div>
+              </div>
 
               {/* QR Image */}
               <div className="mt-4 flex justify-center">

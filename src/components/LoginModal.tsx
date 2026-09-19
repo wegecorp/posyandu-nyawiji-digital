@@ -101,8 +101,22 @@ export const LoginModal: React.FC<AccountModalProps> = ({ isOpen, onClose, onCha
         <div className="p-5 space-y-4">
           <div className="bg-[#f0f2f5] border border-[#e9edef] rounded-2xl p-4 space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#075e54] text-white flex items-center justify-center font-black text-base shadow-xs shrink-0">
-                {user.name.charAt(0).toUpperCase()}
+              <div className="w-11 h-11 rounded-2xl overflow-hidden shrink-0 border border-[#e9edef] bg-[#e7fceb] shadow-2xs flex items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={
+                    user.role === 'POSYANDU'
+                      ? `https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(user.posyanduName || user.name)}`
+                      : user.role === 'PUSKESMAS'
+                      ? `https://api.dicebear.com/10.x/planets/svg?seed=${encodeURIComponent(user.name)}`
+                      : `https://api.dicebear.com/10.x/squircles/svg?seed=${encodeURIComponent(user.name)}&backgroundColor=0284c7,0369a1,075e54`
+                  }
+                  alt={user.name}
+                  width={44}
+                  height={44}
+                  loading="lazy"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="font-black text-[#111b21] text-sm truncate">{user.name}</h3>

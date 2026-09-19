@@ -23,6 +23,7 @@ export const PatientAvatar: React.FC<PatientAvatarProps> = ({
   size = 40,
   className = '',
 }) => {
+  const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
   const cleanName = (name || 'pasien').trim();
   const isBaby = category === 'BAYI' || category === 'BALITA_APRAS';
@@ -59,29 +60,6 @@ export const PatientAvatar: React.FC<PatientAvatarProps> = ({
     return `https://api.dicebear.com/10.x/dylan/svg?seed=${encodeURIComponent(cleanName)}&hairVariant=${maleHair}&facialHairProbability=${facialHair}&backgroundColor=e0f2fe,bae6fd,e0f7ff&moodVariant=happy,hopeful,neutral,superHappy`;
   };
 
-  if (!imgError) {
-    return (
-      <div
-        className={`rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-[#f0f2f5] border ${
-          isFemale ? 'border-rose-200' : isElderly ? 'border-amber-200' : 'border-sky-200'
-        } ${className}`}
-        style={{ width: size, height: size }}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={getAvatarUrl()}
-          alt={cleanName}
-          width={size}
-          height={size}
-          loading="lazy"
-          onError={() => setImgError(true)}
-          className="w-full h-full object-cover"
-        />
-      </div>
-    );
-  }
-
-  // Fallback offline: Boring Avatars varian beam
   const colors = isBaby
     ? BABY_FALLBACK_PALETTE
     : isFemale
@@ -92,18 +70,38 @@ export const PatientAvatar: React.FC<PatientAvatarProps> = ({
 
   return (
     <div
-      className={`rounded-full overflow-hidden shrink-0 flex items-center justify-center border shadow-2xs ${
-        isFemale ? 'border-rose-200' : 'border-sky-200'
+      className={`relative rounded-full overflow-hidden shrink-0 flex items-center justify-center border shadow-2xs ${
+        isFemale ? 'border-rose-200' : isElderly ? 'border-amber-200' : 'border-sky-200'
       } ${className}`}
       style={{ width: size, height: size }}
     >
-      <Avatar
-        size={size}
-        name={cleanName}
-        variant="beam"
-        colors={colors}
-        square={false}
-      />
+      {/* Layer Dasar: Instant Offline Vector Avatar (0ms delay) */}
+      <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
+        <Avatar
+          size={size}
+          name={cleanName}
+          variant="beam"
+          colors={colors}
+          square={false}
+        />
+      </div>
+
+      {/* Layer Utama: DiceBear SVG (fade-in saat selesai diunduh) */}
+      {!imgError && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={getAvatarUrl()}
+          alt={cleanName}
+          width={size}
+          height={size}
+          loading="lazy"
+          onLoad={() => setImgLoaded(true)}
+          onError={() => setImgError(true)}
+          className={`relative z-1 w-full h-full object-cover transition-opacity duration-300 ${
+            imgLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      )}
     </div>
   );
 };

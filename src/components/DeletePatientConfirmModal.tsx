@@ -5,6 +5,7 @@ import { PatientData } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
 import { X, Trash2, AlertTriangle } from 'lucide-react';
 import { useBackLayer } from '@/lib/back-navigation';
+import { PatientAvatar } from '@/components/PatientAvatar';
 
 interface DeletePatientConfirmModalProps {
   isOpen: boolean;
@@ -90,12 +91,20 @@ export const DeletePatientConfirmModal: React.FC<DeletePatientConfirmModalProps>
 
           <div>
             <p className="text-sm text-[#54656f]">Apakah Anda yakin ingin menghapus permanen data pasien berikut?</p>
-            <div className="mt-3 p-3 bg-[#f0f2f5] border border-[#e9edef] rounded-2xl">
-              <span className="font-extrabold text-base text-[#111b21] block">{patient.name}</span>
-              <span className="font-mono text-xs text-[#075e54] font-bold">{patient.regNumber}</span>
-              {patient.guardianName && (
-                <span className="text-xs text-[#54656f] block mt-0.5">Wali: {patient.guardianName}</span>
-              )}
+            <div className="mt-3 p-3.5 bg-[#f0f2f5] border border-[#e9edef] rounded-2xl flex items-center gap-3 text-left">
+              <PatientAvatar
+                name={patient.name}
+                gender={patient.gender}
+                category={patient.category}
+                size={44}
+              />
+              <div className="min-w-0 flex-1">
+                <span className="font-extrabold text-base text-[#111b21] block truncate">{patient.name}</span>
+                <span className="font-mono text-xs text-[#075e54] font-bold">{patient.regNumber}</span>
+                {patient.guardianName && (
+                  <span className="text-xs text-[#54656f] block mt-0.5 truncate">Wali: {patient.guardianName}</span>
+                )}
+              </div>
             </div>
             <p className="text-[11px] text-[#ef4444] font-medium mt-3">
               *Seluruh riwayat pengukuran pasien ini juga akan dihapus dari sistem.

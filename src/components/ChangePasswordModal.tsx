@@ -85,13 +85,27 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
       <div className="bg-white w-full max-w-md rounded-[28px] shadow-2xl overflow-hidden border border-[#e9edef] flex flex-col">
         {/* Header */}
         <div className="bg-[#075e54] text-white p-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-white/10 rounded-2xl">
-              <KeyRound className="w-5 h-5 text-[#25d366]" />
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="w-10 h-10 rounded-2xl overflow-hidden shrink-0 border border-white/20 bg-white/10 shadow-2xs flex items-center justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={
+                  user.role === 'POSYANDU'
+                    ? `https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(user.posyanduName || user.name)}`
+                    : user.role === 'PUSKESMAS'
+                    ? `https://api.dicebear.com/10.x/planets/svg?seed=${encodeURIComponent(user.name)}`
+                    : `https://api.dicebear.com/10.x/squircles/svg?seed=${encodeURIComponent(user.name)}&backgroundColor=0284c7,0369a1,075e54`
+                }
+                alt={user.name}
+                width={40}
+                height={40}
+                loading="lazy"
+                className="w-full h-full object-cover"
+              />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <h2 className="font-extrabold text-sm leading-snug">Ubah Password Akun</h2>
-              <p className="text-[11px] text-[#e9edef]">{user.name} ({user.role})</p>
+              <p className="text-[11px] text-[#e9edef] truncate">{user.name} ({user.role})</p>
             </div>
           </div>
           <button

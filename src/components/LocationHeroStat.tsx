@@ -18,10 +18,19 @@ interface LocationHeroStatProps {
 
 export const LocationHeroStat: React.FC<LocationHeroStatProps> = ({ statusCounts }) => {
   const { user } = useAuth();
+  const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
 
   const posyanduName = user?.posyanduName || (user?.role === 'POSYANDU' ? user.name : '') || APP_NAME;
   const landscapeUrl = `https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(posyanduName)}`;
+
+  // Susun alamat lengkap dari data sesi
+  const addressParts: string[] = [];
+  if (user?.padukuhan && user.padukuhan !== '-') addressParts.push(`Padukuhan ${user.padukuhan}`);
+  if (user?.kalurahan) addressParts.push(`Kalurahan ${user.kalurahan}`);
+  if (user?.kapanewon) addressParts.push(`Kapanewon ${user.kapanewon}`);
+
+  const addressDisplay = addressParts.length > 0 ? addressParts.join(', ') : 'Kabupaten Gunungkidul';
 
   return (
     <div className="bg-white rounded-2xl border border-[#e9edef] p-3.5 sm:p-4 shadow-xs space-y-3 transition-all">
@@ -29,7 +38,8 @@ export const LocationHeroStat: React.FC<LocationHeroStatProps> = ({ statusCounts
       <div className="flex items-center gap-3">
         {/* Avatar Landscape Generator */}
         <div className="w-12 h-12 rounded-2xl overflow-hidden shrink-0 border border-[#bbf7d0] bg-[#e7fceb] shadow-xs flex items-center justify-center relative">
-          {!imgError ? (
+          <Building2 className="w-6 h-6 text-[#075e54] absolute inset-auto z-0 opacity-40" />
+          {!imgError && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={landscapeUrl}
@@ -37,23 +47,24 @@ export const LocationHeroStat: React.FC<LocationHeroStatProps> = ({ statusCounts
               width={48}
               height={48}
               loading="lazy"
+              onLoad={() => setImgLoaded(true)}
               onError={() => setImgError(true)}
-              className="w-full h-full object-cover transition-transform hover:scale-105"
+              className={`w-full h-full object-cover transition-opacity duration-300 relative z-1 hover:scale-105 ${
+                imgLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
             />
-          ) : (
-            <Building2 className="w-6 h-6 text-[#075e54]" />
           )}
         </div>
 
         {/* Info Lokasi / Unit */}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 text-xs text-[#54656f] font-semibold">
-            <MapPin className="w-3.5 h-3.5 text-[#128c7e] shrink-0" />
-            <span className="truncate">Pos Layanan Posyandu</span>
-          </div>
-          <h2 className="text-base sm:text-lg font-extrabold text-[#111b21] truncate leading-tight mt-0.5">
+          <h2 className="text-base sm:text-lg font-extrabold text-[#111b21] truncate leading-tight">
             {posyanduName}
           </h2>
+          <div className="flex items-center gap-1.5 text-xs text-[#54656f] font-medium truncate mt-0.5">
+            <MapPin className="w-3.5 h-3.5 text-[#128c7e] shrink-0" />
+            <span className="truncate">{addressDisplay}</span>
+          </div>
         </div>
       </div>
 

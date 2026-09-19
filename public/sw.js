@@ -5,12 +5,14 @@
  *  2. Menyediakan app-shell luring ringan: halaman bisa dibuka ulang
  *     saat tanpa internet. Data tetaplah dikelola aplikasi (offline-sync),
  *     API TIDAK pernah di-cache agar tidak menampilkan data basi.
+ *  3. Caching asset avatar (DiceBear) untuk rendering instan 0ms offline.
  *
  * Saat versi berubah, cukup naikkan VERSION untuk membersihkan cache lama.
  */
-const VERSION = '2026.09-v4';
+const VERSION = '2026.09-v5';
 const APP_SHELL_CACHE = `nyawiji-shell-${VERSION}`;
 const STATIC_CACHE = `nyawiji-static-${VERSION}`;
+const AVATAR_CACHE = `nyawiji-avatars-${VERSION}`;
 
 self.addEventListener('install', () => {
   self.skipWaiting();
@@ -23,7 +25,7 @@ self.addEventListener('activate', (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key !== APP_SHELL_CACHE && key !== STATIC_CACHE)
+            .filter((key) => key !== APP_SHELL_CACHE && key !== STATIC_CACHE && key !== AVATAR_CACHE)
             .map((key) => caches.delete(key))
         )
       )
@@ -39,7 +41,27 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
-  // Jangan sentuh permintaan lintas-origin.
+  // Cache-First untuk asset avatar DiceBear (hemat kuota & render instan 0ms)
+  if (url.hostname === 'api.dicebear.com') {
+    event.respondWith(
+      caches.open(AVATAR_CACHE).then(async (cache) => {
+        const cached = await cache.match(request);
+        if (cached) return cached;
+        try {
+          const res = await fetch(request);
+          if (res && res.ok) {
+            cache.put(request, res.clone());
+          }
+          return res;
+        } catch {
+          return new Response('', { status: 503 });
+        }
+      })
+    );
+    return;
+  }
+
+  // Jangan sentuh permintaan lintas-origin selain avatar DiceBear
   if (url.origin !== self.location.origin) return;
 
   const path = url.pathname;
@@ -83,7 +105,7 @@ self.addEventListener('fetch', (event) => {
           if (cached) return cached;
           return Response.error();
         }
-      })()
+      })
     );
     return;
   }

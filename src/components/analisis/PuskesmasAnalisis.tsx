@@ -241,11 +241,11 @@ export function PuskesmasAnalisis() {
         </ChartCard>
       )}
 
-      {/* 1c. Ranking Partisipasi Posyandu */}
+      {/* 1c. Ranking Kinerja & Partisipasi Posyandu */}
       {scoreboard.length > 0 && (
         <ChartCard
-          title="Ranking Partisipasi Posyandu"
-          subtitle={`Agregat ${formatYM(from.slice(0, 7))}–${formatYM(to.slice(0, 7))} — merah < ${PARTISIPASI_BURUK_THRESHOLD * 100}%`}
+          title="Ranking Kinerja & Partisipasi Posyandu"
+          subtitle={`Agregat ${formatYM(from.slice(0, 7))}–${formatYM(to.slice(0, 7))} — evaluasi komposit keaktifan entri & kelengkapan sasaran`}
         >
           <UnitScoreboard data={scoreboard} />
         </ChartCard>

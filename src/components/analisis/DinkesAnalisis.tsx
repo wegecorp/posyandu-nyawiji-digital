@@ -357,11 +357,11 @@ export function DinkesAnalisis() {
         </ChartCard>
       )}
 
-      {/* 1c. Ranking Partisipasi Wilayah */}
+      {/* 1c. Ranking Kinerja & Partisipasi Wilayah */}
       {!drillHcId && puskesmasScoreboard.length > 0 && (
         <ChartCard
-          title="Ranking Partisipasi Puskesmas"
-          subtitle={`Agregat ${formatYM(from.slice(0, 7))}–${formatYM(to.slice(0, 7))} — merah < ${PARTISIPASI_BURUK_THRESHOLD * 100}%`}
+          title="Ranking Kinerja & Partisipasi Puskesmas"
+          subtitle={`Agregat ${formatYM(from.slice(0, 7))}–${formatYM(to.slice(0, 7))} — evaluasi komposit keaktifan entri & kelengkapan sasaran`}
         >
           <UnitScoreboard
             data={puskesmasScoreboard}
@@ -372,13 +372,13 @@ export function DinkesAnalisis() {
 
       {/* Drill: Posyandu dalam Puskesmas */}
       {drillHcId && drillLoading && (
-        <ChartCard title="Ranking Posyandu" subtitle={drillHcName}>
+        <ChartCard title="Ranking Kinerja Posyandu" subtitle={drillHcName}>
           <p className="py-6 text-center text-xs font-bold text-[#54656f]">Memuat data...</p>
         </ChartCard>
       )}
 
       {drillHcId && !drillLoading && drillLatestMonth === '' && (
-        <ChartCard title="Ranking Posyandu" subtitle={drillHcName}>
+        <ChartCard title="Ranking Kinerja Posyandu" subtitle={drillHcName}>
           <p className="py-6 text-center text-xs font-bold text-[#54656f]">
             Belum ada data pengukuran untuk {drillHcName} pada periode ini.
           </p>
@@ -387,7 +387,7 @@ export function DinkesAnalisis() {
 
       {drillHcId && !drillLoading && drillScoreboard.length > 0 && (
         <ChartCard
-          title="Ranking Posyandu"
+          title="Ranking Kinerja Posyandu"
           subtitle={`${drillHcName} — agregat ${formatYM(from.slice(0, 7))}–${formatYM(to.slice(0, 7))}`}
         >
           <UnitScoreboard data={drillScoreboard} />

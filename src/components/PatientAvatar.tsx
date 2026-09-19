@@ -4,9 +4,9 @@ import React, { useState } from 'react';
 import Avatar from 'boring-avatars';
 
 interface PatientAvatarProps {
-  name: string;
-  gender?: 'L' | 'P' | string;
-  category?: string;
+  name?: string | null;
+  gender?: 'L' | 'P' | string | null;
+  category?: string | null;
   size?: number;
   className?: string;
 }
@@ -38,7 +38,7 @@ export const PatientAvatar: React.FC<PatientAvatarProps> = ({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={dicebearUrl}
-          alt={name}
+          alt={cleanName}
           width={size}
           height={size}
           loading="lazy"

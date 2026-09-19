@@ -29,9 +29,8 @@ export async function GET(req: Request) {
     dPrev.setFullYear(dPrev.getFullYear() - 1);
     const fromDate = searchParams.get('from') ?? fmt(dPrev);
     const toDate = searchParams.get('to') ?? fmt(now);
-    const fromObj = new Date(`${fromDate}T00:00:00`);
-    const toExclusive = new Date(`${toDate}T00:00:00`);
-    toExclusive.setDate(toExclusive.getDate() + 1);
+    const fromObj = new Date(`${fromDate}T00:00:00+07:00`);
+    const toExclusive = new Date(new Date(`${toDate}T00:00:00+07:00`).getTime() + 86_400_000);
 
     // Resolve posyandu scope.
     let posyanduIds: string[] = [];

@@ -73,4 +73,24 @@ describe('categoryCoverage', () => {
     expect(bayi.registered).toBe(0);
     expect(rows.find((r) => r.category === 'BALITA_APRAS')!.registered).toBe(0);
   });
+
+  it('pasien dengan pengukuran historis (backfill) tetap terhitung terdaftar dan terukur pada bulan tersebut', () => {
+    // Pasien baru dibuat Maret 2026, tetapi memiliki data pengukuran Agustus 2025
+    const backfillPatients: CoveragePatient[] = [
+      { id: 'p_retro', createdAt: new Date('2026-03-01T00:00:00'), birthDate: '1960-01-01', gender: 'L', isPregnant: false },
+    ];
+    const backfillMeasurements = [
+      { patientId: 'p_retro', sessionDate: new Date('2025-08-15T08:00:00') },
+    ];
+    const rows = categoryCoverage(backfillPatients, backfillMeasurements, ['2025-08']);
+    const lansia = rows.find((r) => r.category === 'LANSIA')!;
+    expect(lansia).toMatchObject({
+      registered: 1,
+      measured: 1,
+      totalRegistered: 1,
+      totalMeasured: 1,
+      percent: 100,
+      sharePercent: 100,
+    });
+  });
 });

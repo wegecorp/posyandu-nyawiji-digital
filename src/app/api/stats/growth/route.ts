@@ -45,8 +45,8 @@ export async function GET(req: Request) {
     const fromDate = searchParams.get('from') ?? fmt(dPrev);
     const toDate = searchParams.get('to') ?? defaultTo;
 
-    const fromObj = new Date(`${fromDate}T00:00:00`);
-    const toObj = new Date(`${toDate}T00:00:00`);
+    const fromObj = new Date(`${fromDate}T00:00:00+07:00`);
+    const toObj = new Date(`${toDate}T00:00:00+07:00`);
     const toExclusive = new Date(toObj.getTime() + 86_400_000);
 
     // Resolve posyandu scope.

@@ -34,9 +34,8 @@ export async function GET(req: Request) {
     dPrev.setFullYear(dPrev.getFullYear() - 1);
     const fromDate = searchParams.get('from') ?? fmt(dPrev);
     const toDate = searchParams.get('to') ?? fmt(now);
-    const fromObj = new Date(`${fromDate}T00:00:00`);
-    const toExclusive = new Date(`${toDate}T00:00:00`);
-    toExclusive.setDate(toExclusive.getDate() + 1);
+    const fromObj = new Date(`${fromDate}T00:00:00+07:00`);
+    const toExclusive = new Date(new Date(`${toDate}T00:00:00+07:00`).getTime() + 86_400_000);
 
     const page = Math.max(1, Number(searchParams.get('page') ?? 1) || 1);
     const pageSize = Math.min(100, Math.max(1, Number(searchParams.get('pageSize') ?? 20) || 20));

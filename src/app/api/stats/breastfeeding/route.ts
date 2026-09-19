@@ -29,8 +29,8 @@ export async function GET(req: Request) {
       `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const fromDate = searchParams.get('from') ?? fmt(new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()));
     const toDate = searchParams.get('to') ?? fmt(now);
-    const fromObj = new Date(`${fromDate}T00:00:00`);
-    const toExclusive = new Date(new Date(`${toDate}T00:00:00`).getTime() + 86_400_000);
+    const fromObj = new Date(`${fromDate}T00:00:00+07:00`);
+    const toExclusive = new Date(new Date(`${toDate}T00:00:00+07:00`).getTime() + 86_400_000);
 
     const requestedScope = searchParams.get('scope');
     const scope =

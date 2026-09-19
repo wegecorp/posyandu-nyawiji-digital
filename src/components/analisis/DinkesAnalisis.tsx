@@ -158,11 +158,11 @@ export function DinkesAnalisis() {
       byMonth.set(d.ym, cur);
     }
     return [...byMonth.entries()]
-      .filter(([, v]) => v.denominator > 0)
+      .filter(([, v]) => v.denominator > 0 || v.numerator > 0)
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([ym, v]) => ({
         name: formatYM(ym),
-        partisipasi: Math.round((v.numerator / v.denominator) * 100),
+        partisipasi: v.denominator > 0 ? Math.round((v.numerator / v.denominator) * 100) : 0,
         terukur: v.numerator,
         terdaftar: v.denominator,
       }));
@@ -351,7 +351,7 @@ export function DinkesAnalisis() {
               <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="#8696a0" />
               <YAxis tick={{ fontSize: 10 }} stroke="#8696a0" unit="%" domain={[0, 100]} />
               <Tooltip formatter={(v) => `${v}%`} />
-              <Line type="monotone" dataKey="partisipasi" stroke="#075e54" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="partisipasi" stroke="#075e54" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>

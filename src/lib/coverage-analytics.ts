@@ -158,11 +158,13 @@ export function categoryCoverage(
     let totalMeasured = 0;
 
     for (const p of patients) {
-      if (p.createdAt.getTime() > monthEnd.getTime()) continue;
+      const isMeasured = measuredSet.has(p.id);
+      // Pasien diakui terdaftar bila createdAt <= monthEnd ATAU pasien memiliki pengukuran pada bulan tersebut (data historis/backfilled)
+      if (p.createdAt.getTime() > monthEnd.getTime() && !isMeasured) continue;
       const cat = getPatientCategory(p.birthDate, p.isPregnant, p.gender, monthEnd);
       acc[cat].reg++;
       totalRegistered++;
-      if (measuredSet.has(p.id)) {
+      if (isMeasured) {
         acc[cat].meas++;
         totalMeasured++;
       }

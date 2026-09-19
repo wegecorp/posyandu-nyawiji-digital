@@ -34,9 +34,9 @@ export async function GET(req: Request) {
     const fromDate = searchParams.get('from') ?? defaultFrom;
     const toDate = searchParams.get('to') ?? defaultTo;
 
-    // Build where clause with proper date handling
-    const toDateObj = new Date(`${toDate}T23:59:59.999`);
-    const fromDateObj = new Date(`${fromDate}T00:00:00.000`);
+    // Build where clause with proper date handling (Asia/Jakarta)
+    const toDateObj = new Date(`${toDate}T23:59:59.999+07:00`);
+    const fromDateObj = new Date(`${fromDate}T00:00:00.000+07:00`);
 
     const where: Record<string, unknown> = {
       sessionDate: { gte: fromDateObj, lte: toDateObj },
@@ -66,8 +66,9 @@ export async function GET(req: Request) {
     // Override with month filter if specified
     if (ym) {
       const [year, month] = ym.split('-').map(Number);
-      const monthStart = new Date(year, month - 1, 1);
-      const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+      const monthStart = new Date(`${year}-${String(month).padStart(2, '0')}-01T00:00:00.000+07:00`);
+      const lastDay = new Date(year, month, 0).getDate();
+      const monthEnd = new Date(`${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}T23:59:59.999+07:00`);
       where.sessionDate = { gte: monthStart, lte: monthEnd };
     }
 

@@ -207,7 +207,7 @@ export function PuskesmasAnalisis() {
               <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="#8696a0" />
               <YAxis tick={{ fontSize: 10 }} stroke="#8696a0" unit="%" domain={[0, 100]} />
               <Tooltip formatter={(v) => `${v}%`} />
-              <Line type="monotone" dataKey="partisipasi" stroke="#075e54" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="partisipasi" stroke="#075e54" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>

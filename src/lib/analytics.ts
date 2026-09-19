@@ -15,10 +15,10 @@ import { prisma } from './prisma';
 import { checkIndicator, INDICATORS, type IndicatorDef } from './clinical';
 import type { PatientCategory } from './types';
 
-/** Konversi rentang tanggal 'YYYY-MM-DD' (inklusif) → [fromMs, toExclusiveMs). */
+/** Konversi rentang tanggal 'YYYY-MM-DD' (inklusif) → [fromMs, toExclusiveMs) dalam zona waktu Asia/Jakarta (WIB). */
 export function dateRangeMs(from: string, to: string): { fromMs: number; toMs: number } {
-  const fromMs = new Date(`${from}T00:00:00`).getTime();
-  const toMs = new Date(`${to}T00:00:00`).getTime() + 86_400_000;
+  const fromMs = new Date(`${from}T00:00:00+07:00`).getTime();
+  const toMs = new Date(`${to}T00:00:00+07:00`).getTime() + 86_400_000;
   return { fromMs, toMs };
 }
 
@@ -94,11 +94,19 @@ export async function fetchCoverageBase(from: string, to: string): Promise<Cover
   for (const r of rows) numeratorMap.set(`${r.unitId}|${r.ym}`, Number(r.numerator));
 
   const result: CoverageRow[] = [];
-  for (const [unitId, createdAts] of createdAtByUnit) {
+  const allUnits = new Set<string>([
+    ...createdAtByUnit.keys(),
+    ...[...numeratorMap.keys()].map((k) => k.split('|')[0]),
+  ]);
+
+  for (const unitId of allUnits) {
+    const createdAts = createdAtByUnit.get(unitId) ?? [];
     for (const ym of months) {
       const endMs = monthEndMs.get(ym)!;
-      const denominator = createdAts.filter((t) => t < endMs).length;
+      let denominator = createdAts.filter((t) => t < endMs).length;
       const numerator = numeratorMap.get(`${unitId}|${ym}`) ?? 0;
+      // Bila ada pengukuran di bulan ini (mis. backfill data historis), denominator minimal sama dengan numerator
+      if (numerator > denominator) denominator = numerator;
       if (denominator === 0 && numerator === 0) continue;
       result.push({ ym, unitId, numerator, denominator });
     }

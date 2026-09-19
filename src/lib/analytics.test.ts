@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { classifyOutcomes } from '@/lib/analytics';
+import { classifyOutcomes, dateRangeMs, aggregateToKabupaten } from '@/lib/analytics';
 
 function row(over: Record<string, unknown> = {}) {
   return {
@@ -21,6 +21,33 @@ function row(over: Record<string, unknown> = {}) {
     ...over,
   } as Parameters<typeof classifyOutcomes>[0][number];
 }
+
+describe('dateRangeMs', () => {
+  it('menghasilkan epoch ms yang tepat dalam zona waktu WIB (+07:00)', () => {
+    const { fromMs, toMs } = dateRangeMs('2025-08-01', '2025-08-31');
+    // 2025-08-01 00:00 WIB = 2025-07-31 17:00 UTC
+    expect(new Date(fromMs).toISOString()).toBe('2025-07-31T17:00:00.000Z');
+    // 2025-08-31 + 1 day = 2025-09-01 00:00 WIB = 2025-08-31 17:00 UTC
+    expect(new Date(toMs).toISOString()).toBe('2025-08-31T17:00:00.000Z');
+  });
+});
+
+describe('aggregateToKabupaten', () => {
+  it('mengagregasi numerator dan denominator dan menghitung partisipasi', () => {
+    const base = [
+      { ym: '2025-08', unitId: 'pos1', numerator: 5, denominator: 10 },
+      { ym: '2025-08', unitId: 'pos2', numerator: 5, denominator: 10 },
+    ];
+    const res = aggregateToKabupaten(base, ['2025-08']);
+    expect(res).toHaveLength(1);
+    expect(res[0]).toMatchObject({
+      ym: '2025-08',
+      numerator: 10,
+      denominator: 20,
+      participation: 0.5,
+    });
+  });
+});
 
 describe('classifyOutcomes', () => {
   it('balita tanpa indikator klinis → Belum Dinilai (bukan Normal)', () => {

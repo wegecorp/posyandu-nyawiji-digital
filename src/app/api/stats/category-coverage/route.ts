@@ -34,8 +34,8 @@ export async function GET(req: Request) {
     minFrom.setMonth(minFrom.getMonth() - maxMonths);
     if (new Date(`${fromDate}T00:00:00`) < minFrom) fromDate = fmt(minFrom);
 
-    const fromObj = new Date(`${fromDate}T00:00:00`);
-    const toExclusive = new Date(new Date(`${toDate}T00:00:00`).getTime() + 86_400_000);
+    const fromObj = new Date(`${fromDate}T00:00:00+07:00`);
+    const toExclusive = new Date(new Date(`${toDate}T00:00:00+07:00`).getTime() + 86_400_000);
 
     // Scope per peran.
     let posyanduFilter: string[] | null = null;

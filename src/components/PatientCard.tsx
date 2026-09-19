@@ -3,12 +3,12 @@
 import React from 'react';
 import { PatientData } from '@/lib/types';
 import { getCategoryBadge } from '@/lib/utils';
+import { PatientAvatar } from '@/components/PatientAvatar';
 import {
   ChevronRight,
   CheckCircle2,
   CircleDashed,
   QrCode,
-  User,
   Edit3,
   AlertTriangle,
 } from 'lucide-react';
@@ -50,15 +50,12 @@ export const PatientCard: React.FC<PatientCardProps> = ({
     >
       <div className="flex items-center gap-3 min-w-0 flex-1">
         {/* Avatar */}
-        <div
-          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 border ${
-            patient.gender === 'P'
-              ? 'bg-rose-50 text-rose-600 border-rose-200'
-              : 'bg-sky-50 text-sky-600 border-sky-200'
-          }`}
-        >
-          <User className="w-5 h-5" />
-        </div>
+        <PatientAvatar
+          name={patient.name}
+          gender={patient.gender}
+          category={category}
+          size={40}
+        />
 
         {/* Info Pasien */}
         <div className="min-w-0 flex-1">

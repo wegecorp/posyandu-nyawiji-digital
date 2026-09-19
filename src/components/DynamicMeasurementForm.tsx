@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { PatientData, MeasurementData, PatientCategory } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
 import { useAutoSave, clearQueuedMeasurement } from '@/lib/offline-sync';
+import { PatientAvatar } from '@/components/PatientAvatar';
 import {
   Scale,
   Ruler,
@@ -425,15 +426,12 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
       <div className="bg-white rounded-2xl p-4 border border-[#e9edef] shadow-xs">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-base shrink-0 border ${
-                patient.gender === 'P'
-                  ? 'bg-rose-50 text-rose-600 border-rose-200'
-                  : 'bg-sky-50 text-sky-600 border-sky-200'
-              }`}
-            >
-              <User className="w-6 h-6" />
-            </div>
+            <PatientAvatar
+              name={patient.name}
+              gender={patient.gender}
+              category={patient.category}
+              size={48}
+            />
 
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">

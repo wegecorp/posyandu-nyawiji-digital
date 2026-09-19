@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { RefreshCw, Search, User, X } from 'lucide-react';
+import { RefreshCw, Search, X } from 'lucide-react';
+import { PatientAvatar } from '@/components/PatientAvatar';
 
 export type DrillPatient = {
   patientName: string;
@@ -122,8 +123,8 @@ export function PatientDrillList({
               key={`${p.regNumber}-${i}`}
               className="flex items-center justify-between gap-2 bg-white rounded-xl border border-[#e9edef] p-2.5"
             >
-              <div className="flex items-center gap-2 min-w-0">
-                <User className="w-4 h-4 text-[#128c7e] shrink-0" />
+              <div className="flex items-center gap-2.5 min-w-0">
+                <PatientAvatar name={p.patientName} size={30} />
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-[#111b21] truncate">{p.patientName}</p>
                   <p className="text-[10px] text-[#8696a0] truncate">

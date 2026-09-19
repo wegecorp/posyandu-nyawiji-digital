@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { PatientData } from '@/lib/types';
 import { Header } from '@/components/Header';
 import { PatientCard } from '@/components/PatientCard';
+import { LocationHeroStat } from '@/components/LocationHeroStat';
 import { ExitHint } from '@/components/ExitHint';
 import { useBackLayer, useExitGuard } from '@/lib/back-navigation';
 import { clearQueuedPatient } from '@/lib/offline-sync';
@@ -427,6 +428,9 @@ export default function PosyanduApp() {
               </div>
             )}
 
+            {/* Identitas Lokasi & Ringkasan Partisipasi Bulan Ini */}
+            <LocationHeroStat statusCounts={statusCounts} />
+
             {/* Search Input Bar (WhatsApp Search Bar) */}
             <div className="bg-white rounded-xl p-1 shadow-sm border border-[#e9edef] flex items-center gap-2">
               <div className="relative flex-1">
@@ -447,25 +451,6 @@ export default function PosyanduApp() {
               >
                 <QrCode className="w-4 h-4" />
               </button>
-            </div>
-
-            {/* Ringkasan partisipasi bulan ini */}
-            <div className="bg-white rounded-lg border border-[#e9edef] p-2.5 shadow-xs space-y-1.5">
-              <div className="flex items-center justify-between text-[11px] font-bold">
-                <span className="text-[#54656f]">
-                  Terisi bulan ini:{' '}
-                  <strong className="text-[#075e54]">
-                    {statusCounts.measured}/{statusCounts.total}
-                  </strong>
-                </span>
-                <span className="text-[#075e54]">{statusCounts.percent}%</span>
-              </div>
-              <div className="h-1.5 w-full bg-[#f0f2f5] rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[#25d366] rounded-full transition-[width] duration-500 ease-out"
-                  style={{ width: `${statusCounts.percent}%` }}
-                />
-              </div>
             </div>
 
             {/* Status Filter Tabs (scroll horizontal) */}

@@ -38,6 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigateMainView,
 }) => {
   const { user } = useAuth();
+  const [landscapeError, setLandscapeError] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean>(() =>
     typeof navigator === 'undefined' ? true : navigator.onLine
   );
@@ -126,8 +127,25 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={onOpenLogin}
           className="flex items-center gap-2.5 text-left hover:bg-white/10 rounded-xl px-2 py-1 transition-all touch-press min-w-0 flex-1"
         >
-          <div className="w-9 h-9 rounded-full bg-[#128c7e] text-white flex items-center justify-center font-black text-sm shrink-0 border border-white/20 shadow-xs">
-            {user?.role === 'DINKES' ? 'DK' : user?.role === 'PUSKESMAS' ? 'PK' : 'PS'}
+          <div className="w-9 h-9 rounded-full bg-[#128c7e] text-white flex items-center justify-center font-black text-sm shrink-0 border border-white/20 shadow-xs overflow-hidden">
+            {user?.role === 'POSYANDU' && !landscapeError ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(user?.posyanduName || user?.name || 'Posyandu')}`}
+                alt="Posyandu"
+                width={36}
+                height={36}
+                loading="lazy"
+                onError={() => setLandscapeError(true)}
+                className="w-full h-full object-cover"
+              />
+            ) : user?.role === 'DINKES' ? (
+              'DK'
+            ) : user?.role === 'PUSKESMAS' ? (
+              'PK'
+            ) : (
+              'PS'
+            )}
           </div>
           <div className="truncate min-w-0 sm:max-w-[220px]">
             <div className="font-extrabold text-white truncate text-sm leading-tight">

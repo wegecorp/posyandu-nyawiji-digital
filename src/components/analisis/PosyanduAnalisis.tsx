@@ -5,7 +5,8 @@ import {
   LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
-import { TrendingUp, AlertTriangle, User, Users } from 'lucide-react';
+import { TrendingUp, AlertTriangle, Users } from 'lucide-react';
+import { PatientAvatar } from '@/components/PatientAvatar';
 import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
 import { GrowthStatusDistribution } from './GrowthStatusDistribution';
@@ -234,7 +235,7 @@ export function PosyanduAnalisis() {
                     {patients.slice(0, 10).map((p) => (
                       <div key={p.measurementId} className="flex items-center justify-between p-2 bg-red-50 rounded-lg border border-red-100">
                         <div className="flex items-center gap-2 min-w-0">
-                          <User className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                          <PatientAvatar name={p.patientName} category={p.category} size={28} />
                           <div className="min-w-0">
                             <p className="text-xs font-bold text-[#111b21] truncate">{p.patientName}</p>
                             <p className="text-[10px] text-[#8696a0]">{p.regNumber}</p>

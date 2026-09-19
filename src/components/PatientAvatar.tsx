@@ -32,31 +32,31 @@ export const PatientAvatar: React.FC<PatientAvatarProps> = ({
   // Generate DiceBear URL berdasarkan kategori
   const getAvatarUrl = () => {
     if (isBaby) {
-      // Moods khusus ceria & positif (tanpa mata/mulut sedih/marah)
+      // Bayi & Balita: Moods khusus ceria & positif (tanpa ekspresi marah/sedih)
       const eyes = 'happy,calm,bigPupils,sparkle,wink,pupils';
       const mouths = 'bigSmile,smile,smileOpen,grin,laugh,cat,tongue';
       return `https://api.dicebear.com/10.x/moods/svg?seed=${encodeURIComponent(cleanName)}&eyesVariant=${eyes}&mouthVariant=${mouths}`;
     }
 
-    // Remaja s/d Lansia & Bumil: Open Peeps
-    const baseExpressions = 'calm,smile,smileBig,smileLOL,cute,lovingGrin1,lovingGrin2,explaining,eatingHappy,driven';
-
+    // Remaja s/d Lansia & Bumil: Dylan (karakter ilustrasi tegas & modern)
     if (isElderly) {
-      // Lansia: Rambut putih / beruban, ekspresi tenang/ramah
-      const elderlyHeads = 'grayBun,grayMedium,grayShort,noHair1,noHair2';
-      const elderlyExp = 'old,calm,smile,smileBig';
-      return `https://api.dicebear.com/10.x/open-peeps/svg?seed=${encodeURIComponent(cleanName)}&headVariant=${elderlyHeads}&expressionVariant=${elderlyExp}&backgroundColor=f1f5f9,e2e8f0`;
+      // Lansia: Rambut putih / abu-abu beruban, ekspresi hangat
+      const whiteHair = 'cbd5e1,ffffff,e2e8f0,94a3b8';
+      const elderlyHairVariants = 'plain,parting,roundBob,buns,flatTop';
+      const facialHair = gender === 'L' ? 30 : 0;
+      return `https://api.dicebear.com/10.x/dylan/svg?seed=${encodeURIComponent(cleanName)}&hairColor=${whiteHair}&hairVariant=${elderlyHairVariants}&moodVariant=happy,hopeful,neutral&backgroundColor=f1f5f9,e2e8f0&facialHairProbability=${facialHair}`;
     }
 
     if (isFemale) {
-      // Perempuan & Bumil: Gaya rambut panjang/hijab/bun, latar pink/rose
-      const femaleHeads = 'hijab,bangs,bangs2,bun,bun2,buns,long,longBangs,longCurly,mediumBangs,mediumBangs2,mediumBangs3,mediumStraight';
-      return `https://api.dicebear.com/10.x/open-peeps/svg?seed=${encodeURIComponent(cleanName)}&headVariant=${femaleHeads}&expressionVariant=${baseExpressions}&backgroundColor=fce7f3,fecdd3,fff1f2`;
+      // Perempuan & Ibu Hamil: Rambut panjang/bob/curls, tanpa kumis, latar pink/rose
+      const femaleHair = 'bangs,buns,longCurls,roundBob,wavy,fluffy';
+      return `https://api.dicebear.com/10.x/dylan/svg?seed=${encodeURIComponent(cleanName)}&hairVariant=${femaleHair}&facialHairProbability=0&backgroundColor=fce7f3,fecdd3,fff1f2&moodVariant=happy,hopeful,neutral,superHappy`;
     }
 
-    // Laki-laki / Default: Gaya rambut pendek/flat/shaved, latar biru/sky
-    const maleHeads = 'short1,short2,short3,short4,short5,flatTop,flatTopLong,pomp,mohawk,shaved1,shaved2,shaved3,dreads1';
-    return `https://api.dicebear.com/10.x/open-peeps/svg?seed=${encodeURIComponent(cleanName)}&headVariant=${maleHeads}&expressionVariant=${baseExpressions}&backgroundColor=e0f2fe,bae6fd,e0f7ff`;
+    // Laki-laki (Remaja / Dewasa): Rambut pendek/spiky/flat, latar biru/sky
+    const maleHair = 'flatTop,parting,plain,shaggy,shortCurls,spiky';
+    const facialHair = category === 'REMAJA' ? 0 : 40;
+    return `https://api.dicebear.com/10.x/dylan/svg?seed=${encodeURIComponent(cleanName)}&hairVariant=${maleHair}&facialHairProbability=${facialHair}&backgroundColor=e0f2fe,bae6fd,e0f7ff&moodVariant=happy,hopeful,neutral,superHappy`;
   };
 
   if (!imgError) {

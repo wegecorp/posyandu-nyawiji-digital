@@ -466,7 +466,17 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
             return (
               <div key={`${block.kalurahan}-${block.isContinuation}-${blockIdx}`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="w-3.5 h-3.5 text-[#128c7e]" />
+                  <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-[#e9edef] bg-[#f0f2f5]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`https://api.dicebear.com/10.x/waves/svg?seed=${encodeURIComponent(block.kalurahan)}`}
+                      alt={block.kalurahan}
+                      width={20}
+                      height={20}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                   <span className="text-[11px] font-black uppercase tracking-wider text-[#54656f]">
                     {block.kalurahan}
                     {block.isContinuation ? ' (lanjutan)' : ''}
@@ -486,29 +496,42 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
                     return (
                       <div key={pos.id} className="bg-white rounded-[16px] p-4 border border-[#e9edef] shadow-xs space-y-2.5">
                         <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-extrabold text-sm text-[#111b21]">{pos.name}</h3>
-                              <span className="font-mono text-[10px] bg-[#f0f2f5] text-[#54656f] px-2 py-0.5 rounded-md font-bold border border-[#e9edef]">
-                                {pos.code}
-                              </span>
-                               {disabled ? (
-                                 <span className="text-[10px] font-bold bg-[#f0f2f5] text-[#54656f] border border-[#e9edef] px-2 py-0.5 rounded-full flex items-center gap-1">
-                                   <Power className="w-3 h-3" /> Nonaktif
-                                 </span>
-                               ) : pending ? (
-                                 <span className="text-[10px] font-bold bg-[#fef3c7] text-[#b45309] border border-[#fde68a] px-2 py-0.5 rounded-full flex items-center gap-1">
-                                   <AlertTriangle className="w-3 h-3" /> Menunggu aktivasi
-                                 </span>
-                               ) : (
-                                 <span className="text-[10px] font-bold bg-[#f0fdf4] text-[#16a34a] border border-[#bbf7d0] px-2 py-0.5 rounded-full flex items-center gap-1">
-                                   <Check className="w-3 h-3" /> Aktif
-                                 </span>
-                               )}
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-[#bbf7d0] bg-[#e7fceb] shadow-2xs">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={`https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(pos.name)}`}
+                                alt={pos.name}
+                                width={40}
+                                height={40}
+                                loading="lazy"
+                                className="w-full h-full object-cover"
+                              />
                             </div>
-                            <div className="text-xs text-[#54656f] mt-1 font-medium flex items-center gap-1">
-                              <MapPin className="w-3.5 h-3.5 text-[#128c7e]" />
-                              {pos.padukuhan && pos.padukuhan !== '-' ? `Padukuhan ${pos.padukuhan}, ` : ''}Kalurahan {pos.kalurahan}
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-extrabold text-sm text-[#111b21]">{pos.name}</h3>
+                                <span className="font-mono text-[10px] bg-[#f0f2f5] text-[#54656f] px-2 py-0.5 rounded-md font-bold border border-[#e9edef]">
+                                  {pos.code}
+                                </span>
+                                 {disabled ? (
+                                   <span className="text-[10px] font-bold bg-[#f0f2f5] text-[#54656f] border border-[#e9edef] px-2 py-0.5 rounded-full flex items-center gap-1">
+                                     <Power className="w-3 h-3" /> Nonaktif
+                                   </span>
+                                 ) : pending ? (
+                                   <span className="text-[10px] font-bold bg-[#fef3c7] text-[#b45309] border border-[#fde68a] px-2 py-0.5 rounded-full flex items-center gap-1">
+                                     <AlertTriangle className="w-3 h-3" /> Menunggu aktivasi
+                                   </span>
+                                 ) : (
+                                   <span className="text-[10px] font-bold bg-[#f0fdf4] text-[#16a34a] border border-[#bbf7d0] px-2 py-0.5 rounded-full flex items-center gap-1">
+                                     <Check className="w-3 h-3" /> Aktif
+                                   </span>
+                                 )}
+                              </div>
+                              <div className="text-xs text-[#54656f] mt-1 font-medium flex items-center gap-1">
+                                <MapPin className="w-3.5 h-3.5 text-[#128c7e]" />
+                                {pos.padukuhan && pos.padukuhan !== '-' ? `Padukuhan ${pos.padukuhan}, ` : ''}Kalurahan {pos.kalurahan}
+                              </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">

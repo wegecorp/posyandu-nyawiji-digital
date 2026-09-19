@@ -405,8 +405,16 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
                   className="w-full p-4 text-left transition-all touch-press hover:bg-[#f0f2f5]/60 flex items-center justify-between gap-3"
                 >
                   <div className="min-w-0 flex items-center gap-3">
-                    <div className={`p-2.5 rounded-full shrink-0 ${isOpen ? 'bg-[#075e54] text-white' : 'bg-[#e7fceb] text-[#075e54]'}`}>
-                      <Building className="w-5 h-5" />
+                    <div className="w-11 h-11 rounded-2xl overflow-hidden shrink-0 border border-[#bbf7d0] bg-[#e7fceb] shadow-2xs">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`https://api.dicebear.com/10.x/planets/svg?seed=${encodeURIComponent(pkm.name)}`}
+                        alt={pkm.name}
+                        width={44}
+                        height={44}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -470,6 +478,17 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
                         {groups.map(([kalurahan, posyandus]) => (
                           <div key={kalurahan}>
                             <div className="flex items-center gap-2 mb-2">
+                              <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-[#e9edef] bg-[#f0f2f5]">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={`https://api.dicebear.com/10.x/waves/svg?seed=${encodeURIComponent(kalurahan)}`}
+                                  alt={kalurahan}
+                                  width={20}
+                                  height={20}
+                                  loading="lazy"
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
                               <span className="text-[11px] font-black uppercase tracking-wider text-[#54656f]">
                                 {kalurahan}
                               </span>
@@ -487,8 +506,16 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
                                     className="flex items-center justify-between gap-2 bg-[#f0f2f5]/70 hover:bg-[#f0f2f5] border border-[#e9edef] rounded-xl px-3 py-2.5 transition-all"
                                   >
                                     <div className="min-w-0 flex items-center gap-3 flex-1">
-                                      <div className="w-8 h-8 rounded-full bg-white border border-[#e9edef] text-[#075e54] flex items-center justify-center font-black text-xs shrink-0">
-                                        {pos.name.charAt(0).toUpperCase()}
+                                      <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-[#bbf7d0] bg-[#e7fceb]">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                          src={`https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(pos.name)}`}
+                                          alt={pos.name}
+                                          width={32}
+                                          height={32}
+                                          loading="lazy"
+                                          className="w-full h-full object-cover"
+                                        />
                                       </div>
                                       <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2 flex-wrap">

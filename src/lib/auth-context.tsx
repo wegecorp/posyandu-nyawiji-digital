@@ -10,7 +10,17 @@ interface AuthContextType {
   setUser: (user: UserSession | null) => void;
   login: (userData: UserSession) => void;
   logout: () => void;
-  switchActivePosyandu: (posyanduId: string, posyanduName: string, posyanduCode: string) => void;
+  switchActivePosyandu: (
+    posyanduId: string,
+    posyanduName: string,
+    posyanduCode: string,
+    locationMeta?: {
+      padukuhan?: string | null;
+      kalurahan?: string | null;
+      kapanewon?: string | null;
+      healthCenterName?: string | null;
+    }
+  ) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -92,13 +102,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearSyncQueue();
   };
 
-  const switchActivePosyandu = (posyanduId: string, posyanduName: string, posyanduCode: string) => {
+  const switchActivePosyandu = (
+    posyanduId: string,
+    posyanduName: string,
+    posyanduCode: string,
+    locationMeta?: {
+      padukuhan?: string | null;
+      kalurahan?: string | null;
+      kapanewon?: string | null;
+      healthCenterName?: string | null;
+    }
+  ) => {
     if (!user) return;
-    const updated = {
+    const updated: UserSession = {
       ...user,
       posyanduId,
       posyanduName,
       posyanduCode,
+      padukuhan: locationMeta?.padukuhan !== undefined ? locationMeta.padukuhan : user.padukuhan,
+      kalurahan: locationMeta?.kalurahan !== undefined ? locationMeta.kalurahan : user.kalurahan,
+      kapanewon: locationMeta?.kapanewon !== undefined ? locationMeta.kapanewon : user.kapanewon,
+      healthCenterName: locationMeta?.healthCenterName !== undefined ? locationMeta.healthCenterName : user.healthCenterName,
     };
     setUser(updated);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));

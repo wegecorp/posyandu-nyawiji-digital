@@ -309,8 +309,18 @@ export default function PosyanduApp() {
     setIsQRViewOpen(true);
   };
 
-  const handleEnterPosyanduTable = (posId: string, posName: string, posCode: string) => {
-    switchActivePosyandu(posId, posName, posCode);
+  const handleEnterPosyanduTable = (
+    posId: string,
+    posName: string,
+    posCode: string,
+    locationMeta?: {
+      padukuhan?: string | null;
+      kalurahan?: string | null;
+      kapanewon?: string | null;
+      healthCenterName?: string | null;
+    }
+  ) => {
+    switchActivePosyandu(posId, posName, posCode, locationMeta);
     setActiveViewMode('posyandu_table');
     setSelectedPatient(null);
   };

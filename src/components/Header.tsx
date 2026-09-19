@@ -153,7 +153,7 @@ export const Header: React.FC<HeaderProps> = ({
             ) : user?.role === 'DINKES' && !landscapeError ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={`https://api.dicebear.com/10.x/squircles/svg?seed=${encodeURIComponent(user?.name || 'Dinkes')}&backgroundColor=0284c7,0369a1,075e54`}
+                src="https://api.dicebear.com/10.x/squircles/svg?backgroundColor=ff2e88,00e5ff,ffe600,7cff00,ff6a00,b400ff&seed=zwsvo9x2"
                 alt="Dinkes"
                 width={36}
                 height={36}

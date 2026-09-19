@@ -24,13 +24,17 @@ export const LocationHeroStat: React.FC<LocationHeroStatProps> = ({ statusCounts
   const posyanduName = user?.posyanduName || (user?.role === 'POSYANDU' ? user.name : '') || APP_NAME;
   const landscapeUrl = `https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(posyanduName)}`;
 
-  // Susun alamat lengkap dari data sesi
+  // Susun rincian alamat berjenjang: Padukuhan, Kalurahan, Kapanewon, Puskesmas Pembina
   const addressParts: string[] = [];
   if (user?.padukuhan && user.padukuhan !== '-') addressParts.push(`Padukuhan ${user.padukuhan}`);
-  if (user?.kalurahan) addressParts.push(`Kalurahan ${user.kalurahan}`);
-  if (user?.kapanewon) addressParts.push(`Kapanewon ${user.kapanewon}`);
+  if (user?.kalurahan) addressParts.push(`Kal. ${user.kalurahan}`);
+  if (user?.kapanewon) addressParts.push(`Kap. ${user.kapanewon}`);
+  if (user?.healthCenterName) addressParts.push(`Puskesmas ${user.healthCenterName}`);
 
-  const addressDisplay = addressParts.length > 0 ? addressParts.join(', ') : 'Kabupaten Gunungkidul';
+  const addressDisplay =
+    addressParts.length > 0
+      ? `${addressParts.join(', ')}, Kab. Gunungkidul`
+      : 'Kabupaten Gunungkidul, D.I. Yogyakarta';
 
   return (
     <div className="bg-white rounded-2xl border border-[#e9edef] p-3.5 sm:p-4 shadow-xs space-y-3 transition-all">
@@ -58,10 +62,17 @@ export const LocationHeroStat: React.FC<LocationHeroStatProps> = ({ statusCounts
 
         {/* Info Lokasi / Unit */}
         <div className="min-w-0 flex-1">
-          <h2 className="text-base sm:text-lg font-extrabold text-[#111b21] truncate leading-tight">
-            {posyanduName}
-          </h2>
-          <div className="flex items-center gap-1.5 text-xs text-[#54656f] font-medium truncate mt-0.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-base sm:text-lg font-extrabold text-[#111b21] truncate leading-tight">
+              {posyanduName}
+            </h2>
+            {user?.posyanduCode && (
+              <span className="font-mono text-[10px] bg-[#f0f2f5] text-[#54656f] px-2 py-0.5 rounded-md font-bold border border-[#e9edef]">
+                {user.posyanduCode}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-[#54656f] font-medium truncate mt-0.5" title={addressDisplay}>
             <MapPin className="w-3.5 h-3.5 text-[#128c7e] shrink-0" />
             <span className="truncate">{addressDisplay}</span>
           </div>

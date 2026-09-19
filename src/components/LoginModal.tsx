@@ -109,7 +109,7 @@ export const LoginModal: React.FC<AccountModalProps> = ({ isOpen, onClose, onCha
                       ? `https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(user.posyanduName || user.name)}`
                       : user.role === 'PUSKESMAS'
                       ? `https://api.dicebear.com/10.x/planets/svg?seed=${encodeURIComponent(user.name)}`
-                      : `https://api.dicebear.com/10.x/squircles/svg?seed=${encodeURIComponent(user.name)}&backgroundColor=0284c7,0369a1,075e54`
+                      : 'https://api.dicebear.com/10.x/squircles/svg?backgroundColor=ff2e88,00e5ff,ffe600,7cff00,ff6a00,b400ff&seed=zwsvo9x2'
                   }
                   alt={user.name}
                   width={44}

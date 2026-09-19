@@ -31,7 +31,17 @@ const inputCls =
 const PAGE_SIZE = 10;
 
 interface PuskesmasDashboardProps {
-  onEnterPosyandu: (posyanduId: string, posyanduName: string, posyanduCode: string) => void;
+  onEnterPosyandu: (
+    posyanduId: string,
+    posyanduName: string,
+    posyanduCode: string,
+    locationMeta?: {
+      padukuhan?: string | null;
+      kalurahan?: string | null;
+      kapanewon?: string | null;
+      healthCenterName?: string | null;
+    }
+  ) => void;
   onExport: () => void;
 }
 
@@ -350,8 +360,15 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
       {/* Banner */}
       <div className="bg-[#075e54] text-white rounded-[24px] p-5 shadow-md space-y-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-white/10 rounded-full shrink-0">
-            <Building2 className="w-6 h-6 text-[#25d366]" />
+          <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 border border-white/20 bg-white/10 shadow-xs flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`https://api.dicebear.com/10.x/planets/svg?seed=${encodeURIComponent(user?.name || 'Puskesmas')}`}
+              alt={user?.name || 'Puskesmas'}
+              width={56}
+              height={56}
+              className="w-full h-full object-cover"
+            />
           </div>
           <div className="min-w-0">
             <span className="text-[10px] font-extrabold uppercase tracking-wider bg-[#25d366]/20 text-[#25d366] border border-[#25d366]/40 px-2.5 py-0.5 rounded-full">
@@ -574,10 +591,17 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
                              >
                                <Trash2 className="w-3.5 h-3.5" />
                              </button>
-                             <button
-                               onClick={() => onEnterPosyandu(pos.id, pos.name, pos.code)}
-                              className="py-2 px-3.5 bg-[#128c7e] hover:bg-[#075e54] text-white rounded-full text-xs font-bold transition-all flex items-center gap-1.5 touch-press"
-                            >
+                              <button
+                                onClick={() =>
+                                  onEnterPosyandu(pos.id, pos.name, pos.code, {
+                                    padukuhan: pos.padukuhan,
+                                    kalurahan: pos.kalurahan,
+                                    kapanewon: user?.kapanewon,
+                                    healthCenterName: user?.name,
+                                  })
+                                }
+                               className="py-2 px-3.5 bg-[#128c7e] hover:bg-[#075e54] text-white rounded-full text-xs font-bold transition-all flex items-center gap-1.5 touch-press"
+                             >
                               <span>Buka Meja</span>
                               <ArrowRight className="w-3.5 h-3.5" />
                             </button>

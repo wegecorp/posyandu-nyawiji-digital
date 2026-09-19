@@ -25,7 +25,17 @@ import { DashboardListSkeleton } from '@/components/Skeleton';
 
 interface DinkesDashboardProps {
   onExportAll: () => void;
-  onEnterPosyandu: (posyanduId: string, posyanduName: string, posyanduCode: string) => void;
+  onEnterPosyandu: (
+    posyanduId: string,
+    posyanduName: string,
+    posyanduCode: string,
+    locationMeta?: {
+      padukuhan?: string | null;
+      kalurahan?: string | null;
+      kapanewon?: string | null;
+      healthCenterName?: string | null;
+    }
+  ) => void;
 }
 
 interface KapanewonRef { id: string; code: string; name: string }
@@ -43,6 +53,7 @@ interface PosyanduRow {
   code: string;
   name: string;
   kalurahan: string;
+  padukuhan?: string;
   users?: { id: string; username: string; mustChangePassword: boolean }[];
   _count?: { patients: number; measurements: number };
 }
@@ -273,8 +284,15 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
       {/* Banner */}
       <div className="bg-[#075e54] text-white rounded-[24px] p-5 shadow-md space-y-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-white/10 rounded-full shrink-0">
-            <Building className="w-6 h-6 text-[#25d366]" />
+          <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 border border-white/20 bg-white/10 shadow-xs flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://api.dicebear.com/10.x/squircles/svg?backgroundColor=ff2e88,00e5ff,ffe600,7cff00,ff6a00,b400ff&seed=zwsvo9x2"
+              alt="Dinkes"
+              width={56}
+              height={56}
+              className="w-full h-full object-cover"
+            />
           </div>
           <div className="min-w-0">
             <span className="text-[10px] font-extrabold uppercase tracking-wider bg-[#25d366]/20 text-[#25d366] border border-[#25d366]/40 px-2.5 py-0.5 rounded-full">
@@ -520,7 +538,14 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
                                       <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2 flex-wrap">
                                           <button
-                                            onClick={() => onEnterPosyandu(pos.id, pos.name, pos.code)}
+                                            onClick={() =>
+                                              onEnterPosyandu(pos.id, pos.name, pos.code, {
+                                                padukuhan: pos.padukuhan,
+                                                kalurahan: kalurahan,
+                                                kapanewon: pkm.kapanewon,
+                                                healthCenterName: pkm.name,
+                                              })
+                                            }
                                             className="text-[#111b21] hover:text-[#075e54] text-xs font-extrabold truncate transition-colors flex items-center gap-1"
                                           >
                                             {pos.name}
@@ -552,7 +577,14 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
                                         </button>
                                       )}
                                       <button
-                                        onClick={() => onEnterPosyandu(pos.id, pos.name, pos.code)}
+                                        onClick={() =>
+                                          onEnterPosyandu(pos.id, pos.name, pos.code, {
+                                            padukuhan: pos.padukuhan,
+                                            kalurahan: kalurahan,
+                                            kapanewon: pkm.kapanewon,
+                                            healthCenterName: pkm.name,
+                                          })
+                                        }
                                         className="py-2 px-3 bg-[#128c7e] hover:bg-[#075e54] text-white rounded-full text-xs font-bold transition-all flex items-center gap-1.5 touch-press"
                                       >
                                         <span>Buka</span>

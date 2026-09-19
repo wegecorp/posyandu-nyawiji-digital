@@ -14,7 +14,6 @@ describe('UnitScoreboard - Ranking Adil & Keaktifan Entri', () => {
       numerator: 5,
       denominator: 5,
       participation: 1.0, // 100%
-      delta: 0,
     },
     {
       unitId: 'hc-large',
@@ -22,7 +21,6 @@ describe('UnitScoreboard - Ranking Adil & Keaktifan Entri', () => {
       numerator: 920,
       denominator: 1000,
       participation: 0.92, // 92%
-      delta: 5,
     },
     {
       unitId: 'hc-medium',
@@ -30,7 +28,6 @@ describe('UnitScoreboard - Ranking Adil & Keaktifan Entri', () => {
       numerator: 150,
       denominator: 200,
       participation: 0.75, // 75%
-      delta: -2,
     },
   ];
 
@@ -135,7 +132,6 @@ describe('UnitScoreboard - Ranking Adil & Keaktifan Entri', () => {
         numerator: 0,
         denominator: 0,
         participation: 0,
-        delta: null,
       },
       ...sampleData,
     ];

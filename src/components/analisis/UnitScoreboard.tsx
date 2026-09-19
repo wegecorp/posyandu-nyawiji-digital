@@ -5,9 +5,6 @@ import {
   Award,
   Activity,
   Percent,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   ChevronRight,
 } from 'lucide-react';
 import { PARTISIPASI_BURUK_THRESHOLD } from '@/lib/clinical';
@@ -21,8 +18,6 @@ export interface ScoreboardRow {
   /** Optional extra fields for drill / detail */
   abnormal?: number;
   total?: number;
-  /** Perubahan partisipasi vs bulan sebelumnya, dalam poin persen. null bila tak ada pembanding. */
-  delta?: number | null;
 }
 
 export type ScoreboardSortMode = 'performance' | 'volume' | 'participation' | 'abnormal';
@@ -190,27 +185,6 @@ export function UnitScoreboard({
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  {row.delta != null && (
-                    <span
-                      className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                        row.delta > 0
-                          ? 'bg-green-100 text-green-700'
-                          : row.delta < 0
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-[#f0f2f5] text-[#54656f]'
-                      }`}
-                      title="Perubahan vs bulan sebelumnya"
-                    >
-                      {row.delta > 0 ? (
-                        <TrendingUp className="w-3 h-3 text-green-700" />
-                      ) : row.delta < 0 ? (
-                        <TrendingDown className="w-3 h-3 text-red-700" />
-                      ) : (
-                        <Minus className="w-3 h-3 text-[#54656f]" />
-                      )}
-                      <span>{Math.abs(row.delta)} pts</span>
-                    </span>
-                  )}
                   {showAbnormal && row.abnormal != null && (
                     <span
                       className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${

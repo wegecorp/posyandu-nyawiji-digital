@@ -168,16 +168,8 @@ export function DinkesAnalisis() {
       }));
   }, [drillHcId, drillCoverage, coverageData]);
 
-  // Bulan pembanding: tepat sebelum latestMonth dalam rentang.
-  const prevMonth = useMemo(() => {
-    const months = [...new Set(puskesmasCoverage.map((d) => d.ym))].sort();
-    const idx = months.indexOf(latestMonth);
-    return idx > 0 ? months[idx - 1] : '';
-  }, [puskesmasCoverage, latestMonth]);
-
   // Puskesmas scoreboard: agregat SELURUH periode terpilih (Σ terukur / Σ sasaran),
-  // supaya peringkat objektif lintas unit, bukan cuma 1 bulan. Delta tetap
-  // momentum bulan terakhir vs sebelumnya.
+  // supaya peringkat objektif lintas unit.
   const puskesmasScoreboard = useMemo(() => {
     const agg = new Map<string, { unitId: string; unitName: string; numerator: number; denominator: number }>();
     for (const d of puskesmasCoverage) {
@@ -187,22 +179,14 @@ export function DinkesAnalisis() {
       cur.unitName = d.unitName;
       agg.set(d.unitId, cur);
     }
-    return [...agg.values()].map((d) => {
-      const last = puskesmasCoverage.find(p => p.unitId === d.unitId && p.ym === latestMonth);
-      const prev = prevMonth
-        ? puskesmasCoverage.find(p => p.unitId === d.unitId && p.ym === prevMonth)
-        : undefined;
-      const delta = last && prev && prev.denominator > 0
-        ? Math.round((last.participation - prev.participation) * 100)
-        : null;
-      return {
-        unitId: d.unitId, unitName: d.unitName,
-        participation: d.denominator > 0 ? d.numerator / d.denominator : 0,
-        numerator: d.numerator, denominator: d.denominator,
-        delta,
-      };
-    });
-  }, [puskesmasCoverage, latestMonth, prevMonth]);
+    return [...agg.values()].map((d) => ({
+      unitId: d.unitId,
+      unitName: d.unitName,
+      participation: d.denominator > 0 ? d.numerator / d.denominator : 0,
+      numerator: d.numerator,
+      denominator: d.denominator,
+    }));
+  }, [puskesmasCoverage]);
 
   // Outcomes bulan terakhir: kabupaten, atau agregat HC saat di-drill.
   const activeOutcome = drillHcId

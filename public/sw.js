@@ -9,7 +9,7 @@
  *
  * Saat versi berubah, cukup naikkan VERSION untuk membersihkan cache lama.
  */
-const VERSION = '2026.09-v5';
+const VERSION = '2026.09-v6';
 const APP_SHELL_CACHE = `nyawiji-shell-${VERSION}`;
 const STATIC_CACHE = `nyawiji-static-${VERSION}`;
 const AVATAR_CACHE = `nyawiji-avatars-${VERSION}`;
@@ -70,42 +70,28 @@ self.addEventListener('fetch', (event) => {
   // dan aplikasi sudah punya mekanisme luring (queue sinkron) sendiri.
   if (path.startsWith('/api/')) return;
 
-  // Navigasi halaman (HTML aplikasi): network-first dengan timeout 2.5s -> fallback ke shell terakhir.
+  // Navigasi halaman (HTML aplikasi): network-first murni dengan fallback ke shell cache jika offline.
   if (request.mode === 'navigate') {
     event.respondWith(
-      (async () => {
-        const networkPromise = fetch(request).then((response) => {
+      fetch(request)
+        .then((response) => {
           if (response && response.ok) {
             const copy = response.clone();
             caches.open(APP_SHELL_CACHE).then((cache) => cache.put('/', copy)).catch(() => {});
           }
           return response;
-        });
-
-        const timeoutPromise = new Promise((resolve) =>
-          setTimeout(() => resolve(null), 2500)
-        );
-
-        try {
-          const result = await Promise.race([networkPromise, timeoutPromise]);
-          if (result) return result;
-
-          // Timeout tercapai: coba ambil dari cache shell instan
-          const cached = await caches
-            .open(APP_SHELL_CACHE)
-            .then((cache) => cache.match('/') || cache.match(request.url));
+        })
+        .catch(async () => {
+          const cached = await caches.open(APP_SHELL_CACHE).then((cache) => cache.match('/'));
           if (cached) return cached;
-
-          // Bila belum ada di cache, tunggu respon jaringan
-          return await networkPromise;
-        } catch {
-          const cached = await caches
-            .open(APP_SHELL_CACHE)
-            .then((cache) => cache.match('/') || cache.match(request.url));
-          if (cached) return cached;
-          return Response.error();
-        }
-      })
+          return new Response(
+            '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Portal Nyawiji - Offline</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f0f2f5;color:#111b21;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:1rem;box-sizing:border-box}.card{background:#fff;border-radius:1.5rem;padding:2rem;max-width:380px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.08);border:1px solid #e9edef}h2{color:#075e54;margin:0 0 .5rem}p{color:#54656f;font-size:14px;line-height:1.5;margin:0 0 1.5rem}button{background:#128c7e;color:#fff;border:none;padding:.75rem 1.5rem;font-weight:700;border-radius:9999px;cursor:pointer;font-size:14px}</style></head><body><div class="card"><h2>Anda Sedang Offline</h2><p>Aplikasi tidak dapat terhubung ke server. Periksa koneksi internet Anda lalu coba lagi.</p><button onclick="window.location.reload()">Muat Ulang</button></div></body></html>',
+            {
+              status: 200,
+              headers: { 'Content-Type': 'text/html; charset=utf-8' },
+            }
+          );
+        })
     );
     return;
   }

@@ -27,6 +27,7 @@ import { InstallAppModal } from '@/components/InstallAppModal';
 import { ExitHint } from '@/components/ExitHint';
 import { useBackLayer, useExitGuard } from '@/lib/back-navigation';
 import { saveCredential } from '@/lib/credential-store';
+import { getUnitAvatarDataUri } from '@/lib/unit-avatar';
 
 type LoginTab = 'posyandu' | 'staf';
 type CascadeStep = 0 | 1 | 2 | 3; // 0:puskesmas 1:kalurahan 2:posyandu 3:password
@@ -537,7 +538,7 @@ export function AuthPage() {
                             title={pkm.name}
                             subtitle={`Kapanewon ${pkm.kapanewon}`}
                             icon={<Building2 className="w-4 h-4" />}
-                            avatarUrl={`https://api.dicebear.com/10.x/planets/svg?seed=${encodeURIComponent(pkm.name)}`}
+                            avatarUrl={getUnitAvatarDataUri('planets', pkm.name)}
                             onClick={() => choosePuskesmas(pkm)}
                           />
                         ))}
@@ -567,7 +568,7 @@ export function AuthPage() {
                             title={kal.name}
                             subtitle={`${kal.posyanduCount} posyandu`}
                             icon={<MapPin className="w-4 h-4" />}
-                            avatarUrl={`https://api.dicebear.com/10.x/waves/svg?seed=${encodeURIComponent(kal.name)}`}
+                            avatarUrl={getUnitAvatarDataUri('waves', kal.name)}
                             onClick={() => chooseKalurahan(kal)}
                           />
                         ))}
@@ -597,7 +598,7 @@ export function AuthPage() {
                             title={pos.name}
                             subtitle={`${pos.padukuhan && pos.padukuhan !== '-' ? `Padukuhan ${pos.padukuhan} · ` : ''}Kalurahan ${selectedKalurahan?.name || ''}`}
                             icon={<Home className="w-4 h-4" />}
-                            avatarUrl={`https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(pos.name)}`}
+                            avatarUrl={getUnitAvatarDataUri('landscape', pos.name)}
                             selected={selectedPosyandu?.id === pos.id}
                             onClick={() => {
                               setSelectedPosyandu(pos);
@@ -624,7 +625,7 @@ export function AuthPage() {
                     <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-[#bbf7d0] bg-[#e7fceb] shadow-xs">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={`https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(selectedPosyandu.name)}`}
+                        src={getUnitAvatarDataUri('landscape', selectedPosyandu.name)}
                         alt={selectedPosyandu.name}
                         width={48}
                         height={48}

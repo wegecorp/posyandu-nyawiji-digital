@@ -12,6 +12,7 @@ import {
   KeyRound,
 } from 'lucide-react';
 import { useBackLayer } from '@/lib/back-navigation';
+import { getUnitAvatarDataUri } from '@/lib/unit-avatar';
 
 interface AccountModalProps {
   isOpen: boolean;
@@ -106,15 +107,14 @@ export const LoginModal: React.FC<AccountModalProps> = ({ isOpen, onClose, onCha
                 <img
                   src={
                     user.role === 'POSYANDU'
-                      ? `https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(user.posyanduName || user.name)}`
+                      ? getUnitAvatarDataUri('landscape', user.posyanduName || user.name)
                       : user.role === 'PUSKESMAS'
-                      ? `https://api.dicebear.com/10.x/planets/svg?seed=${encodeURIComponent(user.name)}`
-                      : 'https://api.dicebear.com/10.x/squircles/svg?backgroundColor=ff2e88,00e5ff,ffe600,7cff00,ff6a00,b400ff&seed=zwsvo9x2'
+                      ? getUnitAvatarDataUri('planets', user.name)
+                      : getUnitAvatarDataUri('squircles', 'Dinas Kesehatan')
                   }
                   alt={user.name}
                   width={44}
                   height={44}
-                  loading="lazy"
                   className="w-full h-full object-cover"
                 />
               </div>

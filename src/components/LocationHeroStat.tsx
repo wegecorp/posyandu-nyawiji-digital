@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { APP_NAME } from '@/lib/branding';
 import { MapPin, Building2, CheckCircle2 } from 'lucide-react';
+import { getUnitAvatarDataUri } from '@/lib/unit-avatar';
 
 interface LocationHeroStatProps {
   statusCounts: {
@@ -18,11 +19,8 @@ interface LocationHeroStatProps {
 
 export const LocationHeroStat: React.FC<LocationHeroStatProps> = ({ statusCounts }) => {
   const { user } = useAuth();
-  const [imgLoaded, setImgLoaded] = useState(false);
-  const [imgError, setImgError] = useState(false);
-
   const posyanduName = user?.posyanduName || (user?.role === 'POSYANDU' ? user.name : '') || APP_NAME;
-  const landscapeUrl = `https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(posyanduName)}`;
+  const landscapeUrl = getUnitAvatarDataUri('landscape', posyanduName);
 
   // Susun rincian alamat berjenjang: Padukuhan, Kalurahan, Kapanewon, Puskesmas Pembina
   const addressParts: string[] = [];
@@ -40,23 +38,17 @@ export const LocationHeroStat: React.FC<LocationHeroStatProps> = ({ statusCounts
     <div className="bg-white rounded-2xl border border-[#e9edef] p-3.5 sm:p-4 shadow-xs space-y-3 transition-all">
       {/* Header Identitas Lokasi */}
       <div className="flex items-center gap-3">
-        {/* Avatar Landscape Generator */}
+        {/* Avatar Landscape Generator (100% Offline) */}
         <div className="w-12 h-12 rounded-2xl overflow-hidden shrink-0 border border-[#bbf7d0] bg-[#e7fceb] shadow-xs flex items-center justify-center relative">
           <Building2 className="w-6 h-6 text-[#075e54] absolute inset-auto z-0 opacity-40" />
-          {!imgError && (
+          {landscapeUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={landscapeUrl}
               alt={posyanduName}
               width={48}
               height={48}
-              loading="lazy"
-              decoding="async"
-              onLoad={() => setImgLoaded(true)}
-              onError={() => setImgError(true)}
-              className={`w-full h-full object-cover transition-opacity duration-300 relative z-1 hover:scale-105 ${
-                imgLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
+              className="w-full h-full object-cover relative z-1 hover:scale-105 transition-transform"
             />
           )}
         </div>

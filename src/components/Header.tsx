@@ -19,6 +19,7 @@ import {
 import { getSyncQueue, flushSyncQueue } from '@/lib/offline-sync';
 import { usePwaInstall, type InstallGuide } from '@/lib/pwa';
 import { InstallAppModal } from '@/components/InstallAppModal';
+import { getUnitAvatarDataUri } from '@/lib/unit-avatar';
 
 interface HeaderProps {
   onOpenScanQR: () => void;
@@ -128,46 +129,33 @@ export const Header: React.FC<HeaderProps> = ({
           className="flex items-center gap-2.5 text-left hover:bg-white/10 rounded-xl px-2 py-1 transition-all touch-press min-w-0 flex-1"
         >
           <div className="w-9 h-9 rounded-full bg-[#128c7e] text-white flex items-center justify-center font-black text-sm shrink-0 border border-white/20 shadow-xs overflow-hidden">
-            {user?.role === 'POSYANDU' && !landscapeError ? (
+            {user?.role === 'POSYANDU' ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={`https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(user?.posyanduName || user?.name || 'Posyandu')}`}
+                src={getUnitAvatarDataUri('landscape', user?.posyanduName || user?.name || 'Posyandu')}
                 alt="Posyandu"
                 width={36}
                 height={36}
-                loading="lazy"
-                decoding="async"
-                onError={() => setLandscapeError(true)}
                 className="w-full h-full object-cover"
               />
-            ) : user?.role === 'PUSKESMAS' && !landscapeError ? (
+            ) : user?.role === 'PUSKESMAS' ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={`https://api.dicebear.com/10.x/planets/svg?seed=${encodeURIComponent(user?.name || 'Puskesmas')}`}
+                src={getUnitAvatarDataUri('planets', user?.name || 'Puskesmas')}
                 alt="Puskesmas"
                 width={36}
                 height={36}
-                loading="lazy"
-                decoding="async"
-                onError={() => setLandscapeError(true)}
-                className="w-full h-full object-cover"
-              />
-            ) : user?.role === 'DINKES' && !landscapeError ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src="https://api.dicebear.com/10.x/squircles/svg?backgroundColor=ff2e88,00e5ff,ffe600,7cff00,ff6a00,b400ff&seed=zwsvo9x2"
-                alt="Dinkes"
-                width={36}
-                height={36}
-                loading="lazy"
-                decoding="async"
-                onError={() => setLandscapeError(true)}
                 className="w-full h-full object-cover"
               />
             ) : user?.role === 'DINKES' ? (
-              'DK'
-            ) : user?.role === 'PUSKESMAS' ? (
-              'PK'
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={getUnitAvatarDataUri('squircles', 'Dinas Kesehatan')}
+                alt="Dinkes"
+                width={36}
+                height={36}
+                className="w-full h-full object-cover"
+              />
             ) : (
               'PS'
             )}

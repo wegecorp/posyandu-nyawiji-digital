@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { KeyRound, X, CheckCircle2, AlertTriangle, Lock, Eye, EyeOff } from 'lucide-react';
 import { useBackLayer } from '@/lib/back-navigation';
+import { getUnitAvatarDataUri } from '@/lib/unit-avatar';
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -91,15 +92,14 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
               <img
                 src={
                   user.role === 'POSYANDU'
-                    ? `https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(user.posyanduName || user.name)}`
+                    ? getUnitAvatarDataUri('landscape', user.posyanduName || user.name)
                     : user.role === 'PUSKESMAS'
-                    ? `https://api.dicebear.com/10.x/planets/svg?seed=${encodeURIComponent(user.name)}`
-                    : 'https://api.dicebear.com/10.x/squircles/svg?backgroundColor=ff2e88,00e5ff,ffe600,7cff00,ff6a00,b400ff&seed=zwsvo9x2'
+                    ? getUnitAvatarDataUri('planets', user.name)
+                    : getUnitAvatarDataUri('squircles', 'Dinas Kesehatan')
                 }
                 alt={user.name}
                 width={40}
                 height={40}
-                loading="lazy"
                 className="w-full h-full object-cover"
               />
             </div>

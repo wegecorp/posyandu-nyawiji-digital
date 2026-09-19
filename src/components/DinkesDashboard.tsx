@@ -22,6 +22,7 @@ import {
 import { puskesmasUsernameBase } from '@/lib/names';
 import { useBackLayer } from '@/lib/back-navigation';
 import { DashboardListSkeleton } from '@/components/Skeleton';
+import { getUnitAvatarDataUri } from '@/lib/unit-avatar';
 
 interface DinkesDashboardProps {
   onExportAll: () => void;
@@ -287,7 +288,7 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
           <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 border border-white/20 bg-white/10 shadow-xs flex items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://api.dicebear.com/10.x/squircles/svg?backgroundColor=ff2e88,00e5ff,ffe600,7cff00,ff6a00,b400ff&seed=zwsvo9x2"
+              src={getUnitAvatarDataUri('squircles', 'Dinas Kesehatan')}
               alt="Dinkes"
               width={56}
               height={56}
@@ -426,11 +427,10 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
                     <div className="w-11 h-11 rounded-2xl overflow-hidden shrink-0 border border-[#bbf7d0] bg-[#e7fceb] shadow-2xs">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={`https://api.dicebear.com/10.x/planets/svg?seed=${encodeURIComponent(pkm.name)}`}
+                        src={getUnitAvatarDataUri('planets', pkm.name)}
                         alt={pkm.name}
                         width={44}
                         height={44}
-                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -499,11 +499,10 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
                               <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-[#e9edef] bg-[#f0f2f5]">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
-                                  src={`https://api.dicebear.com/10.x/waves/svg?seed=${encodeURIComponent(kalurahan)}`}
+                                  src={getUnitAvatarDataUri('waves', kalurahan)}
                                   alt={kalurahan}
                                   width={20}
                                   height={20}
-                                  loading="lazy"
                                   className="w-full h-full object-cover"
                                 />
                               </div>
@@ -527,11 +526,10 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
                                       <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-[#bbf7d0] bg-[#e7fceb]">
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
-                                          src={`https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(pos.name)}`}
+                                          src={getUnitAvatarDataUri('landscape', pos.name)}
                                           alt={pos.name}
                                           width={32}
                                           height={32}
-                                          loading="lazy"
                                           className="w-full h-full object-cover"
                                         />
                                       </div>

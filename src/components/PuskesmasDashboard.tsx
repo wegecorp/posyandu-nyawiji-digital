@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useBackLayer } from '@/lib/back-navigation';
 import { DashboardListSkeleton } from '@/components/Skeleton';
+import { getUnitAvatarDataUri } from '@/lib/unit-avatar';
 
 const inputCls =
   'w-full px-3.5 py-2.5 text-xs bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all';
@@ -363,7 +364,7 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
           <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 border border-white/20 bg-white/10 shadow-xs flex items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={`https://api.dicebear.com/10.x/planets/svg?seed=${encodeURIComponent(user?.name || 'Puskesmas')}`}
+              src={getUnitAvatarDataUri('planets', user?.name || 'Puskesmas')}
               alt={user?.name || 'Puskesmas'}
               width={56}
               height={56}
@@ -486,11 +487,10 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
                   <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-[#e9edef] bg-[#f0f2f5]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={`https://api.dicebear.com/10.x/waves/svg?seed=${encodeURIComponent(block.kalurahan)}`}
+                      src={getUnitAvatarDataUri('waves', block.kalurahan)}
                       alt={block.kalurahan}
                       width={20}
                       height={20}
-                      loading="lazy"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -517,11 +517,10 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
                             <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-[#bbf7d0] bg-[#e7fceb] shadow-2xs">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
-                                src={`https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(pos.name)}`}
+                                src={getUnitAvatarDataUri('landscape', pos.name)}
                                 alt={pos.name}
                                 width={40}
                                 height={40}
-                                loading="lazy"
                                 className="w-full h-full object-cover"
                               />
                             </div>

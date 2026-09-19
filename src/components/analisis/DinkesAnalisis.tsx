@@ -395,43 +395,15 @@ export function DinkesAnalisis() {
       )}
 
       {/* LEVEL 2: HASIL SKRINING & TEMUAN KLINIS UMUM */}
-      {/* 2a. Stacked bar — Distribusi per indikator */}
       {indicatorOutcomeStacked.length > 0 && (
         <ChartCard
           title="Distribusi Hasil Pengukuran per Indikator"
-          subtitle={`Bulan ${formatYM(activeMonth)} — per indikator klinis`}
+          subtitle={`Bulan ${formatYM(activeMonth)} — klik indikator untuk melihat rincian sebaran per wilayah`}
         >
-          <IndicatorOutcomeStackedBar data={indicatorOutcomeStacked} />
-        </ChartCard>
-      )}
-
-      {/* 2b. Stacked Bar — Abnormal per Indikator */}
-      {abnormalByIndicator.length > 0 && (
-        <ChartCard title="Temuan Tidak Normal per Indikator" subtitle={`Bulan ${formatYM(activeMonth)} — klik batang untuk lihat per wilayah`}>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={abnormalByIndicator}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e9edef" />
-              <XAxis dataKey="name" tick={{ fontSize: 9 }} stroke="#8696a0" />
-              <YAxis tick={{ fontSize: 10 }} stroke="#8696a0" />
-              <Tooltip />
-              <Bar
-                dataKey="jumlah"
-                radius={[4, 4, 0, 0]}
-                cursor="pointer"
-                onClick={(entry) => {
-                  const e = entry as { key?: string; payload?: { key?: string } };
-                  const k = e.key ?? e.payload?.key;
-                  if (!k) return;
-                  const ind = INDICATORS.find((i) => i.key === k);
-                  if (ind) setIndicatorDrill({ key: ind.key, label: ind.label });
-                }}
-              >
-                {abnormalByIndicator.map((entry, i) => (
-                  <Cell key={i} fill={entry.fill} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <IndicatorOutcomeStackedBar
+            data={indicatorOutcomeStacked}
+            onPick={(key, label) => setIndicatorDrill({ key, label })}
+          />
         </ChartCard>
       )}
 

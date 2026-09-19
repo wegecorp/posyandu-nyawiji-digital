@@ -15,14 +15,24 @@ import { WeightProgressionCard } from './WeightProgressionCard';
 import { BreastfeedingCard } from './BreastfeedingCard';
 import { CategoryCoverageCard } from './CategoryCoverageCard';
 import { TbScreeningCard } from './TbScreeningCard';
-import { OutcomeDonut } from './OutcomeDonut';
+import { IndicatorOutcomeStackedBar } from './IndicatorOutcomeStackedBar';
 import { PeriodControl, periodToRange } from './PeriodControl';
 import { EmptyState } from './EmptyState';
 import { INDICATORS } from '@/lib/clinical';
 import { AnalisisPageSkeleton } from '@/components/Skeleton';
 
 type CoverageData = { ym: string; unitId: string; unitName: string; numerator: number; denominator: number; participation: number };
-type OutcomeData = { ym: string; unitId: string; unitName: string; total: number; normal: number; abnormal: number; notAssessed: number; abnormalByIndicator: Record<string, number> };
+type OutcomeData = {
+  ym: string;
+  unitId: string;
+  unitName: string;
+  total: number;
+  normal: number;
+  abnormal: number;
+  notAssessed: number;
+  abnormalByIndicator: Record<string, number>;
+  assessedByIndicator?: Record<string, number>;
+};
 type AbnormalPatient = {
   measurementId: string; patientName: string; regNumber: string; category: string | null;
   indicatorKey: string; indicatorLabel: string; unit: string; value: number | string;
@@ -89,13 +99,20 @@ export function PosyanduAnalisis() {
   }, [myOutcome]);
   const latestMonth = latestOutcome?.ym ?? '';
 
-  const pieData = useMemo(() => {
+  // Stacked bar per indikator: Tidak Normal / Normal (hanya yang sudah dinilai)
+  const indicatorOutcomeStacked = useMemo(() => {
     if (!latestOutcome) return [];
-    return [
-      { name: 'Normal', value: latestOutcome.normal },
-      { name: 'Tidak Normal', value: latestOutcome.abnormal },
-      { name: 'Belum Dinilai', value: latestOutcome.notAssessed },
-    ];
+    return INDICATORS.map((ind) => {
+      const abnormal = latestOutcome.abnormalByIndicator[ind.key] ?? 0;
+      const assessed = latestOutcome.assessedByIndicator?.[ind.key] ?? 0;
+      return {
+        key: ind.key,
+        name: ind.label.length > 20 ? ind.label.slice(0, 18) + '…' : ind.label,
+        fullLabel: ind.label,
+        abnormal,
+        normal: Math.max(0, assessed - abnormal),
+      };
+    }).filter((r) => r.abnormal + r.normal > 0);
   }, [latestOutcome]);
 
   const normalPct = useMemo(() => {
@@ -196,10 +213,12 @@ export function PosyanduAnalisis() {
       )}
 
       {/* LEVEL 2: HASIL SKRINING & TEMUAN KLINIS UMUM */}
-      {/* 2a. Donut Distribusi Hasil Pengukuran */}
-      {pieData.length > 0 && pieData.some(d => d.value > 0) && (
-        <ChartCard title="Distribusi Hasil Pengukuran" subtitle={`Bulan ${formatYM(latestMonth)}`}>
-          <OutcomeDonut data={pieData} />
+      {indicatorOutcomeStacked.length > 0 && (
+        <ChartCard
+          title="Distribusi Hasil Pengukuran per Indikator"
+          subtitle={`Bulan ${formatYM(latestMonth)} — rasio hasil sehat & temuan klinis`}
+        >
+          <IndicatorOutcomeStackedBar data={indicatorOutcomeStacked} />
         </ChartCard>
       )}
 

@@ -15,10 +15,10 @@ import { WeightProgressionCard } from './WeightProgressionCard';
 import { BreastfeedingCard } from './BreastfeedingCard';
 import { CategoryCoverageCard } from './CategoryCoverageCard';
 import { TbScreeningCard } from './TbScreeningCard';
-import { OutcomeDonut } from './OutcomeDonut';
 import { IndicatorDrillSheet } from './IndicatorDrillSheet';
 import { PeriodControl, periodToRange } from './PeriodControl';
 import { UnitScoreboard } from './UnitScoreboard';
+import { IndicatorOutcomeStackedBar } from './IndicatorOutcomeStackedBar';
 import { EmptyState } from './EmptyState';
 import { PARTISIPASI_BURUK_THRESHOLD, INDICATORS } from '@/lib/clinical';
 import { useBackLayer } from '@/lib/back-navigation';
@@ -26,7 +26,17 @@ import { AnalisisPageSkeleton } from '@/components/Skeleton';
 
 
 type CoverageData = { ym: string; unitId: string; unitName: string; numerator: number; denominator: number; participation: number };
-type OutcomeData = { ym: string; unitId: string; unitName: string; total: number; normal: number; abnormal: number; notAssessed: number; abnormalByIndicator: Record<string, number> };
+type OutcomeData = {
+  ym: string;
+  unitId: string;
+  unitName: string;
+  total: number;
+  normal: number;
+  abnormal: number;
+  notAssessed: number;
+  abnormalByIndicator: Record<string, number>;
+  assessedByIndicator?: Record<string, number>;
+};
 
 function formatYM(ym: string): string {
   const [y, m] = ym.split('-');
@@ -100,11 +110,25 @@ export function PuskesmasAnalisis() {
     }));
   }, [posyanduCoverage]);
 
-  // Outcome pie — agregat SELURUH posyandu utk bulan tsb (jangan find yg ambil 1 baris)
+  // Outcome — agregat SELURUH posyandu utk bulan tsb
   const latestOutcome = useMemo(() => {
     const rows = posyanduOutcome.filter(d => d.ym === latestMonth);
     if (rows.length === 0) return null;
-    const merged: { total: number; normal: number; abnormal: number; notAssessed: number; abnormalByIndicator: Record<string, number> } = { total: 0, normal: 0, abnormal: 0, notAssessed: 0, abnormalByIndicator: {} };
+    const merged: {
+      total: number;
+      normal: number;
+      abnormal: number;
+      notAssessed: number;
+      abnormalByIndicator: Record<string, number>;
+      assessedByIndicator: Record<string, number>;
+    } = {
+      total: 0,
+      normal: 0,
+      abnormal: 0,
+      notAssessed: 0,
+      abnormalByIndicator: {},
+      assessedByIndicator: {},
+    };
     for (const r of rows) {
       merged.total += r.total;
       merged.normal += r.normal;
@@ -113,31 +137,35 @@ export function PuskesmasAnalisis() {
       for (const [k, v] of Object.entries(r.abnormalByIndicator)) {
         merged.abnormalByIndicator[k] = (merged.abnormalByIndicator[k] ?? 0) + v;
       }
+      if (r.assessedByIndicator) {
+        for (const [k, v] of Object.entries(r.assessedByIndicator)) {
+          merged.assessedByIndicator[k] = (merged.assessedByIndicator[k] ?? 0) + v;
+        }
+      }
     }
     return merged;
   }, [posyanduOutcome, latestMonth]);
 
-  const pieData = useMemo(() => {
+  // Stacked bar per indikator: Tidak Normal / Normal (hanya yang sudah dinilai)
+  const indicatorOutcomeStacked = useMemo(() => {
     if (!latestOutcome) return [];
-    return [
-      { name: 'Normal', value: latestOutcome.normal },
-      { name: 'Tidak Normal', value: latestOutcome.abnormal },
-      { name: 'Belum Dinilai', value: latestOutcome.notAssessed },
-    ];
+    return INDICATORS.map((ind) => {
+      const abnormal = latestOutcome.abnormalByIndicator[ind.key] ?? 0;
+      const assessed = latestOutcome.assessedByIndicator?.[ind.key] ?? 0;
+      return {
+        key: ind.key,
+        name: ind.label.length > 20 ? ind.label.slice(0, 18) + '…' : ind.label,
+        fullLabel: ind.label,
+        abnormal,
+        normal: Math.max(0, assessed - abnormal),
+      };
+    }).filter((r) => r.abnormal + r.normal > 0);
   }, [latestOutcome]);
 
   const normalPct = useMemo(() => {
     if (!latestOutcome) return 0;
     const assessed = latestOutcome.normal + latestOutcome.abnormal;
     return assessed > 0 ? Math.round((latestOutcome.normal / assessed) * 100) : 0;
-  }, [latestOutcome]);
-
-  const abnormalByIndicator = useMemo(() => {
-    if (!latestOutcome) return [];
-    return INDICATORS
-      .map((ind) => ({ key: ind.key, label: ind.label, count: latestOutcome.abnormalByIndicator[ind.key] ?? 0 }))
-      .filter((x) => x.count > 0)
-      .sort((a, b) => b.count - a.count);
   }, [latestOutcome]);
 
   const activeDenominator = useMemo(() => {
@@ -224,31 +252,15 @@ export function PuskesmasAnalisis() {
       )}
 
       {/* LEVEL 2: HASIL SKRINING & TEMUAN KLINIS UMUM */}
-      {/* 2a. Donut Distribusi Hasil Pengukuran */}
-      {pieData.length > 0 && pieData.some(d => d.value > 0) && (
-        <ChartCard title="Distribusi Hasil Pengukuran" subtitle={`Bulan ${formatYM(latestMonth)}`}>
-          <OutcomeDonut data={pieData} />
-        </ChartCard>
-      )}
-
-      {/* 2b. Temuan per indikator — klik untuk detail per posyandu */}
-      {abnormalByIndicator.length > 0 && (
-        <ChartCard title="Temuan Tidak Normal per Indikator" subtitle={`Bulan ${formatYM(latestMonth)} — klik untuk lihat per posyandu`}>
-          <div className="space-y-1.5">
-            {abnormalByIndicator.map((ind) => (
-              <button
-                key={ind.key}
-                type="button"
-                onClick={() => setIndicatorDrill({ key: ind.key, label: ind.label })}
-                className="w-full flex items-center justify-between gap-2 bg-white rounded-xl border border-[#e9edef] p-2.5 text-left hover:bg-[#f0f2f5] transition-colors"
-              >
-                <span className="text-xs font-bold text-[#111b21] truncate">{ind.label}</span>
-                <span className="text-xs font-extrabold text-red-600 shrink-0">
-                  {ind.count} <span className="text-[#128c7e]">›</span>
-                </span>
-              </button>
-            ))}
-          </div>
+      {indicatorOutcomeStacked.length > 0 && (
+        <ChartCard
+          title="Distribusi Hasil Pengukuran per Indikator"
+          subtitle={`Bulan ${formatYM(latestMonth)} — klik indikator untuk melihat rincian per posyandu`}
+        >
+          <IndicatorOutcomeStackedBar
+            data={indicatorOutcomeStacked}
+            onPick={(key, label) => setIndicatorDrill({ key, label })}
+          />
         </ChartCard>
       )}
 

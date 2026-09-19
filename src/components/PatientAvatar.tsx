@@ -16,7 +16,7 @@ const FEMALE_PALETTE = ['#e11d48', '#f43f5e', '#fb7185', '#fecdd3', '#fda4af'];
 const BABY_FALLBACK_PALETTE = ['#fb7185', '#fdba74', '#fef08a', '#86efac', '#67e8f9'];
 const DEFAULT_PALETTE = ['#075e54', '#128c7e', '#25d366', '#34b7f1', '#ece5dd'];
 
-export const PatientAvatar: React.FC<PatientAvatarProps> = ({
+export const PatientAvatar: React.FC<PatientAvatarProps> = React.memo(({
   name,
   gender,
   category,
@@ -95,6 +95,7 @@ export const PatientAvatar: React.FC<PatientAvatarProps> = ({
           width={size}
           height={size}
           loading="lazy"
+          decoding="async"
           onLoad={() => setImgLoaded(true)}
           onError={() => setImgError(true)}
           className={`relative z-1 w-full h-full object-cover transition-opacity duration-300 ${
@@ -104,4 +105,6 @@ export const PatientAvatar: React.FC<PatientAvatarProps> = ({
       )}
     </div>
   );
-};
+});
+
+PatientAvatar.displayName = 'PatientAvatar';

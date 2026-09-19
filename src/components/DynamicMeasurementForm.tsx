@@ -577,12 +577,12 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
             </div>
           )}
 
-          {/* A. Ukur Fisik Utama (BB & TB) — semua kategori */}
+          {/* A. Ukur Fisik & Antropometri Utama */}
           <SectionCard>
             <SectionHeader
               icon={Scale}
-              title="Ukur Fisik Utama"
-              hint="Wajib diisi untuk semua pasien"
+              title="Antropometri & Fisik Utama"
+              hint={isUnderFive ? "Wajib diisi — menentukan grafik pertumbuhan KMS balita" : "Wajib diisi untuk semua pasien"}
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <MetricField
@@ -590,6 +590,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 unit="kg"
                 value={weight}
                 onChange={(v) => handleFieldChange('weight', v)}
+                step={0.1}
                 error={errors.weight}
                 onClear={isReadOnly ? undefined : () => handleFieldChange('weight', '')}
               />
@@ -598,10 +599,27 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                 unit="cm"
                 value={height}
                 onChange={(v) => handleFieldChange('height', v)}
+                step={0.5}
                 error={errors.height}
                 onClear={isReadOnly ? undefined : () => handleFieldChange('height', '')}
               />
             </div>
+
+            {/* Lingkar Kepala khusus balita */}
+            {isUnderFive && (
+              <div className="pt-1">
+                <MetricField
+                  label="Lingkar Kepala (LK)"
+                  unit="cm"
+                  value={headCircumference}
+                  onChange={(v) => handleFieldChange('headCircumference', v)}
+                  step={0.5}
+                  size="sm"
+                  error={errors.headCircumference}
+                  onClear={isReadOnly ? undefined : () => handleFieldChange('headCircumference', '')}
+                />
+              </div>
+            )}
 
             <div className="flex items-center justify-between gap-2 pt-1">
               <span className="text-[11px] font-bold text-[#54656f]">Indeks Massa Tubuh (IMT)</span>
@@ -612,7 +630,7 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
 
             {/* Posisi ukur — hanya Bayi/Balita/Apras (menentukan koreksi ±0,7 cm) */}
             {isUnderFive && (
-              <div className="pt-1">
+              <div className="pt-2 border-t border-[#e9edef]">
                 <p className="text-[11px] font-bold text-[#54656f] mb-1.5">Posisi saat diukur</p>
                 <div className="grid grid-cols-2 gap-2">
                   {(['TELENTANG', 'BERDIRI'] as const).map((p) => (
@@ -623,9 +641,9 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                       onClick={() => handleFieldChange('position', p)}
                       className={`h-11 rounded-xl text-[11px] font-extrabold border transition-all ${
                         effectivePosition === p
-                          ? 'bg-[#075e54] text-white border-[#075e54]'
-                          : 'bg-[#f0f2f5] text-[#54656f] border-[#e9edef]'
-                      } disabled:opacity-60`}
+                          ? 'bg-[#075e54] text-white border-[#075e54] shadow-xs'
+                          : 'bg-[#f0f2f5] text-[#54656f] border-[#e9edef] hover:bg-[#e9edef]'
+                      } disabled:opacity-60 touch-press`}
                     >
                       {p === 'TELENTANG' ? 'Telentang (PB)' : 'Berdiri (TB)'}
                     </button>
@@ -663,101 +681,49 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
             )}
           </SectionCard>
 
-          {/* B. Ukur Khusus Bayi/Balita/Apras */}
-          {isUnderFive && (
+          {/* B. Pemeriksaan & Skrining Sasaran */}
+          {(showAsi || showTensi || showArm || showWaist || showVision || showHearing || showTb) && (
             <SectionCard>
               <SectionHeader
-                icon={CircleDot}
-                title="Ukur Khusus Bayi / Balita / Apras"
-                hint="Lingkar kepala (LK) memantau pertumbuhan otak"
-              />
-              <MetricField
-                label="Lingkar Kepala (LK)"
-                unit="cm"
-                value={headCircumference}
-                onChange={(v) => handleFieldChange('headCircumference', v)}
-                error={errors.headCircumference}
-                onClear={isReadOnly ? undefined : () => handleFieldChange('headCircumference', '')}
-              />
-            </SectionCard>
-          )}
-
-          {/* ASI Eksklusif — hanya Bayi (0-5 bln), berhenti setelah dijawab Tidak */}
-          {showAsi && (
-            <SectionCard>
-              <SectionHeader
-                icon={Heart}
-                title="ASI Eksklusif"
-                hint="Apakah bayi bulan ini masih hanya mendapat ASI?"
-              />
-              <div className="grid grid-cols-2 bg-white p-1 rounded-xl border border-[#e9edef] gap-1">
-                {(['Ya', 'Tidak'] as const).map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    disabled={isReadOnly}
-                    onClick={() => handleFieldChange('exclusiveBreastfeeding', opt)}
-                    className={`py-2.5 rounded-lg text-xs font-extrabold border transition-all disabled:opacity-60 ${
-                      exclusiveBreastfeeding === opt
-                        ? 'bg-[#075e54] text-white border-[#075e54]'
-                        : 'bg-[#f0f2f5] text-[#54656f] border-[#e9edef]'
-                    }`}
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-[#8696a0] font-medium">
-                Setelah dijawab <strong>Tidak</strong>, pertanyaan ini tak muncul lagi di bulan berikutnya.
-              </p>
-            </SectionCard>
-          )}
-
-          {/* Ukur Tambahan — menyesuaikan sasaran (opsional) */}
-          {(showArm || showWaist) && (
-            <SectionCard>
-              <SectionHeader
-                icon={Ruler}
-                title="Ukur Tambahan"
-                hint="Opsional — sesuai kelompok sasaran"
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {showArm && (
-                  <MetricField
-                    label="Lingkar Lengan Atas (LiLA)"
-                    unit="cm"
-                    value={armCircumference}
-                    onChange={(v) => handleFieldChange('armCircumference', v)}
-                    error={errors.armCircumference}
-                    onClear={isReadOnly ? undefined : () => handleFieldChange('armCircumference', '')}
-                  />
-                )}
-                {showWaist && (
-                  <MetricField
-                    label="Lingkar Perut"
-                    unit="cm"
-                    value={waistCircumference}
-                    onChange={(v) => handleFieldChange('waistCircumference', v)}
-                    error={errors.waistCircumference}
-                    onClear={isReadOnly ? undefined : () => handleFieldChange('waistCircumference', '')}
-                  />
-                )}
-              </div>
-            </SectionCard>
-          )}
-
-          {/* Tensi / Pemeriksaan Ibu Hamil — Remaja, Dewasa, Lansia, Bumil */}
-          {showTensi && (
-            <SectionCard>
-              <SectionHeader
-                icon={HeartPulse}
-                title={effectiveCategory === 'BUMIL' ? 'Pemeriksaan Ibu Hamil' : 'Tekanan Darah'}
-                hint={
+                icon={effectiveCategory === 'BUMIL' ? HeartPulse : Activity}
+                title={
                   effectiveCategory === 'BUMIL'
-                    ? 'Usia kehamilan & tekanan darah'
-                    : 'Tekanan darah (tensi)'
+                    ? 'Pemeriksaan Ibu Hamil'
+                    : effectiveCategory === 'BAYI' || effectiveCategory === 'BALITA_APRAS'
+                    ? 'Pemeriksaan & Skrining Balita'
+                    : 'Pemeriksaan & Skrining Klinis'
                 }
+                hint="Menyesuaikan kelompok sasaran umur & kondisi"
               />
+
+              {/* ASI Eksklusif — hanya Bayi (0-5 bln) */}
+              {showAsi && (
+                <div className="space-y-1.5 pb-2 border-b border-[#f0f2f5]">
+                  <p className="text-[11px] font-bold text-[#54656f]">ASI Eksklusif (0–5 bulan)</p>
+                  <div className="grid grid-cols-2 bg-white p-1 rounded-xl border border-[#e9edef] gap-1">
+                    {(['Ya', 'Tidak'] as const).map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        disabled={isReadOnly}
+                        onClick={() => handleFieldChange('exclusiveBreastfeeding', opt)}
+                        className={`py-2.5 rounded-lg text-xs font-extrabold border transition-all disabled:opacity-60 touch-press ${
+                          exclusiveBreastfeeding === opt
+                            ? 'bg-[#075e54] text-white border-[#075e54] shadow-xs'
+                            : 'bg-[#f0f2f5] text-[#54656f] border-[#e9edef] hover:bg-[#e9edef]'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-[#8696a0] font-medium">
+                    Setelah dijawab <strong>Tidak</strong>, pertanyaan ini tak muncul lagi di bulan berikutnya.
+                  </p>
+                </div>
+              )}
+
+              {/* Usia Kehamilan untuk Bumil */}
               {showGestational && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <MetricField
@@ -772,90 +738,114 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                   />
                 </div>
               )}
-              <BloodPressureField
-                systolic={systolic}
-                diastolic={diastolic}
-                onSystolic={(v) => handleFieldChange('systolic', v)}
-                onDiastolic={(v) => handleFieldChange('diastolic', v)}
-                error={errors.systolic || errors.diastolic}
-                onClear={
-                  isReadOnly
-                    ? undefined
-                    : () => {
-                        handleFieldChange('systolic', '');
-                        handleFieldChange('diastolic', '');
-                      }
-                }
-              />
-            </SectionCard>
-          )}
 
-          {/* Skrining Indra (opsional) */}
-          {(showVision || showHearing) && (
-            <SectionCard>
-              <SectionHeader
-                icon={Eye}
-                title="Skrining Indra"
-                hint="Hasil pemeriksaan mata & telinga"
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {showVision && (
-                  <ScreeningField
-                    icon={Eye}
-                    label="Skrining Mata"
-                    value={visionStatus}
-                    onChange={(v) => handleFieldChange('visionStatus', v)}
-                    onClear={isReadOnly ? undefined : () => handleFieldChange('visionStatus', '')}
-                  />
-                )}
-                {showHearing && (
-                  <ScreeningField
-                    icon={Ear}
-                    label="Skrining Telinga"
-                    value={hearingStatus}
-                    onChange={(v) => handleFieldChange('hearingStatus', v)}
-                    onClear={isReadOnly ? undefined : () => handleFieldChange('hearingStatus', '')}
-                  />
-                )}
-              </div>
-            </SectionCard>
-          )}
+              {/* Tekanan Darah (Tensi) */}
+              {showTensi && (
+                <BloodPressureField
+                  systolic={systolic}
+                  diastolic={diastolic}
+                  onSystolic={(v) => handleFieldChange('systolic', v)}
+                  onDiastolic={(v) => handleFieldChange('diastolic', v)}
+                  error={errors.systolic || errors.diastolic}
+                  onClear={
+                    isReadOnly
+                      ? undefined
+                      : () => {
+                          handleFieldChange('systolic', '');
+                          handleFieldChange('diastolic', '');
+                        }
+                  }
+                />
+              )}
 
-          {/* Skrining TB (opsional) */}
-          {showTb && (
-            <SectionCard>
-              <SectionHeader
-                icon={Activity}
-                title="Skrining Tuberkulosis (TB)"
-                hint="Apakah berisiko TB bulan ini?"
-              />
-              <div className="grid grid-cols-2 bg-white p-1 rounded-xl border border-[#e9edef] gap-1">
-                {([
-                  { value: 'TIDAK_BERESIKO', label: 'Tidak Beresiko' },
-                  { value: 'BERESIKO', label: 'Beresiko' },
-                ] as const).map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    disabled={isReadOnly}
-                    onClick={() =>
-                      handleFieldChange('tbScreeningStatus', tbScreeningStatus === opt.value ? '' : opt.value)
-                    }
-                    className={`py-2.5 rounded-lg text-xs font-extrabold border transition-all disabled:opacity-60 ${
-                      tbScreeningStatus === opt.value
-                        ? opt.value === 'BERESIKO'
-                          ? 'bg-[#dc2626] text-white border-[#dc2626]'
-                          : 'bg-[#075e54] text-white border-[#075e54]'
-                        : 'bg-[#f0f2f5] text-[#54656f] border-[#e9edef]'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-[#8696a0] font-medium">
-                Tekan pilihan yang aktif untuk mengosongkan.
-              </p>
+              {/* Ukur Tambahan (LiLA & Lingkar Perut) */}
+              {(showArm || showWaist) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {showArm && (
+                    <MetricField
+                      label="Lingkar Lengan Atas (LiLA)"
+                      unit="cm"
+                      value={armCircumference}
+                      onChange={(v) => handleFieldChange('armCircumference', v)}
+                      step={0.5}
+                      error={errors.armCircumference}
+                      onClear={isReadOnly ? undefined : () => handleFieldChange('armCircumference', '')}
+                    />
+                  )}
+                  {showWaist && (
+                    <MetricField
+                      label="Lingkar Perut"
+                      unit="cm"
+                      value={waistCircumference}
+                      onChange={(v) => handleFieldChange('waistCircumference', v)}
+                      step={0.5}
+                      error={errors.waistCircumference}
+                      onClear={isReadOnly ? undefined : () => handleFieldChange('waistCircumference', '')}
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* Skrining Indra */}
+              {(showVision || showHearing) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {showVision && (
+                    <ScreeningField
+                      icon={Eye}
+                      label="Skrining Mata"
+                      value={visionStatus}
+                      onChange={(v) => handleFieldChange('visionStatus', v)}
+                      onClear={isReadOnly ? undefined : () => handleFieldChange('visionStatus', '')}
+                    />
+                  )}
+                  {showHearing && (
+                    <ScreeningField
+                      icon={Ear}
+                      label="Skrining Telinga"
+                      value={hearingStatus}
+                      onChange={(v) => handleFieldChange('hearingStatus', v)}
+                      onClear={isReadOnly ? undefined : () => handleFieldChange('hearingStatus', '')}
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* Skrining TB */}
+              {showTb && (
+                <div className="pt-2 border-t border-[#f0f2f5] space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#54656f]">
+                    <Activity className="w-3.5 h-3.5 text-[#128c7e]" />
+                    <span>Skrining Tuberkulosis (TB)</span>
+                  </div>
+                  <div className="grid grid-cols-2 bg-white p-1 rounded-xl border border-[#e9edef] gap-1">
+                    {([
+                      { value: 'TIDAK_BERESIKO', label: 'Tidak Beresiko' },
+                      { value: 'BERESIKO', label: 'Beresiko' },
+                    ] as const).map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        disabled={isReadOnly}
+                        onClick={() =>
+                          handleFieldChange('tbScreeningStatus', tbScreeningStatus === opt.value ? '' : opt.value)
+                        }
+                        className={`py-2.5 rounded-lg text-xs font-extrabold border transition-all disabled:opacity-60 touch-press ${
+                          tbScreeningStatus === opt.value
+                            ? opt.value === 'BERESIKO'
+                              ? 'bg-[#dc2626] text-white border-[#dc2626] shadow-xs'
+                              : 'bg-[#075e54] text-white border-[#075e54] shadow-xs'
+                            : 'bg-[#f0f2f5] text-[#54656f] border-[#e9edef] hover:bg-[#e9edef]'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-[#8696a0] font-medium">
+                    Tekan pilihan yang aktif untuk mengosongkan.
+                  </p>
+                </div>
+              )}
             </SectionCard>
           )}
 
@@ -1217,6 +1207,7 @@ function MetricField({
   size = 'lg',
   error,
   onClear,
+  step,
 }: {
   label: string;
   unit: string;
@@ -1227,7 +1218,14 @@ function MetricField({
   size?: 'lg' | 'sm';
   error?: string;
   onClear?: () => void;
+  step?: number;
 }) {
+  const handleStep = (delta: number) => {
+    const cur = parseFloat(value) || 0;
+    const next = Math.max(0, Math.round((cur + delta) * 10) / 10);
+    onChange(String(next));
+  };
+
   return (
     <div>
       <div
@@ -1252,6 +1250,26 @@ function MetricField({
             className={`${numInputCls} ${size === 'lg' ? 'text-xl' : 'text-lg'}`}
           />
         </div>
+        {step != null && (
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => handleStep(-step)}
+              className="w-7 h-7 flex items-center justify-center text-[10px] font-black text-[#54656f] bg-white border border-[#e9edef] rounded-lg hover:bg-[#e7fceb] hover:text-[#075e54] transition-all touch-press active:scale-95"
+              title={`Kurangi ${step}`}
+            >
+              -{step}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleStep(step)}
+              className="w-7 h-7 flex items-center justify-center text-[10px] font-black text-[#075e54] bg-white border border-[#e9edef] rounded-lg hover:bg-[#e7fceb] transition-all touch-press active:scale-95"
+              title={`Tambah ${step}`}
+            >
+              +{step}
+            </button>
+          </div>
+        )}
         {onClear && value !== '' && (
           <button
             type="button"

@@ -51,6 +51,7 @@ export const LocationHeroStat: React.FC<LocationHeroStatProps> = ({ statusCounts
               width={48}
               height={48}
               loading="lazy"
+              decoding="async"
               onLoad={() => setImgLoaded(true)}
               onError={() => setImgError(true)}
               className={`w-full h-full object-cover transition-opacity duration-300 relative z-1 hover:scale-105 ${

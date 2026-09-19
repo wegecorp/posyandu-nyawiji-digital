@@ -21,7 +21,7 @@ interface PatientCardProps {
   onEdit?: (patient: PatientData) => void;
 }
 
-export const PatientCard: React.FC<PatientCardProps> = ({
+export const PatientCard: React.FC<PatientCardProps> = React.memo(({
   patient,
   isSelected = false,
   onSelect,
@@ -42,7 +42,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
   return (
     <div
       onClick={() => onSelect(patient)}
-      className={`p-2.5 sm:p-3 rounded-xl border transition-all cursor-pointer touch-press relative flex items-center justify-between gap-2.5 shadow-xs ${
+      className={`patient-card-virtualized p-2.5 sm:p-3 rounded-xl border transition-all cursor-pointer touch-press relative flex items-center justify-between gap-2.5 shadow-xs ${
         isSelected
           ? 'bg-[#e7fceb] border-[#25d366] ring-1 ring-[#25d366]/40'
           : 'bg-white hover:bg-[#f0f2f5] border-[#e9edef]'
@@ -142,4 +142,6 @@ export const PatientCard: React.FC<PatientCardProps> = ({
       </div>
     </div>
   );
-};
+});
+
+PatientCard.displayName = 'PatientCard';

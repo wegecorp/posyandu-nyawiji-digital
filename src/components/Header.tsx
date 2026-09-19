@@ -136,6 +136,7 @@ export const Header: React.FC<HeaderProps> = ({
                 width={36}
                 height={36}
                 loading="lazy"
+                decoding="async"
                 onError={() => setLandscapeError(true)}
                 className="w-full h-full object-cover"
               />
@@ -147,6 +148,7 @@ export const Header: React.FC<HeaderProps> = ({
                 width={36}
                 height={36}
                 loading="lazy"
+                decoding="async"
                 onError={() => setLandscapeError(true)}
                 className="w-full h-full object-cover"
               />
@@ -158,6 +160,7 @@ export const Header: React.FC<HeaderProps> = ({
                 width={36}
                 height={36}
                 loading="lazy"
+                decoding="async"
                 onError={() => setLandscapeError(true)}
                 className="w-full h-full object-cover"
               />

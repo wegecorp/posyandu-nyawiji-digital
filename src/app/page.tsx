@@ -304,6 +304,20 @@ export default function PosyanduApp() {
     }
   };
 
+  const handleSelectPatient = React.useCallback((p: PatientData) => {
+    setSelectedPatient(p);
+  }, []);
+
+  const handleShowPatientQR = React.useCallback((e: React.MouseEvent, p: PatientData) => {
+    e.stopPropagation();
+    setQrPatientTarget(p);
+    setIsQRViewOpen(true);
+  }, []);
+
+  const handleEditPatient = React.useCallback((p: PatientData) => {
+    setEditingPatient(p);
+  }, []);
+
   const showPatientQR = (p: PatientData) => {
     setQrPatientTarget(p);
     setIsQRViewOpen(true);
@@ -548,12 +562,9 @@ export default function PosyanduApp() {
                     key={patient.id}
                     patient={patient}
                     isSelected={false}
-                    onSelect={(p) => setSelectedPatient(p)}
-                    onShowQR={(e, p) => {
-                      e.stopPropagation();
-                      showPatientQR(p);
-                    }}
-                    onEdit={isReadOnly ? undefined : (p) => setEditingPatient(p)}
+                    onSelect={handleSelectPatient}
+                    onShowQR={handleShowPatientQR}
+                    onEdit={isReadOnly ? undefined : handleEditPatient}
                   />
                 ))}
               </div>

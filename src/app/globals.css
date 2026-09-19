@@ -70,6 +70,12 @@ body {
   display: none;
 }
 
+/* Virtualized list performance optimization via CSS content-visibility */
+.patient-card-virtualized {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 76px;
+}
+
 /* Pulse animation for autosaving badge */
 @keyframes savePulse {
   0%, 100% { opacity: 1; transform: scale(1); }

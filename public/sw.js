@@ -9,12 +9,20 @@
  *
  * Saat versi berubah, cukup naikkan VERSION untuk membersihkan cache lama.
  */
-const VERSION = '2026.09-v6';
+const VERSION = '2026.09-v7';
 const APP_SHELL_CACHE = `nyawiji-shell-${VERSION}`;
 const STATIC_CACHE = `nyawiji-static-${VERSION}`;
 const AVATAR_CACHE = `nyawiji-avatars-${VERSION}`;
 
-self.addEventListener('install', () => {
+const PRECACHE_ASSETS = ['/brand/logo.svg', '/favicon.ico'];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches
+      .open(STATIC_CACHE)
+      .then((cache) => cache.addAll(PRECACHE_ASSETS))
+      .catch(() => {})
+  );
   self.skipWaiting();
 });
 

@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   applicationName: APP_NAME,
   icons: {
     icon: [
-      { url: "/brand/logo-192.png", type: "image/png", sizes: "192x192" },
-      { url: "/brand/logo-512.png", type: "image/png", sizes: "512x512" },
+      { url: "/brand/logo.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "32x32" },
     ],
     apple: [{ url: "/brand/logo-apple-180.png", type: "image/png", sizes: "180x180" }],
   },

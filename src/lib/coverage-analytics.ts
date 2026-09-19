@@ -121,6 +121,10 @@ export interface CategoryCoverageRow {
   category: PatientCategory;
   registered: number;
   measured: number;
+  totalRegistered?: number;
+  totalMeasured?: number;
+  percent?: number;
+  sharePercent?: number;
 }
 
 /**
@@ -150,15 +154,33 @@ export function categoryCoverage(
     const acc: Record<string, { reg: number; meas: number }> = {};
     for (const c of CATEGORY_ORDER) acc[c] = { reg: 0, meas: 0 };
 
+    let totalRegistered = 0;
+    let totalMeasured = 0;
+
     for (const p of patients) {
       if (p.createdAt.getTime() > monthEnd.getTime()) continue;
       const cat = getPatientCategory(p.birthDate, p.isPregnant, p.gender, monthEnd);
       acc[cat].reg++;
-      if (measuredSet.has(p.id)) acc[cat].meas++;
+      totalRegistered++;
+      if (measuredSet.has(p.id)) {
+        acc[cat].meas++;
+        totalMeasured++;
+      }
     }
 
     for (const c of CATEGORY_ORDER) {
-      out.push({ ym, category: c, registered: acc[c].reg, measured: acc[c].meas });
+      const reg = acc[c].reg;
+      const meas = acc[c].meas;
+      out.push({
+        ym,
+        category: c,
+        registered: reg,
+        measured: meas,
+        totalRegistered,
+        totalMeasured,
+        percent: reg > 0 ? Math.round((meas / reg) * 100) : 0,
+        sharePercent: totalRegistered > 0 ? Math.round((reg / totalRegistered) * 100) : 0,
+      });
     }
   }
   return out;

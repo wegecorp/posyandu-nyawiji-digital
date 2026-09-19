@@ -61,10 +61,10 @@ describe('categoryCoverage', () => {
     const rows = categoryCoverage(patients, measurements, ['2026-01']);
     const bayi = rows.find((r) => r.category === 'BAYI')!;
     const balita = rows.find((r) => r.category === 'BALITA_APRAS')!;
-    expect(bayi).toMatchObject({ registered: 1, measured: 1 });
-    expect(balita).toMatchObject({ registered: 1, measured: 1 });
+    expect(bayi).toMatchObject({ registered: 1, measured: 1, totalRegistered: 2, totalMeasured: 2, percent: 100, sharePercent: 50 });
+    expect(balita).toMatchObject({ registered: 1, measured: 1, totalRegistered: 2, totalMeasured: 2, percent: 100, sharePercent: 50 });
     // kategori lain kosong
-    expect(rows.find((r) => r.category === 'LANSIA')).toMatchObject({ registered: 0, measured: 0 });
+    expect(rows.find((r) => r.category === 'LANSIA')).toMatchObject({ registered: 0, measured: 0, totalRegistered: 2, totalMeasured: 2, percent: 0, sharePercent: 0 });
   });
 
   it('pasien belum terdaftar pada bulan lampau tidak dihitung', () => {

@@ -309,23 +309,37 @@ export function DinkesAnalisis() {
         <PeriodControl selected={period} onChange={setPeriod} />
       </div>
 
-      {/* 0. Status gizi balita (Permenkes 2/2020) */}
-      <GrowthStatusDistribution from={from} to={to} hcId={drillHcId ?? undefined} />
+      {/* LEVEL 1: RINGKASAN KPI, DEMOGRAFI & CAKUPAN PARTISIPASI (MAKRO) */}
+      {!(drillHcId && activeMonth === '') && (
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
+            <Users className="w-5 h-5 text-[#075e54] mx-auto mb-1" />
+            <p className="text-lg font-extrabold text-[#111b21]">
+              {activeDenominator.toLocaleString('id-ID')}
+            </p>
+            <p className="text-[10px] text-[#54656f] font-bold">Terdaftar</p>
+          </div>
+          <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
+            <TrendingUp className="w-5 h-5 text-[#075e54] mx-auto mb-1" />
+            <p className="text-lg font-extrabold text-[#111b21]">
+              {normalPct}%
+            </p>
+            <p className="text-[10px] text-[#54656f] font-bold">Hasil Normal</p>
+          </div>
+          <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
+            <AlertTriangle className="w-5 h-5 text-red-500 mx-auto mb-1" />
+            <p className="text-lg font-extrabold text-red-600">
+              {(activeOutcome?.abnormal ?? 0).toLocaleString('id-ID')}
+            </p>
+            <p className="text-[10px] text-[#54656f] font-bold">Perlu Perhatian</p>
+          </div>
+        </div>
+      )}
 
-      {/* 0a. Peringkat prevalensi masalah gizi per wilayah */}
-      <GrowthProblemRanking from={from} to={to} hcId={drillHcId ?? undefined} hcName={drillHcName} />
-
-      {/* 0b. Tren stunting (TB/U) */}
-      <StuntingTrendCard from={from} to={to} hcId={drillHcId ?? undefined} />
-
-      {/* 0c. Progres berat badan (N/T & 2T) */}
-      <WeightProgressionCard from={from} to={to} hcId={drillHcId ?? undefined} />
-
-      <BreastfeedingCard from={from} to={to} hcId={drillHcId ?? undefined} hcName={drillHcName} />
-      <TbScreeningCard from={from} to={to} hcId={drillHcId ?? undefined} />
+      {/* 1a. Cakupan & Distribusi Kelompok Sasaran (Lansia s/d Bayi) */}
       <CategoryCoverageCard from={from} to={to} hcId={drillHcId ?? undefined} />
 
-      {/* 1. Trend Line — Partisipasi */}
+      {/* 1b. Tren Garis Partisipasi Bulanan */}
       {trendData.length > 0 && (
         <ChartCard
           title={drillHcId ? `Tren Partisipasi ${drillHcName}` : 'Tren Partisipasi Kabupaten'}
@@ -343,7 +357,7 @@ export function DinkesAnalisis() {
         </ChartCard>
       )}
 
-      {/* 2. Bar Ranking Puskesmas */}
+      {/* 1c. Ranking Partisipasi Wilayah */}
       {!drillHcId && puskesmasScoreboard.length > 0 && (
         <ChartCard
           title="Ranking Partisipasi Puskesmas"
@@ -380,7 +394,8 @@ export function DinkesAnalisis() {
         </ChartCard>
       )}
 
-      {/* 3. Stacked bar — Distribusi per indikator */}
+      {/* LEVEL 2: HASIL SKRINING & TEMUAN KLINIS UMUM */}
+      {/* 2a. Stacked bar — Distribusi per indikator */}
       {indicatorOutcomeStacked.length > 0 && (
         <ChartCard
           title="Distribusi Hasil Pengukuran per Indikator"
@@ -390,7 +405,7 @@ export function DinkesAnalisis() {
         </ChartCard>
       )}
 
-      {/* 4. Stacked Bar — Abnormal per Indikator */}
+      {/* 2b. Stacked Bar — Abnormal per Indikator */}
       {abnormalByIndicator.length > 0 && (
         <ChartCard title="Temuan Tidak Normal per Indikator" subtitle={`Bulan ${formatYM(activeMonth)} — klik batang untuk lihat per wilayah`}>
           <ResponsiveContainer width="100%" height={220}>
@@ -420,32 +435,22 @@ export function DinkesAnalisis() {
         </ChartCard>
       )}
 
-      {/* 5. Ringkasan stat cards */}
-      {!(drillHcId && activeMonth === '') && (
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
-            <TrendingUp className="w-5 h-5 text-[#075e54] mx-auto mb-1" />
-            <p className="text-lg font-extrabold text-[#111b21]">
-              {normalPct}%
-            </p>
-            <p className="text-[10px] text-[#54656f] font-bold">Normal</p>
-          </div>
-          <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
-            <AlertTriangle className="w-5 h-5 text-red-500 mx-auto mb-1" />
-            <p className="text-lg font-extrabold text-red-600">
-              {activeOutcome?.abnormal ?? 0}
-            </p>
-            <p className="text-[10px] text-[#54656f] font-bold">Tidak Normal</p>
-          </div>
-          <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
-            <Users className="w-5 h-5 text-[#075e54] mx-auto mb-1" />
-            <p className="text-lg font-extrabold text-[#111b21]">
-              {activeDenominator}
-            </p>
-            <p className="text-[10px] text-[#54656f] font-bold">Terdaftar</p>
-          </div>
-        </div>
-      )}
+      {/* LEVEL 3: PROGRAM PRIORITAS GIZI BALITA & KHUSUS (SPESIFIK) */}
+      {/* 3a. Status gizi balita (Permenkes 2/2020) */}
+      <GrowthStatusDistribution from={from} to={to} hcId={drillHcId ?? undefined} />
+
+      {/* 3b. Peringkat prevalensi masalah gizi per wilayah */}
+      <GrowthProblemRanking from={from} to={to} hcId={drillHcId ?? undefined} hcName={drillHcName} />
+
+      {/* 3c. Tren stunting (TB/U) */}
+      <StuntingTrendCard from={from} to={to} hcId={drillHcId ?? undefined} />
+
+      {/* 3d. Progres berat badan (N/T & 2T) */}
+      <WeightProgressionCard from={from} to={to} hcId={drillHcId ?? undefined} />
+
+      {/* 3e. ASI Eksklusif & Skrining TB */}
+      <BreastfeedingCard from={from} to={to} hcId={drillHcId ?? undefined} hcName={drillHcName} />
+      <TbScreeningCard from={from} to={to} hcId={drillHcId ?? undefined} />
 
       {indicatorDrill && (
         <IndicatorDrillSheet

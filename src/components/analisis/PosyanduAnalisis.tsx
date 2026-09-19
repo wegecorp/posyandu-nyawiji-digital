@@ -5,7 +5,7 @@ import {
   LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
-import { TrendingUp, AlertTriangle, User } from 'lucide-react';
+import { TrendingUp, AlertTriangle, User, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { ChartCard } from './ChartCard';
 import { GrowthStatusDistribution } from './GrowthStatusDistribution';
@@ -123,6 +123,10 @@ export function PosyanduAnalisis() {
     return map;
   }, [latestAbnormal]);
 
+  const activeDenominator = useMemo(() => {
+    return myCoverage.find((d) => d.ym === latestMonth)?.denominator ?? 0;
+  }, [myCoverage, latestMonth]);
+
   if (loading && myCoverage.length === 0) {
     return <AnalisisPageSkeleton />;
   }
@@ -147,21 +151,35 @@ export function PosyanduAnalisis() {
         <PeriodControl selected={period} onChange={setPeriod} />
       </div>
 
-      {/* 0. Status gizi balita (Permenkes 2/2020) */}
-      <GrowthStatusDistribution from={from} to={to} />
+      {/* LEVEL 1: RINGKASAN KPI, DEMOGRAFI & CAKUPAN PARTISIPASI (MAKRO) */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
+          <Users className="w-5 h-5 text-[#075e54] mx-auto mb-1" />
+          <p className="text-lg font-extrabold text-[#111b21]">
+            {activeDenominator.toLocaleString('id-ID')}
+          </p>
+          <p className="text-[10px] text-[#54656f] font-bold">Terdaftar</p>
+        </div>
+        <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
+          <TrendingUp className="w-5 h-5 text-[#075e54] mx-auto mb-1" />
+          <p className="text-lg font-extrabold text-[#111b21]">
+            {normalPct}%
+          </p>
+          <p className="text-[10px] text-[#54656f] font-bold">Hasil Normal</p>
+        </div>
+        <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
+          <AlertTriangle className="w-5 h-5 text-red-500 mx-auto mb-1" />
+          <p className="text-lg font-extrabold text-red-600">
+            {(latestOutcome?.abnormal ?? 0).toLocaleString('id-ID')}
+          </p>
+          <p className="text-[10px] text-[#54656f] font-bold">Perlu Perhatian</p>
+        </div>
+      </div>
 
-      {/* 0a. Tren stunting (TB/U) */}
-      <StuntingTrendCard from={from} to={to} />
-
-      {/* 0b. Progres berat badan (N/T & 2T) */}
-      <WeightProgressionCard from={from} to={to} />
-
-      {/* 0c. ASI Eksklusif + Skrining TB + Cakupan per kelompok sasaran */}
-      <BreastfeedingCard from={from} to={to} />
-      <TbScreeningCard from={from} to={to} />
+      {/* 1a. Cakupan & Distribusi Kelompok Sasaran (Lansia s/d Bayi) */}
       <CategoryCoverageCard from={from} to={to} />
 
-      {/* 1. Trend Line */}
+      {/* 1b. Tren Garis Partisipasi Bulanan */}
       {trendData.length > 0 && (
         <ChartCard title="Tren Partisipasi Posyandu" subtitle="Persentase pasien terukur per bulan">
           <ResponsiveContainer width="100%" height={220}>
@@ -176,14 +194,29 @@ export function PosyanduAnalisis() {
         </ChartCard>
       )}
 
-      {/* 2. Donut */}
+      {/* LEVEL 2: HASIL SKRINING & TEMUAN KLINIS UMUM */}
+      {/* 2a. Donut Distribusi Hasil Pengukuran */}
       {pieData.length > 0 && pieData.some(d => d.value > 0) && (
         <ChartCard title="Distribusi Hasil Pengukuran" subtitle={`Bulan ${formatYM(latestMonth)}`}>
           <OutcomeDonut data={pieData} />
         </ChartCard>
       )}
 
-      {/* 3. Abnormal patients list */}
+      {/* LEVEL 3: PROGRAM PRIORITAS GIZI BALITA & KHUSUS (SPESIFIK) */}
+      {/* 3a. Status gizi balita (Permenkes 2/2020) */}
+      <GrowthStatusDistribution from={from} to={to} />
+
+      {/* 3b. Tren stunting (TB/U) */}
+      <StuntingTrendCard from={from} to={to} />
+
+      {/* 3c. Progres berat badan (N/T & 2T) */}
+      <WeightProgressionCard from={from} to={to} />
+
+      {/* 3d. ASI Eksklusif & Skrining TB */}
+      <BreastfeedingCard from={from} to={to} />
+      <TbScreeningCard from={from} to={to} />
+
+      {/* LEVEL 4: DETAIL MIKRO / PASIEN TIDAK NORMAL (ACTIONABLE) */}
       {latestAbnormal.length > 0 && (
         <ChartCard
           title="Pasien dengan Temuan Tidak Normal"
@@ -225,22 +258,6 @@ export function PosyanduAnalisis() {
           </div>
         </ChartCard>
       )}
-
-      {/* 4. Stat cards */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
-          <TrendingUp className="w-5 h-5 text-[#075e54] mx-auto mb-1" />
-          <p className="text-lg font-extrabold text-[#111b21]">
-            {normalPct}%
-          </p>
-          <p className="text-[10px] text-[#54656f] font-bold">Normal</p>
-        </div>
-        <div className="bg-white rounded-xl p-3 border border-[#e9edef] text-center shadow-xs">
-          <AlertTriangle className="w-5 h-5 text-red-500 mx-auto mb-1" />
-          <p className="text-lg font-extrabold text-red-600">{latestOutcome?.abnormal ?? 0}</p>
-          <p className="text-[10px] text-[#54656f] font-bold">Tidak Normal</p>
-        </div>
-      </div>
     </div>
   );
 }

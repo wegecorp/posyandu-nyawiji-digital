@@ -3,6 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { PwaServiceWorker } from "@/components/PwaServiceWorker";
 import { CloudflareAnalytics } from "@/components/CloudflareAnalytics";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/branding";
 
 export const viewport: Viewport = {
@@ -39,6 +40,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans bg-slate-50 text-slate-900 selection:bg-emerald-200">
         <PwaServiceWorker />
         <CloudflareAnalytics />
+        <GoogleAnalytics />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

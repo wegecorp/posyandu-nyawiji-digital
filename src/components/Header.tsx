@@ -139,6 +139,17 @@ export const Header: React.FC<HeaderProps> = ({
                 onError={() => setLandscapeError(true)}
                 className="w-full h-full object-cover"
               />
+            ) : user?.role === 'PUSKESMAS' && !landscapeError ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`https://api.dicebear.com/10.x/planets/svg?seed=${encodeURIComponent(user?.name || 'Puskesmas')}`}
+                alt="Puskesmas"
+                width={36}
+                height={36}
+                loading="lazy"
+                onError={() => setLandscapeError(true)}
+                className="w-full h-full object-cover"
+              />
             ) : user?.role === 'DINKES' ? (
               'DK'
             ) : user?.role === 'PUSKESMAS' ? (

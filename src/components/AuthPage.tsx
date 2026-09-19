@@ -537,6 +537,7 @@ export function AuthPage() {
                             title={pkm.name}
                             subtitle={`Kapanewon ${pkm.kapanewon}`}
                             icon={<Building2 className="w-4 h-4" />}
+                            avatarUrl={`https://api.dicebear.com/10.x/planets/svg?seed=${encodeURIComponent(pkm.name)}`}
                             onClick={() => choosePuskesmas(pkm)}
                           />
                         ))}
@@ -566,6 +567,7 @@ export function AuthPage() {
                             title={kal.name}
                             subtitle={`${kal.posyanduCount} posyandu`}
                             icon={<MapPin className="w-4 h-4" />}
+                            avatarUrl={`https://api.dicebear.com/10.x/waves/svg?seed=${encodeURIComponent(kal.name)}`}
                             onClick={() => chooseKalurahan(kal)}
                           />
                         ))}
@@ -595,6 +597,7 @@ export function AuthPage() {
                             title={pos.name}
                             subtitle={`${pos.padukuhan && pos.padukuhan !== '-' ? `Padukuhan ${pos.padukuhan} · ` : ''}Kalurahan ${selectedKalurahan?.name || ''}`}
                             icon={<Home className="w-4 h-4" />}
+                            avatarUrl={`https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(pos.name)}`}
                             selected={selectedPosyandu?.id === pos.id}
                             onClick={() => {
                               setSelectedPosyandu(pos);
@@ -617,14 +620,26 @@ export function AuthPage() {
                       <ArrowLeft className="w-3.5 h-3.5" /> Ubah posyandu
                     </button>
                   </div>
-                  <div className="p-3.5 bg-[#f0f2f5] rounded-2xl border border-[#e9edef]">
-                    <p className="text-[11px] font-bold text-[#128c7e] uppercase tracking-wider">Akun Posyandu</p>
-                    <p className="font-black text-[#111b21] text-base mt-1">{selectedPosyandu.name}</p>
-                    <p className="text-xs text-[#54656f] font-medium mt-0.5 flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5" />
-                      {selectedKalurahan?.name}
-                      {selectedPosyandu.padukuhan && selectedPosyandu.padukuhan !== '-' ? ` · ${selectedPosyandu.padukuhan}` : ''}
-                    </p>
+                  <div className="p-3.5 bg-[#f0f2f5] rounded-2xl border border-[#e9edef] flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-[#bbf7d0] bg-[#e7fceb] shadow-xs">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`https://api.dicebear.com/10.x/landscape/svg?seed=${encodeURIComponent(selectedPosyandu.name)}`}
+                        alt={selectedPosyandu.name}
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-bold text-[#128c7e] uppercase tracking-wider">Akun Posyandu</p>
+                      <p className="font-black text-[#111b21] text-base mt-0.5 truncate">{selectedPosyandu.name}</p>
+                      <p className="text-xs text-[#54656f] font-medium mt-0.5 flex items-center gap-1 truncate">
+                        <MapPin className="w-3.5 h-3.5 shrink-0" />
+                        {selectedKalurahan?.name}
+                        {selectedPosyandu.padukuhan && selectedPosyandu.padukuhan !== '-' ? ` · ${selectedPosyandu.padukuhan}` : ''}
+                      </p>
+                    </div>
                   </div>
                   {errorMsg && <ErrorBanner msg={errorMsg} />}
                   <div>
@@ -818,25 +833,44 @@ function SelectableCard({
   title,
   subtitle,
   icon,
+  avatarUrl,
   onClick,
   selected,
 }: {
   title: string;
   subtitle?: string;
   icon: React.ReactNode;
+  avatarUrl?: string;
   onClick: () => void;
   selected?: boolean;
 }) {
+  const [imgErr, setImgErr] = useState(false);
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full p-3.5 bg-white hover:bg-[#f0f2f5] border-2 rounded-2xl text-left transition-all touch-press shadow-xs flex items-center gap-3 ${
+      className={`w-full p-3 bg-white hover:bg-[#f0f2f5] border-2 rounded-2xl text-left transition-all touch-press shadow-xs flex items-center gap-3 ${
         selected ? 'border-[#128c7e]' : 'border-[#e9edef] hover:border-[#128c7e]'
       }`}
     >
-      <div className={`p-2.5 rounded-full shrink-0 ${selected ? 'bg-[#128c7e] text-white' : 'bg-[#f0f2f5] text-[#075e54]'}`}>
-        {icon}
+      <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 flex items-center justify-center border border-[#e9edef] bg-[#f0f2f5]">
+        {avatarUrl && !imgErr ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt={title}
+            width={40}
+            height={40}
+            loading="lazy"
+            onError={() => setImgErr(true)}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className={`p-2 rounded-full shrink-0 ${selected ? 'bg-[#128c7e] text-white' : 'text-[#075e54]'}`}>
+            {icon}
+          </div>
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="font-black text-[#111b21] text-sm truncate">{title}</h3>

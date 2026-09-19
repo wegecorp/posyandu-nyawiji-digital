@@ -28,29 +28,24 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const STORAGE_KEY = 'posyandu_auth_session';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserSession | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<UserSession | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        if (cached && typeof cached === 'object' && cached.id) return cached;
+      }
+    } catch {}
+    return null;
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   // Sumber kebenaran sesi = server (/api/auth/me). localStorage dipakai sebagai
   // cache instan (optimistic render) agar aplikasi langsung interaktif saat dibuka
   // tanpa menunggu roundtrip jaringan, kemudian divalidasi di latar belakang.
   useEffect(() => {
     let cancelled = false;
-    let hadCache = false;
-
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const cached = JSON.parse(raw);
-        if (cached && typeof cached === 'object' && cached.id) {
-          setUser(cached);
-          setIsLoading(false);
-          hadCache = true;
-        }
-      }
-    } catch {
-      /* ignore corrupt cache */
-    }
 
     async function revalidateSession() {
       try {
@@ -73,10 +68,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch {
         // Gagal jaringan: tetap pakai cache tanpa mengganggu user.
-      } finally {
-        if (!cancelled && !hadCache) {
-          setIsLoading(false);
-        }
       }
     }
 

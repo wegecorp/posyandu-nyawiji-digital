@@ -65,7 +65,18 @@ export function AuthPage() {
 
   // --- Cascade Posyandu ---
   const [step, setStep] = useState<CascadeStep>(0);
-  const [puskesmasList, setPuskesmasList] = useState<PuskesmasItem[]>([]);
+  const [puskesmasList, setPuskesmasList] = useState<PuskesmasItem[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const cached = localStorage.getItem('nyawiji_pkm_list') || sessionStorage.getItem('nyawiji_pkm_list');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [];
+  });
+  const [isFetchingPkm, setIsFetchingPkm] = useState(false);
   const [kalurahanList, setKalurahanList] = useState<KalurahanItem[]>([]);
   const [posyanduList, setPosyanduList] = useState<PosyanduItem[]>([]);
   const [selectedPuskesmas, setSelectedPuskesmas] = useState<PuskesmasItem | null>(null);
@@ -88,28 +99,25 @@ export function AuthPage() {
 
   // Ambil daftar puskesmas saat tab posyandu aktif di step awal (dengan cache instan)
   useEffect(() => {
-    if (tab === 'posyandu' && step === 0 && puskesmasList.length === 0) {
-      try {
-        const cached = sessionStorage.getItem('nyawiji_pkm_list');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) setPuskesmasList(parsed);
-        }
-      } catch {}
-
+    if (tab === 'posyandu' && step === 0) {
+      if (puskesmasList.length === 0) {
+        setIsFetchingPkm(true);
+      }
       fetch('/api/public/puskesmas')
         .then((r) => r.json())
         .then((json) => {
           if (json.success && Array.isArray(json.data)) {
             setPuskesmasList(json.data);
             try {
+              localStorage.setItem('nyawiji_pkm_list', JSON.stringify(json.data));
               sessionStorage.setItem('nyawiji_pkm_list', JSON.stringify(json.data));
             } catch {}
           }
         })
-        .catch((e) => console.error('Gagal memuat puskesmas:', e));
+        .catch((e) => console.error('Gagal memuat puskesmas:', e))
+        .finally(() => setIsFetchingPkm(false));
     }
-  }, [tab, step, puskesmasList.length]);
+  }, [tab, step]);
 
   const resetCascade = () => {
     setStep(0);
@@ -522,10 +530,17 @@ export function AuthPage() {
                   </div>
                   {errorMsg && <ErrorBanner msg={errorMsg} />}
                   <div className="p-3 space-y-2">
-                    {isLoading ? (
-                      <div className="p-10 flex flex-col items-center gap-2 text-xs font-bold text-[#54656f]">
-                        <RefreshCw className="w-5 h-5 animate-spin text-[#075e54]" />
-                        Memuat daftar puskesmas...
+                    {isFetchingPkm && puskesmasList.length === 0 ? (
+                      <div className="space-y-2 animate-pulse">
+                        {[1, 2, 3, 4].map((i) => (
+                          <div key={i} className="p-3 bg-white border border-[#e9edef] rounded-2xl flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-[#f0f2f5] shrink-0" />
+                            <div className="flex-1 space-y-1.5">
+                              <div className="h-4 bg-[#e9edef] rounded w-3/4" />
+                              <div className="h-3 bg-[#f0f2f5] rounded w-1/2" />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     ) : puskesmasList.length === 0 ? (
                       <EmptyState msg="Belum ada Puskesmas terdaftar. Hubungi Dinas Kesehatan untuk pembuatan akun." />

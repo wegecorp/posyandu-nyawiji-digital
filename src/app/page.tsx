@@ -47,6 +47,8 @@ const AnalisisPage = dynamic(
   }
 );
 
+import { AuthPage } from '@/components/AuthPage';
+
 const DinkesDashboard = dynamic(
   () => import('@/components/DinkesDashboard').then((m) => m.DinkesDashboard),
   {
@@ -61,17 +63,6 @@ const PuskesmasDashboard = dynamic(
   }
 );
 
-const AuthPage = dynamic(() => import('@/components/AuthPage').then((m) => m.AuthPage), {
-  loading: () => (
-    <div className="min-h-screen flex items-center justify-center bg-[#f0f2f5]">
-      <div className="text-center space-y-2">
-        <RefreshCw className="w-7 h-7 animate-spin text-[#075e54] mx-auto" />
-        <p className="text-xs font-bold text-[#54656f]">Memuat portal...</p>
-      </div>
-    </div>
-  ),
-});
-
 const QRModal = dynamic(() => import('@/components/QRModal').then((m) => m.QRModal));
 const ExportModal = dynamic(() => import('@/components/ExportModal').then((m) => m.ExportModal));
 const QuickRegisterModal = dynamic(() => import('@/components/QuickRegisterModal').then((m) => m.QuickRegisterModal));
@@ -81,7 +72,7 @@ const ChangePasswordModal = dynamic(() => import('@/components/ChangePasswordMod
 const LoginModal = dynamic(() => import('@/components/LoginModal').then((m) => m.LoginModal));
 
 export default function PosyanduApp() {
-  const { user, isLoading: authLoading, switchActivePosyandu } = useAuth();
+  const { user, switchActivePosyandu } = useAuth();
   const [patients, setPatients] = useState<PatientData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -351,18 +342,6 @@ export default function PosyanduApp() {
   useBackLayer(mainView === 'analisis', () => setMainView('beranda'));
   useBackLayer(activeViewMode === 'posyandu_table', () => setActiveViewMode('default'));
   useBackLayer(Boolean(selectedPatient), goBackToList);
-
-  // 0. Still validating session against server — show splash to avoid flash of login page
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f0f2f5]">
-        <div className="text-center space-y-2">
-          <RefreshCw className="w-7 h-7 animate-spin text-[#075e54] mx-auto" />
-          <p className="text-xs font-bold text-[#54656f]">Memuat aplikasi...</p>
-        </div>
-      </div>
-    );
-  }
 
   // 1. IF NOT LOGGED IN — show login (cascade kader / staf)
   if (!user) {

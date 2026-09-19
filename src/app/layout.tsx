@@ -7,8 +7,6 @@ import { APP_NAME, APP_DESCRIPTION } from "@/lib/branding";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   themeColor: "#059669",
 };
 

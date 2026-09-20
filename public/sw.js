@@ -8,11 +8,11 @@
  *
  * Saat versi berubah, cukup naikkan VERSION untuk membersihkan cache lama.
  */
-const VERSION = '2026.09-v9';
+const VERSION = '2026.09-v10';
 const APP_SHELL_CACHE = `nyawiji-shell-${VERSION}`;
 const STATIC_CACHE = `nyawiji-static-${VERSION}`;
 
-const PRECACHE_ASSETS = ['/brand/logo.svg', '/favicon.ico'];
+const PRECACHE_ASSETS = ['/brand/logo-192.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -82,36 +82,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Aset build Next.js (_next/static/*) immutable & ber-hash: cache dulu,
-  // tapi tetap perbarui di latar belakang bila ada versi jaringan lebih baru.
-  if (path.startsWith('/_next/static/')) {
+  // Aset build Next.js (_next/static/*) dan aset statis (brand, font, favicon):
+  // Cache-first murni agar tidak membebani jaringan lambat dengan fetch berulang.
+  if (
+    path.startsWith('/_next/static/') ||
+    path.startsWith('/brand/') ||
+    path === '/favicon.ico' ||
+    path === '/manifest.webmanifest' ||
+    /\.(png|jpe?g|svg|webp|gif|ico|woff2?)$/.test(path)
+  ) {
     event.respondWith(
       caches.open(STATIC_CACHE).then(async (cache) => {
         const cached = await cache.match(request);
-        const network = fetch(request)
+        if (cached) return cached;
+        return fetch(request)
           .then((response) => {
             if (response && response.ok) cache.put(request, response.clone());
             return response;
           })
           .catch(() => cached);
-        return cached || network;
-      })
-    );
-    return;
-  }
-
-  // Aset kecil lainnya (logo, manifest, ikon): stale-while-revalidate.
-  if (/\.(png|jpe?g|svg|webp|gif|ico|json|txt|css|js|woff2?)$/.test(path)) {
-    event.respondWith(
-      caches.open(STATIC_CACHE).then(async (cache) => {
-        const cached = await cache.match(request);
-        const network = fetch(request)
-          .then((response) => {
-            if (response && response.ok) cache.put(request, response.clone());
-            return response;
-          })
-          .catch(() => cached);
-        return cached || network;
       })
     );
     return;

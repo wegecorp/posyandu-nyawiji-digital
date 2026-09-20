@@ -9,7 +9,7 @@ export function CloudflareAnalytics() {
       defer
       src="https://static.cloudflareinsights.com/beacon.min.js"
       data-cf-beacon={`{"token": "${token}"}`}
-      strategy="afterInteractive"
+      strategy="lazyOnload"
     />
   );
 }

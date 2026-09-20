@@ -370,7 +370,7 @@ export function AuthPage() {
         <div className="flex justify-center mb-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/brand/logo.svg"
+            src="/brand/logo-192.png"
             alt={`Logo ${APP_NAME}`}
             className="w-16 h-16 rounded-2xl shadow-md border-2 border-white object-cover"
           />

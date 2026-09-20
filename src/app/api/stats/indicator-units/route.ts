@@ -104,17 +104,23 @@ export async function GET(req: Request) {
     }
 
     const data = [...sums.entries()]
-      .map(([unitId, v]) => ({
-        unitId,
-        unitName: v.unitName || 'Tidak diketahui',
-        abnormal: v.abnormal,
-        assessed: v.assessed,
-        prevalence: v.assessed > 0 ? v.abnormal / v.assessed : 0,
-        smallSample: v.assessed < SMALL_SAMPLE,
-      }))
+      .map(([unitId, v]) => {
+        const percent = v.assessed > 0 ? v.abnormal / v.assessed : 0;
+        return {
+          unitId,
+          unitName: v.unitName || 'Tidak diketahui',
+          count: v.abnormal,
+          total: v.assessed,
+          percent,
+          abnormal: v.abnormal,
+          assessed: v.assessed,
+          prevalence: percent,
+          smallSample: v.assessed < SMALL_SAMPLE,
+        };
+      })
       .filter((u) => u.assessed > 0 && u.abnormal > 0)
       .filter((u) => !q || u.unitName.toLowerCase().includes(q))
-      .sort((a, b) => b.prevalence - a.prevalence || b.abnormal - a.abnormal);
+      .sort((a, b) => b.percent - a.percent || b.count - a.count);
 
     const label = INDICATORS.find((i) => i.key === indicator)?.label ?? indicator;
 

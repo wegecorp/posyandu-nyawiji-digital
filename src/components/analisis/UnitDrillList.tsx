@@ -101,17 +101,28 @@ export function UnitDrillList({
         <p className="py-10 text-center text-xs font-bold text-[#54656f]">{emptyText}</p>
       ) : (
         units.map((u) => {
+          const raw = u as unknown as Record<string, unknown>;
+          const count = Number(u.count ?? raw.abnormal ?? 0);
+          const total = Number(u.total ?? raw.assessed ?? 0);
+          const rawPct = u.percent ?? raw.prevalence;
+          const percent =
+            typeof rawPct === 'number' && Number.isFinite(rawPct)
+              ? rawPct
+              : total > 0
+                ? count / total
+                : 0;
+          const displayPct = Number.isFinite(percent) ? Math.round(percent * 100) : 0;
           const body = (
             <>
               <div className="min-w-0">
                 <p className="text-xs font-bold text-[#111b21] truncate">{u.unitName}</p>
                 <p className="text-[10px] text-[#8696a0]">
-                  {u.count} / {u.total} dinilai
+                  {count} / {total} dinilai
                   {u.smallSample && <span className="text-amber-600 font-bold"> · sampel kecil</span>}
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-sm font-extrabold text-[#111b21]">{Math.round(u.percent * 100)}%</p>
+                <p className="text-sm font-extrabold text-[#111b21]">{displayPct}%</p>
                 {onPick && <p className="text-[10px] text-[#128c7e] font-bold">lihat ›</p>}
               </div>
             </>

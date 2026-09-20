@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { DrillSheet } from './DrillSheet';
 import { UnitDrillList, type DrillUnit } from './UnitDrillList';
@@ -41,6 +41,26 @@ export function IndicatorDrillSheet({
   const unitsBase = `/api/stats/indicator-units?indicator=${indicator}&from=${from}&to=${to}`;
   const patientBase = `/api/stats/abnormal-patients?indicator=${indicator}&from=${from}&to=${to}`;
 
+  const mapRaw = useCallback((r: Record<string, unknown>): DrillUnit => {
+    const abnormal = Number(r.count ?? r.abnormal ?? 0);
+    const assessed = Number(r.total ?? r.assessed ?? 0);
+    const rawPct = r.percent ?? r.prevalence;
+    const percent =
+      typeof rawPct === 'number' && Number.isFinite(rawPct)
+        ? rawPct
+        : assessed > 0
+          ? abnormal / assessed
+          : 0;
+    return {
+      unitId: String(r.unitId ?? ''),
+      unitName: String(r.unitName ?? ''),
+      count: abnormal,
+      total: assessed,
+      percent,
+      smallSample: Boolean(r.smallSample ?? assessed < 5),
+    };
+  }, []);
+
   const title = posyandu?.unitName ?? hc?.unitName ?? `Temuan: ${label}`;
   const subtitle = posyandu || hc ? label : role === 'DINKES' ? 'Peringkat per Puskesmas' : 'Peringkat per Posyandu';
   const onBack =
@@ -70,6 +90,7 @@ export function IndicatorDrillSheet({
       ) : role === 'PUSKESMAS' ? (
         <UnitDrillList
           baseUrl={`${unitsBase}&scope=posyandu`}
+          mapRaw={mapRaw}
           onPick={(u) => setPosyandu(u)}
           searchPlaceholder="Cari posyandu..."
         />
@@ -78,11 +99,13 @@ export function IndicatorDrillSheet({
         <UnitDrillList
           key={hc.unitId}
           baseUrl={`${unitsBase}&scope=posyandu&hcId=${hc.unitId}`}
+          mapRaw={mapRaw}
           searchPlaceholder="Cari posyandu..."
         />
       ) : (
         <UnitDrillList
           baseUrl={`${unitsBase}&scope=puskesmas`}
+          mapRaw={mapRaw}
           onPick={setHc}
           searchPlaceholder="Cari puskesmas..."
         />

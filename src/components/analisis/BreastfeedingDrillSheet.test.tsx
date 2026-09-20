@@ -51,7 +51,9 @@ describe('BreastfeedingDrillSheet', () => {
 
     await waitFor(() => expect(screen.getAllByText('Puskesmas A')).toHaveLength(1));
     expect(screen.getAllByText('Puskesmas B')).toHaveLength(1);
-    expect(screen.getByText('4 / 5 dinilai')).toBeTruthy();
+    expect(screen.getByText('80% dari sasaran dinilai')).toBeTruthy();
+    expect(screen.getByText('4')).toBeTruthy();
+    expect(screen.getByText('/ 5')).toBeTruthy();
   });
 
   it('ambil rentang bulan terpilih, bukan seluruh periode', async () => {

@@ -104,17 +104,20 @@ export async function GET(req: Request) {
       }),
     ]);
 
-    // Cakupan penimbangan balita bulan berjalan (BALITA = umur 0-60 bln).
-    const currentYm = ymOf(now);
-    const registeredBalita = registeredBalitaIds(patientRows, now);
+    // Cakupan penimbangan balita: gunakan bulan terakhir yang memiliki data pengukuran, atau bulan ini jika kosong.
+    const monthsWithData = [...new Set(meas.map((m) => ymOf(m.sessionDate)))].sort();
+    const targetYm = monthsWithData.at(-1) ?? ymOf(now);
+    const [tYear, tMonth] = targetYm.split('-').map(Number);
+    const targetDate = new Date(tYear, tMonth, 0, 23, 59, 59);
+    const registeredBalita = registeredBalitaIds(patientRows, targetDate);
     const birthOf = new Map(patientRows.map((p) => [p.id, p.birthDate]));
     const measuredThisMonth = new Set(
-      meas.filter((m) => ymOf(m.sessionDate) === currentYm).map((m) => m.patientId),
+      meas.filter((m) => ymOf(m.sessionDate) === targetYm).map((m) => m.patientId),
     );
     let balitaMeasured = 0;
     for (const id of measuredThisMonth) if (registeredBalita.has(id)) balitaMeasured++;
     const coverage = {
-      month: currentYm,
+      month: targetYm,
       balitaTotal: registeredBalita.size,
       balitaMeasured,
     };

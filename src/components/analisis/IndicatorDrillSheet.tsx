@@ -7,6 +7,20 @@ import { UnitDrillList, type DrillUnit } from './UnitDrillList';
 import { PatientDrillList } from './PatientDrillList';
 import { useBackLayer } from '@/lib/back-navigation';
 
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+function formatYM(ym: string): string {
+  const [y, m] = ym.split('-');
+  const i = parseInt(m, 10) - 1;
+  return `${MONTHS_SHORT[i] ?? m} ${y}`;
+}
+
+function monthDateRange(ym: string): { from: string; to: string } {
+  const [y, m] = ym.split('-').map(Number);
+  const lastDay = new Date(y, m, 0).getDate();
+  return { from: `${ym}-01`, to: `${ym}-${String(lastDay).padStart(2, '0')}` };
+}
+
 /**
  * Detail per-indikator, sadar peran:
  * - DINKES   : peringkat Puskesmas → peringkat Posyandu (agregat, tanpa nama).
@@ -16,16 +30,19 @@ import { useBackLayer } from '@/lib/back-navigation';
 export function IndicatorDrillSheet({
   indicator,
   label,
-  from,
-  to,
+  month,
+  from: propFrom,
+  to: propTo,
   onClose,
   hcId,
   hcName,
 }: {
   indicator: string;
   label: string;
-  from: string;
-  to: string;
+  /** Bulan aktif (YYYY-MM) agar query fokus pada bulan tersebut */
+  month?: string;
+  from?: string;
+  to?: string;
   onClose: () => void;
   /** Bila dibuka dari konteks drill HC, langsung tampilkan posyandu HC ini. */
   hcId?: string;
@@ -38,8 +55,12 @@ export function IndicatorDrillSheet({
   );
   const [posyandu, setPosyandu] = useState<DrillUnit | null>(null);
 
+  const range = month ? monthDateRange(month) : null;
+  const from = range ? range.from : (propFrom ?? '');
+  const to = range ? range.to : (propTo ?? '');
+
   const unitsBase = `/api/stats/indicator-units?indicator=${indicator}&from=${from}&to=${to}`;
-  const patientBase = `/api/stats/abnormal-patients?indicator=${indicator}&from=${from}&to=${to}`;
+  const patientBase = `/api/stats/abnormal-patients?indicator=${indicator}&from=${from}&to=${to}${month ? `&ym=${month}` : ''}`;
 
   const mapRaw = useCallback((r: Record<string, unknown>): DrillUnit => {
     const abnormal = Number(r.count ?? r.abnormal ?? 0);
@@ -61,8 +82,11 @@ export function IndicatorDrillSheet({
     };
   }, []);
 
+  const monthLabel = month ? formatYM(month) : '';
   const title = posyandu?.unitName ?? hc?.unitName ?? `Temuan: ${label}`;
-  const subtitle = posyandu || hc ? label : role === 'DINKES' ? 'Peringkat per Puskesmas' : 'Peringkat per Posyandu';
+  const subtitle = posyandu || hc
+    ? `${label}${monthLabel ? ` · Bulan ${monthLabel}` : ''}`
+    : `${role === 'DINKES' ? 'Peringkat per Puskesmas' : 'Peringkat per Posyandu'}${monthLabel ? ` · Bulan ${monthLabel}` : ''}`;
   const onBack =
     role === 'DINKES'
       ? hcId

@@ -46,6 +46,15 @@ export async function GET(req: Request) {
       sessionDate: { gte: fromObj, lt: toExclusive },
     };
 
+    const ym = searchParams.get('ym');
+    if (ym) {
+      const [year, month] = ym.split('-').map(Number);
+      const monthStart = new Date(`${year}-${String(month).padStart(2, '0')}-01T00:00:00.000+07:00`);
+      const lastDay = new Date(year, month, 0).getDate();
+      const monthEnd = new Date(`${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}T23:59:59.999+07:00`);
+      where.sessionDate = { gte: monthStart, lte: monthEnd };
+    }
+
     if (session.role === 'POSYANDU' && session.posyanduId) {
       where.posyanduId = session.posyanduId;
     } else if (session.role === 'PUSKESMAS' && session.healthCenterId) {

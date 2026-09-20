@@ -111,6 +111,7 @@ export function BreastfeedingDrillSheet({
           mapRaw={mapRaw}
           onPick={setHc}
           searchPlaceholder="Cari puskesmas..."
+          highlightColor="green"
         />
       ) : (
         <UnitDrillList
@@ -119,6 +120,7 @@ export function BreastfeedingDrillSheet({
           mapRaw={mapRaw}
           emptyText="Tidak ada data ASI eksklusif pada filter ini."
           searchPlaceholder="Cari posyandu..."
+          highlightColor="green"
         />
       )}
     </DrillSheet>

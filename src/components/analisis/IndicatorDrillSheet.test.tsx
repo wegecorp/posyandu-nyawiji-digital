@@ -62,7 +62,7 @@ afterEach(() => {
 });
 
 describe('IndicatorDrillSheet & UnitDrillList', () => {
-  it('menampilkan persentase dan penyebut dinilai secara benar dari payload abnormal/assessed/prevalence (tanpa NaN%)', async () => {
+  it('menampilkan rasio angka merah X / Y dan persentase secara benar dari payload abnormal/assessed/prevalence (tanpa NaN%)', async () => {
     mockFetch(LEGACY_API_DATA);
     const { IndicatorDrillSheet } = await import('./IndicatorDrillSheet');
 
@@ -70,8 +70,7 @@ describe('IndicatorDrillSheet & UnitDrillList', () => {
       <IndicatorDrillSheet
         indicator="hypertension"
         label="Hipertensi"
-        from="2026-01-01"
-        to="2026-03-31"
+        month="2026-03"
         onClose={() => {}}
       />,
     );
@@ -80,37 +79,39 @@ describe('IndicatorDrillSheet & UnitDrillList', () => {
       expect(screen.getByText('Puskesmas Playen I')).toBeDefined();
     });
 
-    expect(screen.getByText('4 / 10 dinilai')).toBeDefined();
-    expect(screen.getByText('40%')).toBeDefined();
+    expect(screen.getByText('40% dari sasaran dinilai')).toBeDefined();
+    expect(screen.getByText('4')).toBeDefined();
+    expect(screen.getByText('/ 10')).toBeDefined();
 
-    expect(screen.getByText('1 / 2 dinilai')).toBeDefined();
-    expect(screen.getByText('50%')).toBeDefined();
+    expect(screen.getByText('50% dari sasaran dinilai')).toBeDefined();
+    expect(screen.getByText('1')).toBeDefined();
+    expect(screen.getByText('/ 2')).toBeDefined();
     expect(screen.getByText(/sampel kecil/i)).toBeDefined();
 
     expect(screen.queryByText(/NaN%/i)).toBeNull();
     expect(screen.queryByText(/undefined/i)).toBeNull();
   });
 
-  it('menampilkan persentase secara benar dari payload dengan count/total/percent', async () => {
-    mockFetch(NEW_API_DATA);
+  it('menggunakan rentang tanggal bulan aktif saat prop month diberikan', async () => {
+    const fetchFn = mockFetch(NEW_API_DATA);
     const { IndicatorDrillSheet } = await import('./IndicatorDrillSheet');
 
     render(
       <IndicatorDrillSheet
         indicator="hypertension"
         label="Hipertensi"
-        from="2026-01-01"
-        to="2026-03-31"
+        month="2026-03"
         onClose={() => {}}
       />,
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Puskesmas Playen I')).toBeDefined();
+      expect(fetchFn).toHaveBeenCalled();
     });
 
-    expect(screen.getByText('4 / 10 dinilai')).toBeDefined();
-    expect(screen.getByText('40%')).toBeDefined();
-    expect(screen.queryByText(/NaN%/i)).toBeNull();
+    const requestedUrl = String(fetchFn.mock.calls[0][0]);
+    expect(requestedUrl).toContain('from=2026-03-01');
+    expect(requestedUrl).toContain('to=2026-03-31');
+    expect(screen.getByText(/Bulan Mar 2026/i)).toBeDefined();
   });
 });

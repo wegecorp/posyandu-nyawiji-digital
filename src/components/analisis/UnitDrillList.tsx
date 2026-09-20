@@ -22,6 +22,7 @@ export function UnitDrillList({
   emptyText = 'Tidak ada unit dengan data pada filter ini.',
   searchPlaceholder = 'Cari unit...',
   mapRaw,
+  highlightColor = 'red',
 }: {
   baseUrl: string;
   /** Bila kosong, baris bersifat statis (level terdalam drill). */
@@ -30,6 +31,8 @@ export function UnitDrillList({
   searchPlaceholder?: string;
   /** Normalisasi payload API → DrillUnit (mis. ASI: exclusive/assessed). */
   mapRaw?: (raw: Record<string, unknown>) => DrillUnit;
+  /** Warna aksen angka count (default: red untuk temuan klinis / masalah). */
+  highlightColor?: 'red' | 'green' | 'amber' | 'teal';
 }) {
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
@@ -112,18 +115,34 @@ export function UnitDrillList({
                 ? count / total
                 : 0;
           const displayPct = Number.isFinite(percent) ? Math.round(percent * 100) : 0;
+          const countColorClass =
+            highlightColor === 'green'
+              ? 'text-[#25d366]'
+              : highlightColor === 'amber'
+                ? 'text-amber-600'
+                : highlightColor === 'teal'
+                  ? 'text-[#075e54]'
+                  : 'text-red-600';
+
           const body = (
             <>
               <div className="min-w-0">
                 <p className="text-xs font-bold text-[#111b21] truncate">{u.unitName}</p>
                 <p className="text-[10px] text-[#8696a0]">
-                  {count} / {total} dinilai
+                  {displayPct}% dari sasaran dinilai
                   {u.smallSample && <span className="text-amber-600 font-bold"> · sampel kecil</span>}
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-sm font-extrabold text-[#111b21]">{displayPct}%</p>
-                {onPick && <p className="text-[10px] text-[#128c7e] font-bold">lihat ›</p>}
+                <p className="text-sm font-black text-[#111b21]">
+                  <span className={countColorClass}>{count}</span>
+                  <span className="text-xs text-[#8696a0] font-bold"> / {total}</span>
+                </p>
+                {onPick ? (
+                  <p className="text-[10px] text-[#128c7e] font-bold">rincian ›</p>
+                ) : (
+                  <p className="text-[10px] text-[#8696a0]">pasien</p>
+                )}
               </div>
             </>
           );

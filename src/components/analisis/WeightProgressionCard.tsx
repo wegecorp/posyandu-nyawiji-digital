@@ -234,14 +234,14 @@ export function WeightProgressionCard({ from, to, hcId }: { from: string; to: st
       {drill && canDrill && (
         <DrillSheet
           title={drill.title}
-          subtitle="Pasien 2T (2x tidak naik) — perlu rujuk"
+          subtitle={`Pasien 2T (2x tidak naik) — Bulan ${formatYM(latestMonth)}`}
           onClose={() => setDrill(null)}
         >
           <PatientDrillList
             key={drill.posyanduId ?? 'all'}
             baseUrl={`/api/stats/faltering-patients?from=${from}&to=${to}${
               drill.posyanduId ? `&posyanduId=${drill.posyanduId}` : ''
-            }`}
+            }${latestMonth ? `&ym=${latestMonth}` : ''}`}
             emptyText="Tidak ada pasien 2T pada filter ini."
           />
         </DrillSheet>

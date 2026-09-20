@@ -285,8 +285,7 @@ export function PuskesmasAnalisis() {
         <IndicatorDrillSheet
           indicator={indicatorDrill.key}
           label={indicatorDrill.label}
-          from={from}
-          to={to}
+          month={latestMonth}
           onClose={() => setIndicatorDrill(null)}
         />
       )}

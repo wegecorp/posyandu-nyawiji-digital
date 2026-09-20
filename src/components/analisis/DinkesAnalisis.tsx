@@ -412,8 +412,7 @@ export function DinkesAnalisis() {
         <IndicatorDrillSheet
           indicator={indicatorDrill.key}
           label={indicatorDrill.label}
-          from={from}
-          to={to}
+          month={activeMonth}
           hcId={drillHcId ?? undefined}
           hcName={drillHcName}
           onClose={() => setIndicatorDrill(null)}

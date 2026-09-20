@@ -507,7 +507,9 @@ export default function PosyanduApp() {
               </div>
 
               <button
+                type="button"
                 onClick={() => setIsQRScanOpen(true)}
+                aria-label="Scan QR Code Pasien"
                 className="w-9 h-9 bg-[#075e54] hover:bg-[#054c44] text-white rounded-lg flex items-center justify-center transition-all touch-press shrink-0 shadow-xs"
                 title="Scan QR Code Pasien"
               >

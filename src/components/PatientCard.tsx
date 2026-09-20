@@ -119,8 +119,10 @@ export const PatientCard: React.FC<PatientCardProps> = React.memo(({
       {/* Right Direct Buttons */}
       <div className="flex items-center gap-1 shrink-0">
         <button
+          type="button"
           onClick={(e) => onShowQR(e, patient)}
-          className="w-8 h-8 flex items-center justify-center text-[#54656f] hover:text-[#075e54] rounded-full hover:bg-[#f0f2f5] transition-all"
+          aria-label={`QR Code ${patient.name}`}
+          className="w-9 h-9 flex items-center justify-center text-[#54656f] hover:text-[#075e54] rounded-full hover:bg-[#f0f2f5] transition-all touch-press"
           title="QR Code Pasien"
         >
           <QrCode className="w-4.5 h-4.5" />
@@ -128,15 +130,17 @@ export const PatientCard: React.FC<PatientCardProps> = React.memo(({
 
         {onEdit && (
           <button
+            type="button"
             onClick={handleEdit}
-            className="w-8 h-8 flex items-center justify-center text-[#54656f] hover:text-[#075e54] rounded-full hover:bg-[#f0f2f5] transition-all"
+            aria-label={`Edit data ${patient.name}`}
+            className="w-9 h-9 flex items-center justify-center text-[#54656f] hover:text-[#075e54] rounded-full hover:bg-[#f0f2f5] transition-all touch-press"
             title="Edit Data Pasien"
           >
             <Edit3 className="w-4 h-4" />
           </button>
         )}
 
-        <div className="w-8 h-8 rounded-full bg-[#075e54] text-white flex items-center justify-center shadow-xs">
+        <div className="w-9 h-9 rounded-full bg-[#075e54] text-white flex items-center justify-center shadow-xs">
           <ChevronRight className="w-4 h-4" />
         </div>
       </div>

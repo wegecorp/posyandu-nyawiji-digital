@@ -9,7 +9,7 @@ import { APP_NAME, APP_DESCRIPTION } from "@/lib/branding";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#059669",
+  themeColor: "#075e54",
 };
 
 export const metadata: Metadata = {

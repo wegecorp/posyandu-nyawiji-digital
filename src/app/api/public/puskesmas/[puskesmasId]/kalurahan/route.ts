@@ -17,7 +17,14 @@ export async function GET(
     });
 
     if (posyandus.length === 0) {
-      return NextResponse.json({ success: true, data: [] });
+      return NextResponse.json(
+        { success: true, data: [] },
+        {
+          headers: {
+            'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+          },
+        }
+      );
     }
 
     const kalurahan = await prisma.kalurahan.findMany({
@@ -36,7 +43,14 @@ export async function GET(
       posyanduCount: k._count.posyandus,
     }));
 
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json(
+      { success: true, data },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error fetching kalurahan for cascade:', error);
     return NextResponse.json({ error: 'Gagal memuat data Kalurahan' }, { status: 500 });

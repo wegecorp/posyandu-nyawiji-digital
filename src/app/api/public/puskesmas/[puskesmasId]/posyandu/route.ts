@@ -27,7 +27,14 @@ export async function GET(
       orderBy: { name: 'asc' },
     });
 
-    return NextResponse.json({ success: true, data: posyandus });
+    return NextResponse.json(
+      { success: true, data: posyandus },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error fetching posyandu for cascade:', error);
     return NextResponse.json({ error: 'Gagal memuat data Posyandu' }, { status: 500 });

@@ -22,7 +22,14 @@ export async function GET() {
       kapanewon: hc.kapanewon.name,
     }));
 
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json(
+      { success: true, data },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error fetching public puskesmas list:', error);
     return NextResponse.json({ error: 'Gagal memuat data Puskesmas' }, { status: 500 });

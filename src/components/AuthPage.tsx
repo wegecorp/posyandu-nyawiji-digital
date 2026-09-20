@@ -372,6 +372,9 @@ export function AuthPage() {
           <img
             src="/brand/logo-192.png"
             alt={`Logo ${APP_NAME}`}
+            width={64}
+            height={64}
+            fetchPriority="high"
             className="w-16 h-16 rounded-2xl shadow-md border-2 border-white object-cover"
           />
         </div>
@@ -446,7 +449,12 @@ export function AuthPage() {
                     required
                     className="w-full pl-10 pr-10 py-2.5 text-sm bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all"
                   />
-                  <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3.5 top-3 text-[#8696a0] hover:text-[#111b21]">
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    aria-label={showPass ? "Sembunyikan password" : "Lihat password"}
+                    className="absolute right-2 top-2 p-1.5 text-[#54656f] hover:text-[#111b21] rounded-lg touch-press"
+                  >
                     {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>

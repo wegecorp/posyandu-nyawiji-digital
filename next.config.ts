@@ -58,11 +58,12 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
-  silent: true,
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
+  org: process.env.SENTRY_ORG || "wege",
+  project: process.env.SENTRY_PROJECT || "posyandu-digital",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
   widenClientFileUpload: true,
-  tunnelRoute: "/monitoring-tunnel",
+  tunnelRoute: "/monitoring",
+  silent: !process.env.CI,
   sourcemaps: {
     disable: process.env.NODE_ENV !== "production",
   },

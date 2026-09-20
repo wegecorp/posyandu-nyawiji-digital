@@ -396,7 +396,7 @@ export default function PosyanduApp() {
       />
 
       {/* 2. MAIN CONTAINER */}
-      <main className={`flex-1 mx-auto p-3 sm:p-4 ${mainView === 'analisis' ? 'max-w-5xl' : 'max-w-2xl w-full'} transition-all duration-150`}>
+      <main className={`flex-1 w-full min-w-0 mx-auto p-3 sm:p-4 ${mainView === 'analisis' ? 'max-w-5xl' : 'max-w-2xl'} transition-all duration-150`}>
         {/* ANALISIS PAGE (all roles) */}
         {mainView === 'analisis' ? (
           <AnalisisPage />

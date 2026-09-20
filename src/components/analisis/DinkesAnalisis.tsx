@@ -281,14 +281,14 @@ export function DinkesAnalisis() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full min-w-0">
       {/* Top Header & Range Filter */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h2 className="text-base font-extrabold text-[#111b21]">
+      <div className="flex items-center justify-between flex-wrap gap-2 min-w-0">
+        <div className="min-w-0">
+          <h2 className="text-base font-extrabold text-[#111b21] truncate">
             {drillHcId ? drillHcName : 'Analisis Kabupaten'}
           </h2>
-          <p className="text-xs text-[#54656f]">
+          <p className="text-xs text-[#54656f] truncate">
             {drillHcId
               ? `Statistik agregat & rincian posyandu di wilayah ${drillHcName}`
               : 'Statistik agregat pelayanan posyandu se-Kabupaten Gunungkidul'}
@@ -299,13 +299,13 @@ export function DinkesAnalisis() {
 
       {/* Drilldown Context Bar (Lagi Buka Apa) */}
       {drillHcId && (
-        <div className="bg-[#e7fceb] border border-[#25d366]/40 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 shadow-xs animate-in fade-in duration-150">
-          <div className="flex items-center gap-2.5 min-w-0">
+        <div className="w-full min-w-0 bg-[#e7fceb] border border-[#25d366]/40 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 shadow-xs animate-in fade-in duration-150">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <div className="w-8 h-8 rounded-xl bg-[#075e54] text-white flex items-center justify-center shrink-0 shadow-2xs">
               <Building2 className="w-4 h-4 text-[#25d366]" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[#075e54] flex-wrap">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[#075e54] flex-wrap min-w-0">
                 <button
                   type="button"
                   onClick={() => {
@@ -313,12 +313,12 @@ export function DinkesAnalisis() {
                     setDrillHcName('');
                     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'instant' });
                   }}
-                  className="hover:underline flex items-center gap-1 text-[#075e54]"
+                  className="hover:underline flex items-center gap-1 text-[#075e54] shrink-0"
                 >
                   Kabupaten Gunungkidul
                 </button>
                 <ChevronRight className="w-3.5 h-3.5 text-[#128c7e] shrink-0" />
-                <span className="font-extrabold text-[#111b21] bg-white px-2 py-0.5 rounded-lg border border-[#bbf7d0]">
+                <span className="font-extrabold text-[#111b21] bg-white px-2 py-0.5 rounded-lg border border-[#bbf7d0] truncate max-w-[200px] sm:max-w-xs">
                   {drillHcName}
                 </span>
               </div>
@@ -334,11 +334,10 @@ export function DinkesAnalisis() {
               setDrillHcName('');
               if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'instant' });
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#075e54] text-[#075e54] hover:text-white border border-[#25d366]/50 rounded-xl text-xs font-bold transition-all shrink-0 self-start sm:self-auto touch-press shadow-2xs"
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#075e54] text-[#075e54] hover:text-white border border-[#25d366]/50 rounded-xl text-xs font-bold transition-all shrink-0 self-stretch sm:self-auto touch-press shadow-2xs cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Kembali ke Kabupaten</span>
-            <span className="sm:hidden">Kembali</span>
+            <span>Kembali ke Kabupaten</span>
           </button>
         </div>
       )}

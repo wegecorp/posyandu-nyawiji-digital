@@ -181,7 +181,7 @@ export function PuskesmasAnalisis() {
   const hasAnyData = posyanduCoverage.some((d) => d.numerator > 0);
   if (!hasAnyData) {
     return (
-      <div className="space-y-4">
+    <div className="space-y-4 w-full min-w-0">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-extrabold text-[#111b21]">Analisis Puskesmas</h2>
           <PeriodControl selected={period} onChange={setPeriod} />

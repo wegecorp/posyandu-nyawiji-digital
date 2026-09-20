@@ -15,7 +15,7 @@ describe('LocationHeroStat', () => {
     percent: 67,
   };
 
-  it('renders location name, stats, and DiceBear landscape image', () => {
+  it('renders location name, stats, and unit avatar image', () => {
     render(
       <AuthProvider>
         <LocationHeroStat statusCounts={mockCounts} />

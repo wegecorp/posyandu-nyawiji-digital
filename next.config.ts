@@ -4,7 +4,7 @@ import { withSentryConfig } from "@sentry/nextjs/config";
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   experimental: {
-    optimizePackageImports: ['lucide-react', 'recharts', '@dicebear/core', '@dicebear/collection'],
+    optimizePackageImports: ['lucide-react', 'recharts'],
   },
   async headers() {
     return [
@@ -19,9 +19,9 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://www.googletagmanager.com",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://api.dicebear.com https://*.google-analytics.com https://*.googletagmanager.com",
+              "img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com",
               "font-src 'self' data:",
-              "connect-src 'self' https://api.dicebear.com https://cloudflareinsights.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
+              "connect-src 'self' https://cloudflareinsights.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
               "object-src 'none'",
               "base-uri 'self'",
               "frame-ancestors 'self'",

@@ -194,7 +194,14 @@ export function PuskesmasAnalisis() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <h2 className="text-base font-extrabold text-[#111b21]">Analisis Puskesmas</h2>
+        <div>
+          <h2 className="text-base font-extrabold text-[#111b21]">
+            Analisis {user?.name || 'Puskesmas'}
+          </h2>
+          <p className="text-xs text-[#54656f]">
+            Statistik agregat {scoreboard.length} posyandu wilayah kerja {user?.name || ''}
+          </p>
+        </div>
         <PeriodControl selected={period} onChange={setPeriod} />
       </div>
 

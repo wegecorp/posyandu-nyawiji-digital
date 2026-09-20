@@ -28,6 +28,8 @@ interface HeaderProps {
   showTools?: boolean;
   mainView?: 'beranda' | 'analisis';
   onNavigateMainView?: (view: 'beranda' | 'analisis') => void;
+  activeContextTitle?: string;
+  activeContextSubtitle?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -37,6 +39,8 @@ export const Header: React.FC<HeaderProps> = ({
   showTools = true,
   mainView = 'beranda',
   onNavigateMainView,
+  activeContextTitle,
+  activeContextSubtitle,
 }) => {
   const { user } = useAuth();
   const [landscapeError, setLandscapeError] = useState(false);
@@ -118,11 +122,15 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const roleBadge = getRoleBadge();
+  const containerMaxW = mainView === 'analisis' ? 'max-w-5xl' : 'max-w-2xl';
+
+  const displayTitle = activeContextTitle || user?.name || user?.posyanduName || APP_NAME;
+  const displaySubtitle = activeContextSubtitle || roleBadge.label;
 
   return (
     <header className="sticky top-0 z-40 bg-[#075e54] text-white shadow-md">
       {/* Main Action Bar */}
-      <div className="px-4 py-2.5 flex items-center justify-between gap-3 max-w-2xl mx-auto">
+      <div className={`px-4 py-2.5 flex items-center justify-between gap-3 ${containerMaxW} mx-auto transition-all duration-150`}>
         {/* Account Info Button */}
         <button
           onClick={onOpenLogin}
@@ -160,15 +168,15 @@ export const Header: React.FC<HeaderProps> = ({
               'PS'
             )}
           </div>
-          <div className="truncate min-w-0 sm:max-w-[220px]">
+          <div className="truncate min-w-0 sm:max-w-[280px]">
             <div className="font-extrabold text-white truncate text-sm leading-tight">
-              {user?.name || user?.posyanduName || APP_NAME}
+              {displayTitle}
             </div>
-            <div className="mt-1 flex items-center gap-1.5">
-              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black tracking-wider ${roleBadge.color}`}>
-                {roleBadge.label}
+            <div className="mt-0.5 flex items-center gap-1.5">
+              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black tracking-wider truncate max-w-[200px] ${roleBadge.color}`}>
+                {displaySubtitle}
               </span>
-              <ChevronDown className="w-3.5 h-3.5 text-white/70" />
+              <ChevronDown className="w-3.5 h-3.5 text-white/70 shrink-0" />
             </div>
           </div>
         </button>
@@ -237,7 +245,7 @@ export const Header: React.FC<HeaderProps> = ({
             {menuOpen && (
               <div
                 role="menu"
-                className="absolute right-0 top-full mt-2 w-52 rounded-xl bg-white shadow-lg border border-black/5 overflow-hidden z-50"
+                className="absolute right-0 top-full mt-2 w-52 rounded-2xl bg-white shadow-xl border border-[#e9edef] overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100"
               >
                 {showTools && (
                   <button
@@ -271,7 +279,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Tab Navigation — Beranda | Analisis */}
       {onNavigateMainView && (
-        <div className="px-4 pb-1.5 max-w-2xl mx-auto flex gap-1">
+        <div className={`px-4 pb-1.5 ${containerMaxW} mx-auto flex gap-1 transition-all duration-150`}>
           <button
             onClick={() => onNavigateMainView('beranda')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-t-lg text-xs font-bold transition-all ${

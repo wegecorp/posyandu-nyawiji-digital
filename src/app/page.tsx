@@ -31,6 +31,9 @@ import {
   Activity,
   LayoutGrid,
   ShieldAlert,
+  ChevronRight,
+  Building,
+  Building2,
 } from 'lucide-react';
 
 const DynamicMeasurementForm = dynamic(
@@ -297,6 +300,7 @@ export default function PosyanduApp() {
 
   const handleSelectPatient = React.useCallback((p: PatientData) => {
     setSelectedPatient(p);
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
   const handleShowPatientQR = React.useCallback((e: React.MouseEvent, p: PatientData) => {
@@ -328,11 +332,13 @@ export default function PosyanduApp() {
     switchActivePosyandu(posId, posName, posCode, locationMeta);
     setActiveViewMode('posyandu_table');
     setSelectedPatient(null);
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
   // Balik ke daftar + segarkan list (data pengukuran terbaru).
   const goBackToList = () => {
     setSelectedPatient(null);
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'instant' });
     fetchPatients();
   };
 
@@ -358,14 +364,39 @@ export default function PosyanduApp() {
         showTools={user.role === 'POSYANDU' || activeViewMode === 'posyandu_table'}
         mainView={mainView}
         onNavigateMainView={(view) => {
+          if (view !== mainView && typeof window !== 'undefined') {
+            window.scrollTo({ top: 0, behavior: 'instant' });
+          }
           setMainView(view);
           setActiveViewMode('default');
           setSelectedPatient(null);
         }}
+        activeContextTitle={
+          selectedPatient
+            ? selectedPatient.name
+            : activeViewMode === 'posyandu_table'
+            ? user.posyanduName || 'Meja Pelayanan'
+            : mainView === 'analisis'
+            ? user.role === 'DINKES'
+              ? 'Analisis Kabupaten'
+              : user.role === 'PUSKESMAS'
+              ? `Analisis ${user.name}`
+              : `Analisis ${user.posyanduName || 'Posyandu'}`
+            : undefined
+        }
+        activeContextSubtitle={
+          selectedPatient
+            ? `${user.posyanduName || 'Posyandu'} • ${selectedPatient.regNumber}`
+            : activeViewMode === 'posyandu_table'
+            ? `${user.name} • Meja Pelayanan`
+            : mainView === 'analisis'
+            ? user.name
+            : undefined
+        }
       />
 
       {/* 2. MAIN CONTAINER */}
-      <main className={`flex-1 mx-auto p-3 sm:p-4 ${mainView === 'analisis' ? 'max-w-5xl' : 'max-w-2xl w-full'}`}>
+      <main className={`flex-1 mx-auto p-3 sm:p-4 ${mainView === 'analisis' ? 'max-w-5xl' : 'max-w-2xl w-full'} transition-all duration-150`}>
         {/* ANALISIS PAGE (all roles) */}
         {mainView === 'analisis' ? (
           <AnalisisPage />
@@ -384,18 +415,23 @@ export default function PosyanduApp() {
         ) : /* VIEW 3: POSYANDU OPERATIONAL TABLE & MEASUREMENT FORMS */
         selectedPatient ? (
           <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-150">
-            {/* Back button to patient list */}
-            <div className="flex items-center justify-between">
+            {/* Breadcrumb navigation bar */}
+            <div className="flex items-center justify-between gap-2 bg-white rounded-2xl p-2.5 sm:p-3 border border-[#e9edef] shadow-xs">
               <button
                 onClick={goBackToList}
-                className="flex items-center gap-1.5 text-xs font-bold text-[#075e54] bg-white hover:bg-[#e7fceb] px-4 py-2 rounded-full border border-[#e9edef] shadow-xs transition-all touch-press"
+                className="flex items-center gap-1.5 text-xs font-bold text-[#075e54] bg-[#e7fceb] hover:bg-[#075e54] hover:text-white px-3.5 py-2 rounded-xl border border-[#25d366]/30 shadow-2xs transition-all touch-press shrink-0"
               >
-                <ArrowLeft className="w-3.5 h-3.5 text-[#128c7e]" />
-                <span>Daftar Pasien ({patients.length})</span>
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Daftar ({patients.length})</span>
               </button>
 
-              <div className="text-[11px] text-[#54656f] font-medium">
-                Sesi: <span className="font-bold text-[#075e54]">{user.posyanduName || 'Posyandu'}</span>
+              <div className="flex items-center gap-1.5 text-xs text-[#54656f] font-medium truncate min-w-0">
+                <span className="truncate hidden sm:inline font-bold text-[#075e54]">{user.posyanduName || 'Posyandu'}</span>
+                <ChevronRight className="w-3.5 h-3.5 text-[#8696a0] shrink-0 hidden sm:inline" />
+                <span className="font-extrabold text-[#111b21] truncate">{selectedPatient.name}</span>
+                <span className="text-[10px] font-mono bg-[#f0f2f5] px-1.5 py-0.5 rounded border border-[#e9edef] shrink-0 text-[#54656f]">
+                  {selectedPatient.regNumber}
+                </span>
               </div>
             </div>
 
@@ -410,13 +446,36 @@ export default function PosyanduApp() {
           /* VIEW 4: PATIENT LIST & QUEUE FOR POSYANDU */
           <div className="space-y-3.5 animate-in fade-in duration-150 pb-20">
             {activeViewMode === 'posyandu_table' && (
-              <button
-                onClick={() => setActiveViewMode('default')}
-                className="flex items-center gap-1.5 text-xs font-bold text-[#075e54] bg-white hover:bg-[#e7fceb] px-4 py-2 rounded-full border border-[#e9edef] shadow-xs transition-all touch-press"
-              >
-                <ArrowLeft className="w-3.5 h-3.5 text-[#128c7e]" />
-                <span>Kembali ke Dashboard</span>
-              </button>
+              <div className="bg-[#e7fceb] border border-[#25d366]/40 rounded-2xl p-3 sm:p-3.5 flex items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-[#075e54] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                    <Building className="w-4 h-4 text-[#25d366]" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-[#075e54] flex-wrap">
+                      <span>{user.name}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-[#128c7e] shrink-0" />
+                      <span className="font-extrabold text-[#111b21] bg-white px-2 py-0.5 rounded-lg border border-[#bbf7d0]">
+                        {user.posyanduName || 'Meja Pelayanan'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#54656f] mt-0.5 truncate">
+                      Tinjauan operasional data pasien & pencatatan posyandu
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setActiveViewMode('default');
+                    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'instant' });
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#075e54] text-[#075e54] hover:text-white border border-[#25d366]/50 rounded-xl text-xs font-bold transition-all shrink-0 touch-press shadow-2xs"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Kembali ke Dashboard</span>
+                  <span className="sm:hidden">Dashboard</span>
+                </button>
+              </div>
             )}
 
             {isReadOnly && (

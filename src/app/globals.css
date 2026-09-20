@@ -39,6 +39,10 @@
   --tw-enter-translate-y: 0;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background-color: var(--surface-soft);
   color: var(--ink);

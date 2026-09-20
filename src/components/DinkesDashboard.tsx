@@ -464,7 +464,7 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
                 </button>
 
                 {isOpen && (
-                  <div className="px-4 pb-4 pt-1 space-y-4 border-t border-[#f0f2f5]">
+                  <div className="px-4 pb-4 pt-1 space-y-4 border-t border-[#f0f2f5] animate-in fade-in duration-150">
                     {pkmUser?.username && (
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <span className="text-[11px] text-[#54656f] font-medium">

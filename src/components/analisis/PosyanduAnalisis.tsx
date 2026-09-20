@@ -165,7 +165,14 @@ export function PosyanduAnalisis() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <h2 className="text-base font-extrabold text-[#111b21]">Analisis Posyandu</h2>
+        <div>
+          <h2 className="text-base font-extrabold text-[#111b21]">
+            Analisis {user?.posyanduName || user?.name || 'Posyandu'}
+          </h2>
+          <p className="text-xs text-[#54656f]">
+            Statistik sasaran & hasil pemeriksaan kesehatan terpadu
+          </p>
+        </div>
         <PeriodControl selected={period} onChange={setPeriod} />
       </div>
 

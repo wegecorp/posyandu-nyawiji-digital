@@ -5,7 +5,7 @@ import {
   LineChart, Line, BarChart, Bar, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
-import { TrendingUp, Users, AlertTriangle } from 'lucide-react';
+import { TrendingUp, Users, AlertTriangle, Building2, ChevronRight, ArrowLeft } from 'lucide-react';
 import { ChartCard } from './ChartCard';
 import { GrowthStatusDistribution } from './GrowthStatusDistribution';
 import { GrowthProblemRanking } from './GrowthProblemRanking';
@@ -96,6 +96,9 @@ export function DinkesAnalisis() {
   const handleDrill = useCallback((hcId: string, hcName: string) => {
     setDrillHcId(hcId);
     setDrillHcName(hcName);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
   }, []);
 
   // Refetch data drill saat HC atau periode berubah (agar tidak basi setelah ganti periode).
@@ -279,19 +282,66 @@ export function DinkesAnalisis() {
 
   return (
     <div className="space-y-4">
+      {/* Top Header & Range Filter */}
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <h2 className="text-base font-extrabold text-[#111b21]">
-          {drillHcId ? (
-            <button onClick={() => { setDrillHcId(null); setDrillHcName(''); }} className="text-[#075e54] hover:underline">
-              Analisis Kabupaten
-            </button>
-          ) : (
-            'Analisis Kabupaten'
-          )}
-          {drillHcId && <span className="text-[#54656f] font-bold"> / {drillHcName}</span>}
-        </h2>
+        <div>
+          <h2 className="text-base font-extrabold text-[#111b21]">
+            {drillHcId ? drillHcName : 'Analisis Kabupaten'}
+          </h2>
+          <p className="text-xs text-[#54656f]">
+            {drillHcId
+              ? `Statistik agregat & rincian posyandu di wilayah ${drillHcName}`
+              : 'Statistik agregat pelayanan posyandu se-Kabupaten Gunungkidul'}
+          </p>
+        </div>
         <PeriodControl selected={period} onChange={setPeriod} />
       </div>
+
+      {/* Drilldown Context Bar (Lagi Buka Apa) */}
+      {drillHcId && (
+        <div className="bg-[#e7fceb] border border-[#25d366]/40 rounded-2xl p-3 sm:p-3.5 flex items-center justify-between gap-3 shadow-xs animate-in fade-in duration-150">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-[#075e54] text-white flex items-center justify-center shrink-0 shadow-2xs">
+              <Building2 className="w-4 h-4 text-[#25d366]" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[#075e54] flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDrillHcId(null);
+                    setDrillHcName('');
+                    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'instant' });
+                  }}
+                  className="hover:underline flex items-center gap-1 text-[#075e54]"
+                >
+                  Kabupaten Gunungkidul
+                </button>
+                <ChevronRight className="w-3.5 h-3.5 text-[#128c7e] shrink-0" />
+                <span className="font-extrabold text-[#111b21] bg-white px-2 py-0.5 rounded-lg border border-[#bbf7d0]">
+                  {drillHcName}
+                </span>
+              </div>
+              <p className="text-[11px] text-[#54656f] mt-0.5 truncate">
+                Mode drill-down: Hanya menampilkan data sasaran & posyandu di {drillHcName}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setDrillHcId(null);
+              setDrillHcName('');
+              if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'instant' });
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#075e54] text-[#075e54] hover:text-white border border-[#25d366]/50 rounded-xl text-xs font-bold transition-all shrink-0 touch-press shadow-2xs"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Kembali ke Kabupaten</span>
+            <span className="sm:hidden">Kembali</span>
+          </button>
+        </div>
+      )}
 
       {/* LEVEL 1: RINGKASAN KPI, DEMOGRAFI & CAKUPAN PARTISIPASI (MAKRO) */}
       {!(drillHcId && activeMonth === '') && (

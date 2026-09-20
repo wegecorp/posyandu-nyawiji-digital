@@ -71,11 +71,32 @@ export const ChartCardSkeleton: React.FC<{ height?: string }> = ({ height = 'h-4
 );
 
 export const AnalisisPageSkeleton: React.FC = () => (
-  <div className="space-y-4" aria-busy="true" aria-label="Memuat analisis statistik">
+  <div className="space-y-4 animate-pulse" aria-busy="true" aria-label="Memuat analisis statistik">
     {/* Header bar placeholder */}
-    <div className="flex items-center justify-between animate-pulse">
-      <div className="h-5 w-44 bg-[#e9edef] rounded-md" />
-      <div className="h-8 w-32 bg-[#f0f2f5] rounded-full" />
+    <div className="flex items-center justify-between">
+      <div className="space-y-1">
+        <div className="h-5 w-44 bg-[#e9edef] rounded-md" />
+        <div className="h-3 w-64 bg-[#f0f2f5] rounded-md" />
+      </div>
+      <div className="h-8 w-48 bg-[#f0f2f5] rounded-xl" />
+    </div>
+    {/* 3 KPI Summary cards */}
+    <div className="grid grid-cols-3 gap-2">
+      <div className="h-20 bg-white rounded-xl border border-[#e9edef] p-3 flex flex-col items-center justify-center gap-1.5 shadow-xs">
+        <div className="w-5 h-5 bg-[#e9edef] rounded-full" />
+        <div className="w-12 h-4 bg-[#f0f2f5] rounded-md" />
+        <div className="w-16 h-2 bg-[#f0f2f5] rounded-sm" />
+      </div>
+      <div className="h-20 bg-white rounded-xl border border-[#e9edef] p-3 flex flex-col items-center justify-center gap-1.5 shadow-xs">
+        <div className="w-5 h-5 bg-[#e9edef] rounded-full" />
+        <div className="w-12 h-4 bg-[#f0f2f5] rounded-md" />
+        <div className="w-16 h-2 bg-[#f0f2f5] rounded-sm" />
+      </div>
+      <div className="h-20 bg-white rounded-xl border border-[#e9edef] p-3 flex flex-col items-center justify-center gap-1.5 shadow-xs">
+        <div className="w-5 h-5 bg-[#e9edef] rounded-full" />
+        <div className="w-12 h-4 bg-[#f0f2f5] rounded-md" />
+        <div className="w-16 h-2 bg-[#f0f2f5] rounded-sm" />
+      </div>
     </div>
     {/* Main large chart card */}
     <ChartCardSkeleton height="h-56" />

@@ -43,7 +43,7 @@ const NEW_API_DATA = [
 ];
 
 function mockFetch(data: unknown) {
-  const fn = vi.fn(async () => ({
+  const fn = vi.fn(async (_url?: string | URL | Request) => ({
     ok: true,
     json: async () => ({ success: true, scope: 'puskesmas', data }),
   }));

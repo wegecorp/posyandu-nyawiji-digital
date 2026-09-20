@@ -39,8 +39,15 @@
   --tw-enter-translate-y: 0;
 }
 
-html {
-  scrollbar-gutter: stable;
+@media (min-width: 768px) {
+  html {
+    scrollbar-gutter: stable;
+  }
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {

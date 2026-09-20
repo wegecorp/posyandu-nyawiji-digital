@@ -172,8 +172,8 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="font-extrabold text-white truncate text-sm leading-tight">
               {displayTitle}
             </div>
-            <div className="mt-0.5 flex items-center gap-1.5">
-              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black tracking-wider truncate max-w-[200px] ${roleBadge.color}`}>
+            <div className="mt-0.5 flex items-center gap-1.5 min-w-0">
+              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black tracking-wider truncate max-w-[120px] sm:max-w-[200px] ${roleBadge.color}`}>
                 {displaySubtitle}
               </span>
               <ChevronDown className="w-3.5 h-3.5 text-white/70 shrink-0" />
@@ -182,16 +182,16 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         {/* Header Action Buttons */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* Install Aplikasi (PWA) ke Layar Utama — icon-only di layar kecil */}
           {showInstallButton && (
             <button
               onClick={handleInstallTap}
               aria-label="Install Aplikasi"
-              className="h-11 w-11 sm:w-auto px-0 sm:px-3.5 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center gap-2 border border-white/20 shrink-0"
+              className="h-9 w-9 sm:h-11 sm:w-auto px-0 sm:px-3.5 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center gap-2 border border-white/20 shrink-0"
               title="Install / Simpan Aplikasi di Layar Utama"
             >
-              <Download className="w-5 h-5 text-[#25d366] shrink-0" />
+              <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#25d366] shrink-0" />
               <span className="hidden sm:inline text-xs font-bold leading-tight">Install Aplikasi</span>
             </button>
           )}
@@ -223,10 +223,10 @@ export const Header: React.FC<HeaderProps> = ({
             href="/panduan"
             prefetch={false}
             aria-label="Panduan Pengguna"
-            className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
+            className="w-9 h-9 sm:w-11 sm:h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
             title="Panduan Pengguna"
           >
-            <BookOpen className="w-5 h-5 text-white" />
+            <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </Link>
 
           {/* Overflow menu — layar kecil: Scan QR & Export */}
@@ -236,10 +236,10 @@ export const Header: React.FC<HeaderProps> = ({
               aria-label="Menu lainnya"
               aria-expanded={menuOpen}
               aria-haspopup="menu"
-              className="w-11 h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
+              className="w-9 h-9 sm:w-11 sm:h-11 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all touch-press flex items-center justify-center border border-white/20 shrink-0"
               title="Menu lainnya"
             >
-              <EllipsisVertical className="w-5 h-5 text-white" />
+              <EllipsisVertical className="w-4 h-4 text-white" />
             </button>
 
             {menuOpen && (

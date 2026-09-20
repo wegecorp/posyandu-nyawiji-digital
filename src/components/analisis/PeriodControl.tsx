@@ -122,7 +122,7 @@ export function PeriodControl({ selected, onChange }: PeriodControlProps) {
 
       {/* Dropdown kalender */}
       {open && (
-        <div className="absolute right-0 top-full mt-1.5 z-50 w-64 bg-white rounded-2xl border border-[#e9edef] shadow-xl p-3">
+        <div className="absolute right-0 top-full mt-1.5 z-50 w-60 sm:w-64 max-w-[calc(100vw-2rem)] bg-white rounded-2xl border border-[#e9edef] shadow-xl p-3">
           <div className="text-[11px] font-extrabold text-[#111b21] mb-2">
             Pilih bulan untuk fokus pemaparan
           </div>

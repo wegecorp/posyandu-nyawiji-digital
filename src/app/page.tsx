@@ -446,12 +446,12 @@ export default function PosyanduApp() {
           /* VIEW 4: PATIENT LIST & QUEUE FOR POSYANDU */
           <div className="space-y-3.5 animate-in fade-in duration-150 pb-20">
             {activeViewMode === 'posyandu_table' && (
-              <div className="bg-[#e7fceb] border border-[#25d366]/40 rounded-2xl p-3 sm:p-3.5 flex items-center justify-between gap-3 shadow-xs">
+              <div className="bg-[#e7fceb] border border-[#25d366]/40 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 shadow-xs">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-8 h-8 rounded-xl bg-[#075e54] text-white flex items-center justify-center shrink-0 shadow-2xs">
                     <Building className="w-4 h-4 text-[#25d366]" />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-[#075e54] flex-wrap">
                       <span>{user.name}</span>
                       <ChevronRight className="w-3.5 h-3.5 text-[#128c7e] shrink-0" />
@@ -469,7 +469,7 @@ export default function PosyanduApp() {
                     setActiveViewMode('default');
                     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'instant' });
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#075e54] text-[#075e54] hover:text-white border border-[#25d366]/50 rounded-xl text-xs font-bold transition-all shrink-0 touch-press shadow-2xs"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#075e54] text-[#075e54] hover:text-white border border-[#25d366]/50 rounded-xl text-xs font-bold transition-all shrink-0 self-start sm:self-auto touch-press shadow-2xs"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Kembali ke Dashboard</span>

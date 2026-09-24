@@ -412,9 +412,9 @@ export default function PosyanduApp() {
             onEnterPosyandu={handleEnterPosyanduTable}
             onExport={() => setIsExportOpen(true)}
           />
-        ) : /* VIEW 3: POSYANDU OPERATIONAL TABLE & MEASUREMENT FORMS */
+        )         : /* VIEW 3: POSYANDU OPERATIONAL TABLE & MEASUREMENT FORMS */
         selectedPatient ? (
-          <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <div className="space-y-3 pb-24">
             {/* Breadcrumb navigation bar */}
             <div className="flex items-center justify-between gap-2 bg-white rounded-2xl p-2.5 sm:p-3 border border-[#e9edef] shadow-xs">
               <button
@@ -444,7 +444,7 @@ export default function PosyanduApp() {
           </div>
         ) : (
           /* VIEW 4: PATIENT LIST & QUEUE FOR POSYANDU */
-          <div className="space-y-3.5 animate-in fade-in duration-150 pb-20">
+          <div className="space-y-3.5 pb-20">
             {activeViewMode === 'posyandu_table' && (
               <div className="bg-[#e7fceb] border border-[#25d366]/40 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 shadow-xs">
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -609,23 +609,23 @@ export default function PosyanduApp() {
                 ))}
               </div>
             )}
-
-            {/* WhatsApp Floating Action Button (FAB) for Quick Patient Register */}
-            {!isReadOnly && !selectedPatient && (
-              <div className="fixed bottom-6 right-6 z-40">
-                <button
-                  onClick={() => setIsRegisterOpen(true)}
-                  className="bg-[#25d366] hover:bg-[#128c7e] text-white font-black px-5 py-3.5 rounded-full shadow-2xl flex items-center gap-2.5 border-2 border-white transition-all touch-press text-sm active:scale-95"
-                  title="Tambah Pasien Baru"
-                >
-                  <UserPlus className="w-6 h-6 text-white" />
-                  <span className="font-black text-sm">PASIEN BARU</span>
-                </button>
-              </div>
-            )}
           </div>
         )}
       </main>
+
+      {/* WhatsApp Floating Action Button (FAB) for Quick Patient Register */}
+      {!isReadOnly && !selectedPatient && mainView === 'beranda' && (
+        <div className="fixed bottom-6 right-6 z-40 pointer-events-auto">
+          <button
+            onClick={() => setIsRegisterOpen(true)}
+            className="bg-[#25d366] hover:bg-[#128c7e] text-white font-black px-5 py-3.5 rounded-full shadow-2xl flex items-center gap-2.5 border-2 border-white transition-all touch-press text-sm active:scale-95"
+            title="Tambah Pasien Baru"
+          >
+            <UserPlus className="w-6 h-6 text-white" />
+            <span className="font-black text-sm">PASIEN BARU</span>
+          </button>
+        </div>
+      )}
 
       {/* MODALS */}
       {/* 1. Quick Registration Modal */}

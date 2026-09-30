@@ -28,6 +28,7 @@ import { ExitHint } from '@/components/ExitHint';
 import { useBackLayer, useExitGuard } from '@/lib/back-navigation';
 import { saveCredential } from '@/lib/credential-store';
 import { getUnitAvatarDataUri } from '@/lib/unit-avatar';
+import { matchSearchQuery } from '@/lib/search';
 
 type LoginTab = 'posyandu' | 'staf';
 type CascadeStep = 0 | 1 | 2 | 3; // 0:puskesmas 1:kalurahan 2:posyandu 3:password
@@ -42,6 +43,15 @@ interface Identity {
 interface PuskesmasItem { id: string; code: string; name: string; kapanewon: string }
 interface KalurahanItem { id: string; name: string; posyanduCount: number }
 interface PosyanduItem { id: string; code: string; name: string; padukuhan: string }
+
+interface DirectSearchResult {
+  id: string;
+  code: string;
+  name: string;
+  padukuhan: string;
+  kalurahan: { id: string; name: string };
+  healthCenter: { id: string; code: string; name: string; kapanewon: string };
+}
 
 function getErrMsg(err: unknown): string {
   return err instanceof Error ? err.message : 'Terjadi kesalahan';
@@ -84,6 +94,8 @@ export function AuthPage() {
   const [selectedPosyandu, setSelectedPosyandu] = useState<PosyanduItem | null>(null);
   const [kaderPassword, setKaderPassword] = useState('');
   const [filterText, setFilterText] = useState('');
+  const [directResults, setDirectResults] = useState<DirectSearchResult[]>([]);
+  const [isSearchingDirect, setIsSearchingDirect] = useState(false);
 
   // --- Staf ---
   const [staffUsername, setStaffUsername] = useState('');
@@ -100,13 +112,11 @@ export function AuthPage() {
   // Ambil daftar puskesmas saat tab posyandu aktif di step awal (dengan cache instan)
   useEffect(() => {
     if (tab === 'posyandu' && step === 0) {
-      if (puskesmasList.length === 0) {
-        setIsFetchingPkm(true);
-      }
+      let active = true;
       fetch('/api/public/puskesmas')
         .then((r) => r.json())
         .then((json) => {
-          if (json.success && Array.isArray(json.data)) {
+          if (active && json.success && Array.isArray(json.data)) {
             setPuskesmasList(json.data);
             try {
               localStorage.setItem('nyawiji_pkm_list', JSON.stringify(json.data));
@@ -115,9 +125,42 @@ export function AuthPage() {
           }
         })
         .catch((e) => console.error('Gagal memuat puskesmas:', e))
-        .finally(() => setIsFetchingPkm(false));
+        .finally(() => {
+          if (active) setIsFetchingPkm(false);
+        });
+      return () => {
+        active = false;
+      };
     }
   }, [tab, step]);
+
+  // Pencarian langsung posyandu lintas puskesmas / kalurahan di Step 0
+  useEffect(() => {
+    if (tab !== 'posyandu' || step !== 0) return;
+    const q = filterText.trim();
+    if (q.length < 2) {
+      setDirectResults([]);
+      setIsSearchingDirect(false);
+      return;
+    }
+
+    setIsSearchingDirect(true);
+    const timer = setTimeout(() => {
+      fetch(`/api/public/posyandu/search?q=${encodeURIComponent(q)}`)
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success && Array.isArray(res.data)) {
+            setDirectResults(res.data);
+          } else {
+            setDirectResults([]);
+          }
+        })
+        .catch(() => setDirectResults([]))
+        .finally(() => setIsSearchingDirect(false));
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [tab, step, filterText]);
 
   const resetCascade = () => {
     setStep(0);
@@ -126,8 +169,28 @@ export function AuthPage() {
     setSelectedPosyandu(null);
     setKalurahanList([]);
     setPosyanduList([]);
+    setDirectResults([]);
     setKaderPassword('');
     setFilterText('');
+  };
+
+  const chooseDirectPosyandu = (pos: DirectSearchResult) => {
+    setSelectedPuskesmas(pos.healthCenter);
+    setSelectedKalurahan({
+      id: pos.kalurahan.id,
+      name: pos.kalurahan.name,
+      posyanduCount: 1,
+    });
+    setSelectedPosyandu({
+      id: pos.id,
+      code: pos.code,
+      name: pos.name,
+      padukuhan: pos.padukuhan,
+    });
+    setErrorMsg('');
+    setFilterText('');
+    setDirectResults([]);
+    setStep(3);
   };
 
   const switchTab = (next: LoginTab) => {
@@ -232,6 +295,7 @@ export function AuthPage() {
   const goBack = () => {
     setErrorMsg('');
     setFilterText('');
+    setDirectResults([]);
     if (step === 1) {
       resetCascade();
     } else if (step === 2) {
@@ -239,9 +303,13 @@ export function AuthPage() {
       setSelectedKalurahan(null);
       setPosyanduList([]);
     } else if (step === 3) {
-      setStep(2);
-      setSelectedPosyandu(null);
-      setKaderPassword('');
+      if (posyanduList.length === 0) {
+        resetCascade();
+      } else {
+        setStep(2);
+        setSelectedPosyandu(null);
+        setKaderPassword('');
+      }
     }
   };
 
@@ -354,13 +422,15 @@ export function AuthPage() {
     }
   };
 
-  const q = filterText.toLowerCase().trim();
+  const q = filterText.trim();
   const shownPuskesmas = q
-    ? puskesmasList.filter((p) => p.name.toLowerCase().includes(q) || p.kapanewon.toLowerCase().includes(q))
+    ? puskesmasList.filter((p) => matchSearchQuery(`${p.name} ${p.kapanewon} ${p.code}`, q))
     : puskesmasList;
-  const shownKalurahan = q ? kalurahanList.filter((k) => k.name.toLowerCase().includes(q)) : kalurahanList;
+  const shownKalurahan = q
+    ? kalurahanList.filter((k) => matchSearchQuery(k.name, q))
+    : kalurahanList;
   const shownPosyandu = q
-    ? posyanduList.filter((p) => p.name.toLowerCase().includes(q) || (p.padukuhan || '').toLowerCase().includes(q))
+    ? posyanduList.filter((p) => matchSearchQuery(`${p.name} ${p.code} ${p.padukuhan || ''}`, q))
     : posyanduList;
 
   return (
@@ -554,17 +624,67 @@ export function AuthPage() {
                       <EmptyState msg="Belum ada Puskesmas terdaftar. Hubungi Dinas Kesehatan untuk pembuatan akun." />
                     ) : (
                       <>
-                        <StepFilter value={filterText} onChange={setFilterText} placeholder="Cari puskesmas / kapanewon..." />
-                        {shownPuskesmas.map((pkm) => (
-                          <SelectableCard
-                            key={pkm.id}
-                            title={pkm.name}
-                            subtitle={`Kapanewon ${pkm.kapanewon}`}
-                            icon={<Building2 className="w-4 h-4" />}
-                            avatarUrl={getUnitAvatarDataUri('planets', pkm.name)}
-                            onClick={() => choosePuskesmas(pkm)}
-                          />
-                        ))}
+                        <StepFilter
+                          value={filterText}
+                          onChange={setFilterText}
+                          placeholder="Cari nama posyandu, dusun, puskesmas..."
+                        />
+
+                        {/* Hasil pencarian langsung posyandu */}
+                        {directResults.length > 0 && (
+                          <div className="space-y-1.5 pb-2.5 border-b border-[#e9edef]">
+                            <div className="flex items-center justify-between px-1">
+                              <span className="text-[11px] font-bold text-[#075e54] uppercase tracking-wider flex items-center gap-1.5">
+                                <Home className="w-3.5 h-3.5 text-[#128c7e]" />
+                                Posyandu Ditemukan ({directResults.length})
+                              </span>
+                              <span className="text-[10px] text-[#8696a0]">Langsung masuk</span>
+                            </div>
+                            {directResults.map((pos) => (
+                              <SelectableCard
+                                key={pos.id}
+                                title={pos.name}
+                                subtitle={`${pos.kalurahan.name}${pos.padukuhan && pos.padukuhan !== '-' ? ` · Dusun ${pos.padukuhan}` : ''} • ${pos.healthCenter.name}`}
+                                icon={<Home className="w-4 h-4" />}
+                                avatarUrl={getUnitAvatarDataUri('rings', pos.name)}
+                                onClick={() => chooseDirectPosyandu(pos)}
+                              />
+                            ))}
+                          </div>
+                        )}
+
+                        {isSearchingDirect && directResults.length === 0 && (
+                          <div className="py-2 text-center text-xs text-[#8696a0] font-medium animate-pulse">
+                            Mencari posyandu...
+                          </div>
+                        )}
+
+                        {/* Daftar puskesmas */}
+                        {shownPuskesmas.length > 0 && (
+                          <div className="space-y-1.5">
+                            {filterText.trim().length > 0 && (
+                              <div className="px-1 pt-1">
+                                <span className="text-[11px] font-bold text-[#54656f] uppercase tracking-wider">
+                                  Puskesmas Pembina ({shownPuskesmas.length})
+                                </span>
+                              </div>
+                            )}
+                            {shownPuskesmas.map((pkm) => (
+                              <SelectableCard
+                                key={pkm.id}
+                                title={pkm.name}
+                                subtitle={`Kapanewon ${pkm.kapanewon}`}
+                                icon={<Building2 className="w-4 h-4" />}
+                                avatarUrl={getUnitAvatarDataUri('planets', pkm.name)}
+                                onClick={() => choosePuskesmas(pkm)}
+                              />
+                            ))}
+                          </div>
+                        )}
+
+                        {filterText.trim().length >= 2 && directResults.length === 0 && shownPuskesmas.length === 0 && !isSearchingDirect && (
+                          <EmptyState msg={`Tidak ada posyandu atau puskesmas cocok dengan "${filterText.trim()}".`} />
+                        )}
                       </>
                     )}
                   </div>

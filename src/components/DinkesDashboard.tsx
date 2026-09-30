@@ -23,6 +23,7 @@ import { puskesmasUsernameBase } from '@/lib/names';
 import { useBackLayer } from '@/lib/back-navigation';
 import { DashboardListSkeleton } from '@/components/Skeleton';
 import { getUnitAvatarDataUri } from '@/lib/unit-avatar';
+import { matchSearchQuery } from '@/lib/search';
 
 interface DinkesDashboardProps {
   onExportAll: () => void;
@@ -131,23 +132,32 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
 
   const refresh = () => {
     setIsLoading(true);
-    fetch('/api/dinkes/puskesmas')
+    const url = searchQuery.trim()
+      ? `/api/dinkes/puskesmas?q=${encodeURIComponent(searchQuery.trim())}`
+      : '/api/dinkes/puskesmas';
+    fetch(url)
       .then((r) => r.json())
       .then((data) => {
-        if (data.success) setPuskesmasList(data.data);
+        if (data.success) {
+          setPuskesmasList(data.data);
+          if (Array.isArray(data.data)) {
+            setPosyandusByPuskesmas((prev) => {
+              const updated = { ...prev };
+              for (const pkm of data.data) {
+                if (pkm.posyandus && pkm.posyandus.length > 0) {
+                  updated[pkm.id] = pkm.posyandus;
+                }
+              }
+              return updated;
+            });
+          }
+        }
       })
       .catch((e) => console.error(e))
       .finally(() => setIsLoading(false));
   };
 
   useEffect(() => {
-    fetch('/api/dinkes/puskesmas')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success) setPuskesmasList(data.data);
-      })
-      .catch((e) => console.error(e))
-      .finally(() => setIsLoading(false));
     fetch('/api/lokasi')
       .then((r) => r.json())
       .then((json) => {
@@ -155,6 +165,45 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
       })
       .catch(console.error);
   }, []);
+
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q) {
+      setIsLoading(true);
+      fetch('/api/dinkes/puskesmas')
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.success) setPuskesmasList(data.data);
+        })
+        .catch(console.error)
+        .finally(() => setIsLoading(false));
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setIsLoading(true);
+      fetch(`/api/dinkes/puskesmas?q=${encodeURIComponent(q)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.data)) {
+            setPuskesmasList(data.data);
+            setPosyandusByPuskesmas((prev) => {
+              const updated = { ...prev };
+              for (const pkm of data.data) {
+                if (pkm.posyandus && pkm.posyandus.length > 0) {
+                  updated[pkm.id] = pkm.posyandus;
+                }
+              }
+              return updated;
+            });
+          }
+        })
+        .catch(console.error)
+        .finally(() => setIsLoading(false));
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const openCreate = () => {
     setCName('');
@@ -224,21 +273,18 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
   );
 
   // Pencarian & grouping
-  const q = searchQuery.trim().toLowerCase();
+  const q = searchQuery.trim();
   const filteredPuskesmas = q ? puskesmasList.filter((pkm) => {
-    const pkmMatch = pkm.name.toLowerCase().includes(q) || pkm.kapanewon.toLowerCase().includes(q);
-    const pkmPos = posyandusByPuskesmas[pkm.id] || pkm.posyandus;
-    const posMatch = pkmPos?.some(
-      (pos) => pos.name.toLowerCase().includes(q) || pos.code.toLowerCase().includes(q) || pos.kalurahan.toLowerCase().includes(q)
+    const pkmMatch = matchSearchQuery(`${pkm.name} ${pkm.kapanewon} ${pkm.code}`, q);
+    const pkmPos = posyandusByPuskesmas[pkm.id] || pkm.posyandus || [];
+    const posMatch = pkmPos.some((pos) =>
+      matchSearchQuery(`${pos.name} ${pos.code} ${pos.kalurahan} ${pos.padukuhan || ''}`, q)
     );
     return pkmMatch || posMatch;
   }) : puskesmasList;
 
   const posMatches = (pos: PosyanduRow) =>
-    !q ||
-    pos.name.toLowerCase().includes(q) ||
-    pos.code.toLowerCase().includes(q) ||
-    pos.kalurahan.toLowerCase().includes(q);
+    !q || matchSearchQuery(`${pos.name} ${pos.code} ${pos.kalurahan} ${pos.padukuhan || ''}`, q);
 
   const groupByKalurahan = (posyandus: PosyanduRow[] = []) => {
     const groups = new Map<string, PosyanduRow[]>();
@@ -397,11 +443,11 @@ export const DinkesDashboard: React.FC<DinkesDashboardProps> = ({ onExportAll, o
           {filteredPuskesmas.map((pkm) => {
             const pkmUser = pkm.users?.[0];
             const pkmPending = !!pkmUser?.mustChangePassword;
-            const isOpen = expandedId === pkm.id;
             const pkmPosyandus = posyandusByPuskesmas[pkm.id] || pkm.posyandus || [];
             const isLoadingPos = !!loadingPosByPkm[pkm.id];
             const posCount = pkm._count?.posyandus ?? pkmPosyandus.length;
             const matchCount = q ? pkmPosyandus.filter(posMatches).length : 0;
+            const isOpen = expandedId === pkm.id || Boolean(q && matchCount > 0);
             const allGroups = groupByKalurahan(pkmPosyandus);
             const showAllGroups = !!showAllPos[pkm.id] || !!q;
             let groups = allGroups;

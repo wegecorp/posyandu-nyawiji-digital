@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { FileSpreadsheet, Download, X, RefreshCw, Check, AlertTriangle } from 'lucide-react';
+import { FileSpreadsheet, Download, X, RefreshCw, Check, AlertTriangle, Search } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { PeriodControl, periodToRange } from './analisis/PeriodControl';
 import { useBackLayer } from '@/lib/back-navigation';
+import { matchSearchQuery } from '@/lib/search';
 
 type Include = 'anggota' | 'detail' | 'beresiko';
 
@@ -33,6 +34,7 @@ export function ExportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
   const [scopeAll, setScopeAll] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [units, setUnits] = useState<{ id: string; name: string }[]>([]);
+  const [unitSearch, setUnitSearch] = useState('');
   const [preview, setPreview] = useState<PreviewShape | null>(null);
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -57,6 +59,12 @@ export function ExportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 
   const includeArr = useMemo(() => [...include], [include]);
   const selectedArr = useMemo(() => [...selected], [selected]);
+
+  const filteredUnits = useMemo(() => {
+    const q = unitSearch.trim();
+    if (!q) return units;
+    return units.filter((u) => matchSearchQuery(u.name, q));
+  }, [units, unitSearch]);
 
   const unitIdsQuery =
     role === 'PUSKESMAS' && !scopeAll && selectedArr.length > 0 ? `&unitIds=${selectedArr.join(',')}` : '';
@@ -201,22 +209,45 @@ export function ExportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
               </div>
 
               {!scopeAll && (
-                <div className="max-h-44 overflow-y-auto border border-[#e9edef] rounded-2xl divide-y divide-[#f0f2f5]">
-                  {units.length === 0 ? (
-                    <p className="p-3 text-[11px] text-[#8696a0] font-medium">Memuat daftar posyandu...</p>
-                  ) : (
-                    units.map((u) => (
-                      <label key={u.id} className="flex items-center gap-2.5 p-2.5 text-xs font-medium text-[#111b21]">
-                        <input
-                          type="checkbox"
-                          checked={selected.has(u.id)}
-                          onChange={() => toggleUnit(u.id)}
-                          className="w-4 h-4 accent-[#128c7e]"
-                        />
-                        <span className="truncate">{u.name}</span>
-                      </label>
-                    ))
-                  )}
+                <div className="space-y-1.5">
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-[#8696a0] absolute left-2.5 top-2.5" />
+                    <input
+                      type="text"
+                      value={unitSearch}
+                      onChange={(e) => setUnitSearch(e.target.value)}
+                      placeholder="Cari nama posyandu..."
+                      className="w-full pl-8 pr-7 py-1.5 text-xs bg-[#f0f2f5] rounded-xl border border-[#e9edef] outline-none focus:bg-white focus:border-[#075e54] text-[#111b21] transition-all"
+                    />
+                    {unitSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setUnitSearch('')}
+                        className="absolute right-2 top-2 text-[#8696a0] hover:text-[#111b21]"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-44 overflow-y-auto border border-[#e9edef] rounded-2xl divide-y divide-[#f0f2f5]">
+                    {filteredUnits.length === 0 ? (
+                      <p className="p-3 text-[11px] text-[#8696a0] font-medium">
+                        {units.length === 0 ? 'Memuat daftar posyandu...' : 'Tidak ada posyandu cocok.'}
+                      </p>
+                    ) : (
+                      filteredUnits.map((u) => (
+                        <label key={u.id} className="flex items-center gap-2.5 p-2.5 text-xs font-medium text-[#111b21] hover:bg-[#f0f2f5]/60 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selected.has(u.id)}
+                            onChange={() => toggleUnit(u.id)}
+                            className="w-4 h-4 accent-[#128c7e]"
+                          />
+                          <span className="truncate">{u.name}</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
                 </div>
               )}
             </section>

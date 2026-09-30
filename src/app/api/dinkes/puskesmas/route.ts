@@ -2,17 +2,125 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireRole } from '@/lib/api-auth';
 import { hashPassword } from '@/lib/password';
-import { smartTitle } from '@/lib/names';
+import { smartTitle, romanToNumber } from '@/lib/names';
+import { extractSearchTokens } from '@/lib/search';
 import {
   generateHealthCenterCode,
   generateUniquePuskesmasUsername,
   getPuskesmasDefaultPassword,
 } from '@/lib/accounts';
 
-export async function GET() {
+const ARABIC_TO_ROMAN: Record<string, string> = {
+  '1': 'I',
+  '2': 'II',
+  '3': 'III',
+  '4': 'IV',
+  '5': 'V',
+  '6': 'VI',
+  '7': 'VII',
+  '8': 'VIII',
+  '9': 'IX',
+  '10': 'X',
+};
+
+export async function GET(req: Request) {
   try {
     const session = await requireRole(undefined, ['DINKES']);
     if (session instanceof NextResponse) return session;
+
+    const { searchParams } = new URL(req.url);
+    const q = searchParams.get('q')?.trim() || '';
+
+    if (q) {
+      const tokens = extractSearchTokens(q);
+      const tokenConditions = (tokens.length > 0 ? tokens : [q]).map((token) => {
+        const variants = [token];
+        if (/^\d+$/.test(token)) {
+          const roman = ARABIC_TO_ROMAN[token];
+          if (roman) variants.push(roman);
+          if (token.length === 1) variants.push(`0${token}`);
+        }
+        const arabic = romanToNumber(token);
+        if (arabic !== null) {
+          variants.push(String(arabic));
+          if (arabic < 10) variants.push(`0${arabic}`);
+        }
+        return variants;
+      });
+
+      const healthCenters = await prisma.healthCenter.findMany({
+        where: {
+          AND: tokenConditions.map((variants) => ({
+            OR: variants.flatMap((v) => [
+              { name: { contains: v, mode: 'insensitive' as const } },
+              { code: { contains: v, mode: 'insensitive' as const } },
+              { kapanewon: { name: { contains: v, mode: 'insensitive' as const } } },
+              {
+                posyandus: {
+                  some: {
+                    OR: [
+                      { name: { contains: v, mode: 'insensitive' as const } },
+                      { code: { contains: v, mode: 'insensitive' as const } },
+                      { padukuhan: { contains: v, mode: 'insensitive' as const } },
+                      { kalurahan: { name: { contains: v, mode: 'insensitive' as const } } },
+                    ],
+                  },
+                },
+              },
+            ]),
+          })),
+        },
+        include: {
+          kapanewon: { select: { name: true } },
+          users: {
+            select: { id: true, username: true, mustChangePassword: true, disabledAt: true },
+          },
+          posyandus: {
+            where: {
+              AND: tokenConditions.map((variants) => ({
+                OR: variants.flatMap((v) => [
+                  { name: { contains: v, mode: 'insensitive' as const } },
+                  { code: { contains: v, mode: 'insensitive' as const } },
+                  { padukuhan: { contains: v, mode: 'insensitive' as const } },
+                  { kalurahan: { name: { contains: v, mode: 'insensitive' as const } } },
+                  { healthCenter: { name: { contains: v, mode: 'insensitive' as const } } },
+                ]),
+              })),
+            },
+            include: {
+              kalurahan: { select: { name: true } },
+              users: { select: { id: true, username: true, mustChangePassword: true } },
+              _count: { select: { patients: true, measurements: true } },
+            },
+            orderBy: { name: 'asc' },
+          },
+          _count: {
+            select: { posyandus: true },
+          },
+        },
+        orderBy: { name: 'asc' },
+      });
+
+      const data = healthCenters.map((hc) => ({
+        id: hc.id,
+        code: hc.code,
+        name: hc.name,
+        kapanewon: hc.kapanewon.name,
+        users: hc.users,
+        _count: hc._count,
+        posyandus: hc.posyandus.map((p) => ({
+          id: p.id,
+          code: p.code,
+          name: p.name,
+          padukuhan: p.padukuhan,
+          kalurahan: p.kalurahan.name,
+          users: p.users,
+          _count: p._count,
+        })),
+      }));
+
+      return NextResponse.json({ success: true, data });
+    }
 
     const healthCenters = await prisma.healthCenter.findMany({
       include: {

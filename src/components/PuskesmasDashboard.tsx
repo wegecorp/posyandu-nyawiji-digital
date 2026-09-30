@@ -25,6 +25,7 @@ import {
 import { useBackLayer } from '@/lib/back-navigation';
 import { DashboardListSkeleton } from '@/components/Skeleton';
 import { getUnitAvatarDataUri } from '@/lib/unit-avatar';
+import { matchSearchQuery } from '@/lib/search';
 
 const inputCls =
   'w-full px-3.5 py-2.5 text-xs bg-[#f0f2f5] border border-[#e9edef] rounded-2xl outline-none focus:bg-white focus:border-2 focus:border-[#128c7e] font-medium text-[#111b21] transition-all';
@@ -297,14 +298,13 @@ export const PuskesmasDashboard: React.FC<PuskesmasDashboardProps> = ({ onEnterP
   );
 
   // Pencarian & ringkasan
-  const q = searchQuery.trim().toLowerCase();
+  const q = searchQuery.trim();
   const filtered = q
-    ? posyandus.filter(
-        (pos) =>
-          pos.name.toLowerCase().includes(q) ||
-          pos.code.toLowerCase().includes(q) ||
-          pos.kalurahan.toLowerCase().includes(q) ||
-          (pos.padukuhan && pos.padukuhan !== '-' && pos.padukuhan.toLowerCase().includes(q))
+    ? posyandus.filter((pos) =>
+        matchSearchQuery(
+          `${pos.name} ${pos.code} ${pos.kalurahan} ${pos.padukuhan && pos.padukuhan !== '-' ? pos.padukuhan : ''}`,
+          q
+        )
       )
     : posyandus;
 

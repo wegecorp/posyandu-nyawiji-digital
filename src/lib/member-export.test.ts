@@ -182,4 +182,38 @@ describe('cakupan KMS 0-60 bulan (N/T & 2T)', () => {
     expect(risk.some((r) => r.Nama === 'Balita' && r['Jenis Risiko'] === 'BB 2T (tidak naik 2x)')).toBe(true);
     expect(risk.some((r) => r.Nama === 'Apras Lanjut' && r['Jenis Risiko'] === 'BB 2T (tidak naik 2x)')).toBe(false);
   });
+
+  it('status gizi balita BB/U, TB/U, BB/TB tidak bocor ke pasien dewasa meski ada nilai residu di measurement', () => {
+    const adultPatients: ExportPatient[] = [
+      { id: 'ad1', regNumber: 'AD1', name: 'Dewasa', birthDate: '1995-01-01', gender: 'L', isPregnant: false },
+    ];
+    const dirtyAdultMeas: ExportMeasurement[] = [
+      {
+        patientId: 'ad1',
+        sessionDate: '2026-03-10',
+        weight: 65,
+        height: 165,
+        underweightStatus: 'risiko_bb_lebih',
+        stuntingStatus: 'tinggi',
+        wastingStatus: 'obesitas',
+        zWeightAge: 4.5,
+        zHeightAge: 5.0,
+        zWeightHeight: 4.0,
+      },
+    ];
+
+    const roster = buildRoster(adultPatients, dirtyAdultMeas, new Date('2026-05-01T00:00:00'));
+    const details = buildDetails(adultPatients, dirtyAdultMeas);
+
+    expect(roster[0]['Status BB/U']).toBe('');
+    expect(roster[0]['Status TB/U']).toBe('');
+    expect(roster[0]['Status BB/TB']).toBe('');
+
+    expect(details[0]['Z BB/U']).toBe('');
+    expect(details[0]['Z TB/U']).toBe('');
+    expect(details[0]['Z BB/TB']).toBe('');
+    expect(details[0]['BB/U']).toBe('');
+    expect(details[0]['TB/U']).toBe('');
+    expect(details[0]['BB/TB']).toBe('');
+  });
 });

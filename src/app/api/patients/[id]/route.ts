@@ -204,7 +204,16 @@ export async function PUT(
                 wastingStatus: growth.BB_TB?.categoryKey ?? null,
                 growthRefVersion: growth.refVersion,
               }
-            : {}),
+            : {
+                zWeightAge: null,
+                zHeightAge: null,
+                zWeightHeight: null,
+                zBmiAge: null,
+                underweightStatus: null,
+                stuntingStatus: null,
+                wastingStatus: null,
+                growthRefVersion: null,
+              }),
         },
       });
     }

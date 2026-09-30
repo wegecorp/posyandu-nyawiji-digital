@@ -1080,19 +1080,19 @@ export const DynamicMeasurementForm: React.FC<DynamicMeasurementFormProps> = ({
                   {hist.imt != null && (
                     <MetricChip label="IMT" value={`${hist.imt} kg/m²`} />
                   )}
-                  {hist.underweightStatus && (
+                  {isKmsAge(ageInCompletedMonths(patient.birthDate, hist.sessionDate)) && hist.underweightStatus && (
                     <MetricChip
                       label="BB/U"
                       value={findCategory('BB_U', hist.underweightStatus)?.label ?? hist.underweightStatus}
                     />
                   )}
-                  {hist.stuntingStatus && (
+                  {isKmsAge(ageInCompletedMonths(patient.birthDate, hist.sessionDate)) && hist.stuntingStatus && (
                     <MetricChip
                       label="TB/U"
                       value={findCategory('TB_U', hist.stuntingStatus)?.label ?? hist.stuntingStatus}
                     />
                   )}
-                  {hist.wastingStatus && (
+                  {isKmsAge(ageInCompletedMonths(patient.birthDate, hist.sessionDate)) && hist.wastingStatus && (
                     <MetricChip
                       label="BB/TB"
                       value={findCategory('BB_TB', hist.wastingStatus)?.label ?? hist.wastingStatus}

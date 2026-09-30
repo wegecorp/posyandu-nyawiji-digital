@@ -69,6 +69,15 @@ export async function POST(req: Request) {
           data.stuntingStatus = g.TB_U?.categoryKey ?? null;
           data.wastingStatus = g.BB_TB?.categoryKey ?? null;
           data.growthRefVersion = g.refVersion;
+        } else {
+          data.zWeightAge = null;
+          data.zHeightAge = null;
+          data.zWeightHeight = null;
+          data.zBmiAge = null;
+          data.underweightStatus = null;
+          data.stuntingStatus = null;
+          data.wastingStatus = null;
+          data.growthRefVersion = null;
         }
         await prisma.measurement.update({ where: { id: m.id }, data });
         if (g.ok) updated++;

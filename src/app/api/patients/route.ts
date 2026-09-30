@@ -42,12 +42,17 @@ export async function GET(req: Request) {
     }
     // scope.kind === 'all' → DINKES tanpa filter (boleh tinjau seluruh wilayah).
 
-    if (query.trim()) {
-      whereClause.OR = [
-        { name: { contains: query.trim() } },
-        { regNumber: { contains: query.trim() } },
-        { guardianName: { contains: query.trim() } },
-      ];
+    const q = query.trim();
+    if (q) {
+      const tokens = q.split(/\s+/).filter(Boolean);
+      whereClause.AND = tokens.map((token) => ({
+        OR: [
+          { name: { contains: token, mode: 'insensitive' as const } },
+          { regNumber: { contains: token, mode: 'insensitive' as const } },
+          { guardianName: { contains: token, mode: 'insensitive' as const } },
+          { address: { contains: token, mode: 'insensitive' as const } },
+        ],
+      }));
     }
 
     // Sesi = BULAN: status daftar pasien mengikuti pengukuran bulan berjalan.

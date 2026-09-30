@@ -70,7 +70,15 @@ export async function GET(req: Request) {
 
     const q = (searchParams.get('q') ?? '').trim();
     if (q) {
-      where.patient = { OR: [{ name: { contains: q } }, { regNumber: { contains: q } }] };
+      const tokens = q.split(/\s+/).filter(Boolean);
+      where.patient = {
+        AND: tokens.map((token) => ({
+          OR: [
+            { name: { contains: token, mode: 'insensitive' as const } },
+            { regNumber: { contains: token, mode: 'insensitive' as const } },
+          ],
+        })),
+      };
     }
 
     const [total, rows] = await Promise.all([

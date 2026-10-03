@@ -75,7 +75,7 @@ const ChangePasswordModal = dynamic(() => import('@/components/ChangePasswordMod
 const LoginModal = dynamic(() => import('@/components/LoginModal').then((m) => m.LoginModal));
 
 export default function PosyanduApp() {
-  const { user, switchActivePosyandu } = useAuth();
+  const { user, isLoading: isAuthLoading, switchActivePosyandu } = useAuth();
   const [patients, setPatients] = useState<PatientData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -349,7 +349,23 @@ export default function PosyanduApp() {
   useBackLayer(activeViewMode === 'posyandu_table', () => setActiveViewMode('default'));
   useBackLayer(Boolean(selectedPatient), goBackToList);
 
-  // 1. IF NOT LOGGED IN — show login (cascade kader / staf)
+  // 1. Loading sesi awal (menghindari hydration mismatch antara SSR dan cache localStorage)
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-[#f0f2f5] flex items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-4">
+          <div className="flex flex-col items-center gap-2 mb-6">
+            <div className="w-16 h-16 rounded-2xl bg-white/80 animate-pulse border border-[#e9edef]" />
+            <div className="h-6 w-32 bg-[#e9edef] rounded-md animate-pulse" />
+            <div className="h-4 w-48 bg-[#e9edef] rounded-md animate-pulse" />
+          </div>
+          <DashboardListSkeleton count={3} />
+        </div>
+      </div>
+    );
+  }
+
+  // 2. IF NOT LOGGED IN — show login (cascade kader / staf)
   if (!user) {
     return <AuthPage />;
   }

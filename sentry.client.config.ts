@@ -15,6 +15,22 @@ if (dsn) {
     replaysSessionSampleRate: 0,
     replaysOnErrorSampleRate: isSlowConnection ? 0 : 0.5,
     enableLogs: false,
+    ignoreErrors: [
+      'UnhandledRejection: Object captured as promise rejection with keys: code, message, stack',
+      'Object captured as promise rejection with keys: code, message, stack',
+      'ResizeObserver loop completed with undelivered notifications',
+      'ResizeObserver loop limit exceeded',
+    ],
+    beforeSend(event) {
+      const exValue = event.exception?.values?.[0]?.value || '';
+      if (
+        exValue.includes('Object captured as promise rejection with keys: code, message, stack') ||
+        event.message?.includes('Object captured as promise rejection with keys: code, message, stack')
+      ) {
+        return null;
+      }
+      return event;
+    },
     integrations: isSlowConnection ? [] : [
       Sentry.replayIntegration({
         maskAllText: true,

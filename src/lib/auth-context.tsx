@@ -28,26 +28,34 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const STORAGE_KEY = 'posyandu_auth_session';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserSession | null>(() => {
-    if (typeof window === 'undefined') return null;
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const cached = JSON.parse(raw);
-        if (cached && typeof cached === 'object' && cached.id) return cached;
-      }
-    } catch {}
-    return null;
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<UserSession | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Sumber kebenaran sesi = server (/api/auth/me). localStorage dipakai sebagai
   // cache instan (optimistic render) agar aplikasi langsung interaktif saat dibuka
   // tanpa menunggu roundtrip jaringan, kemudian divalidasi di latar belakang.
+  // Cache dimuat di useEffect setelah mount agar tidak memicu React hydration mismatch (#418).
   useEffect(() => {
     let cancelled = false;
 
     async function revalidateSession() {
+      // Yield ke microtask queue agar tidak memicu cascading renders saat mount
+      await Promise.resolve();
+
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw && !cancelled) {
+          const cached = JSON.parse(raw);
+          if (cached && typeof cached === 'object' && cached.id) {
+            setUser(cached);
+          }
+        }
+      } catch {}
+
+      if (!cancelled) {
+        setIsLoading(false);
+      }
+
       try {
         const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
         if (!cancelled) {

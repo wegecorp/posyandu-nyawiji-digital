@@ -75,17 +75,7 @@ export function AuthPage() {
 
   // --- Cascade Posyandu ---
   const [step, setStep] = useState<CascadeStep>(0);
-  const [puskesmasList, setPuskesmasList] = useState<PuskesmasItem[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const cached = localStorage.getItem('nyawiji_pkm_list') || sessionStorage.getItem('nyawiji_pkm_list');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-    return [];
-  });
+  const [puskesmasList, setPuskesmasList] = useState<PuskesmasItem[]>([]);
   const [isFetchingPkm, setIsFetchingPkm] = useState(false);
   const [kalurahanList, setKalurahanList] = useState<KalurahanItem[]>([]);
   const [posyanduList, setPosyanduList] = useState<PosyanduItem[]>([]);
@@ -124,7 +114,18 @@ export function AuthPage() {
             } catch {}
           }
         })
-        .catch((e) => console.error('Gagal memuat puskesmas:', e))
+        .catch((e) => {
+          console.error('Gagal memuat puskesmas:', e);
+          if (active) {
+            try {
+              const cached = localStorage.getItem('nyawiji_pkm_list') || sessionStorage.getItem('nyawiji_pkm_list');
+              if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed) && parsed.length > 0) setPuskesmasList(parsed);
+              }
+            } catch {}
+          }
+        })
         .finally(() => {
           if (active) setIsFetchingPkm(false);
         });

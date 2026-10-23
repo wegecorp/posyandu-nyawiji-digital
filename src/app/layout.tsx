@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { PwaServiceWorker } from "@/components/PwaServiceWorker";
+import { InAppBrowserWarning } from "@/components/InAppBrowserWarning";
 import { CloudflareAnalytics } from "@/components/CloudflareAnalytics";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/branding";
@@ -35,6 +36,7 @@ export default function RootLayout({
   return (
     <html lang="id" className="h-full bg-slate-50 antialiased">
       <body className="min-h-full flex flex-col font-sans bg-slate-50 text-slate-900 selection:bg-emerald-200">
+        <InAppBrowserWarning />
         <PwaServiceWorker />
         <CloudflareAnalytics />
         <GoogleAnalytics />

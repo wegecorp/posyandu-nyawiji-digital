@@ -126,6 +126,26 @@ export default function PosyanduApp() {
   const fetchSeqRef = useRef(0);
   const prevCtxRef = useRef<string | null>(null);
 
+  // Helper simpan cache pasien aman dari QuotaExceededError di HP
+  const safeSetPatientsCache = (posId: string, data: unknown) => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(`nyawiji_patients_${posId}`, JSON.stringify(data));
+    } catch {
+      try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('nyawiji_patients_') && k !== `nyawiji_patients_${posId}`) {
+            keysToRemove.push(k);
+          }
+        }
+        keysToRemove.forEach((k) => localStorage.removeItem(k));
+        localStorage.setItem(`nyawiji_patients_${posId}`, JSON.stringify(data));
+      } catch {}
+    }
+  };
+
   // Fetch patients for active Posyandu (dipanggil dari event handler/refresh)
   const fetchPatients = async () => {
     const shouldFetch = user?.role === 'POSYANDU' || activeViewMode === 'posyandu_table';
@@ -136,14 +156,16 @@ export default function PosyanduApp() {
     try {
       const posId = user?.posyanduId || '';
       const res = await fetch(`/api/patients?posyanduId=${posId}&q=${encodeURIComponent(searchQuery)}`);
+      if (res.status === 401 || res.status === 403) {
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+        return;
+      }
       if (seq !== fetchSeqRef.current) return; // ada fetch lebih baru
       const result = await res.json();
       if (result.success && Array.isArray(result.data)) {
         setPatients(result.data);
         if (!searchQuery && posId) {
-          try {
-            localStorage.setItem(`nyawiji_patients_${posId}`, JSON.stringify(result.data));
-          } catch {}
+          safeSetPatientsCache(posId, result.data);
         }
 
         setSelectedPatient((prev) => {
@@ -199,15 +221,20 @@ export default function PosyanduApp() {
 
     const seq = ++fetchSeqRef.current;
     fetch(`/api/patients?posyanduId=${posId}&q=${encodeURIComponent(debouncedSearchQuery)}`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (r.status === 401 || r.status === 403) {
+          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+          return null;
+        }
+        return r.json();
+      })
       .then((result) => {
+        if (!result) return;
         if (!active || seq !== fetchSeqRef.current || !result.success || !Array.isArray(result.data))
           return;
         setPatients(result.data);
         if (!debouncedSearchQuery && posId) {
-          try {
-            localStorage.setItem(`nyawiji_patients_${posId}`, JSON.stringify(result.data));
-          } catch {}
+          safeSetPatientsCache(posId, result.data);
         }
         setSelectedPatient((prev) => {
           if (!prev) return null;

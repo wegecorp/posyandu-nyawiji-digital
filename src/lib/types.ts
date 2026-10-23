@@ -96,4 +96,5 @@ export interface UserSession {
   kalurahan?: string | null;
   padukuhan?: string | null;
   kapanewon?: string | null;
+  _cachedAt?: number;
 }

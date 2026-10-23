@@ -38,6 +38,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
+    // Dengarkan event 401/403 dari komponen lain agar langsung auto-logout
+    const handleUnauthorized = () => {
+      setUser(null);
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {}
+      clearSyncQueue();
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+
     async function revalidateSession() {
       // Yield ke microtask queue agar tidak memicu cascading renders saat mount
       await Promise.resolve();
@@ -46,8 +56,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw && !cancelled) {
           const cached = JSON.parse(raw);
-          if (cached && typeof cached === 'object' && cached.id) {
+          const isValid = cached && typeof cached === 'object' && cached.id;
+          // Abaikan cache sesi jika sudah lebih dari 7 hari
+          const isStale = cached._cachedAt && Date.now() - cached._cachedAt > 7 * 24 * 60 * 60 * 1000;
+          if (isValid && !isStale) {
             setUser(cached);
+          } else if (isStale) {
+            localStorage.removeItem(STORAGE_KEY);
           }
         }
       } catch {}
@@ -62,8 +77,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (res.ok) {
             const json = await res.json();
             if (json.success && json.user) {
-              setUser(json.user);
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(json.user));
+              const sessionWithTimestamp = { ...json.user, _cachedAt: Date.now() };
+              setUser(sessionWithTimestamp);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionWithTimestamp));
               return;
             }
           }
@@ -82,12 +98,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     revalidateSession();
     return () => {
       cancelled = true;
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
     };
   }, []);
 
   const login = (userData: UserSession) => {
-    setUser(userData);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+    const withTs = { ...userData, _cachedAt: Date.now() };
+    setUser(withTs);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(withTs));
   };
 
   const logout = async () => {
@@ -122,6 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       kalurahan: locationMeta?.kalurahan !== undefined ? locationMeta.kalurahan : user.kalurahan,
       kapanewon: locationMeta?.kapanewon !== undefined ? locationMeta.kapanewon : user.kapanewon,
       healthCenterName: locationMeta?.healthCenterName !== undefined ? locationMeta.healthCenterName : user.healthCenterName,
+      _cachedAt: Date.now(),
     };
     setUser(updated);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));

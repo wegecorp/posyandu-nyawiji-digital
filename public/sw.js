@@ -8,7 +8,7 @@
  *
  * Saat versi berubah, cukup naikkan VERSION untuk membersihkan cache lama.
  */
-const VERSION = '2026.09-v10';
+const VERSION = '2026.10-v11';
 const APP_SHELL_CACHE = `nyawiji-shell-${VERSION}`;
 const STATIC_CACHE = `nyawiji-static-${VERSION}`;
 

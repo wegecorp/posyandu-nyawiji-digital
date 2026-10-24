@@ -13,7 +13,10 @@ export function InAppBrowserWarning() {
     // Cek apakah dibuka di in-app browser (WhatsApp, FB, Instagram, Line, TikTok)
     const ua = navigator.userAgent || '';
     const isInsideApp = /WhatsApp|FBAN|FBAV|Instagram|Line|ByteLocale|TikTok/i.test(ua);
-    const wasDismissed = sessionStorage.getItem('nyawiji_inapp_dismissed') === '1';
+    let wasDismissed = false;
+    try {
+      wasDismissed = sessionStorage.getItem('nyawiji_inapp_dismissed') === '1';
+    } catch {}
 
     if (isInsideApp && !wasDismissed) {
       setIsInApp(true);

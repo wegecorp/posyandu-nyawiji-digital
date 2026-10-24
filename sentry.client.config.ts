@@ -20,6 +20,7 @@ if (dsn) {
       'Object captured as promise rejection with keys: code, message, stack',
       'ResizeObserver loop completed with undelivered notifications',
       'ResizeObserver loop limit exceeded',
+      /SecurityError.*(sessionStorage|localStorage)/i,
     ],
     beforeSend(event) {
       const exValue = event.exception?.values?.[0]?.value || '';

@@ -19,9 +19,14 @@ export function PwaServiceWorker() {
           msg.includes('ChunkLoadError') ||
           msg.includes('Failed to fetch dynamically imported module'))
       ) {
-        const lastReload = Number(sessionStorage.getItem('nyawiji_chunk_reload') || '0');
+        let lastReload = 0;
+        try {
+          lastReload = Number(sessionStorage.getItem('nyawiji_chunk_reload') || '0');
+        } catch {}
         if (Date.now() - lastReload > 10000) {
-          sessionStorage.setItem('nyawiji_chunk_reload', String(Date.now()));
+          try {
+            sessionStorage.setItem('nyawiji_chunk_reload', String(Date.now()));
+          } catch {}
           // Unregister semua service worker dan bersihkan caches lalu reload halaman dari server
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then((regs) => {

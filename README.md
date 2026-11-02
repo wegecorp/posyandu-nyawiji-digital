@@ -101,6 +101,21 @@ Buka [http://localhost:3000](http://localhost:3000) di browser.
 
 ---
 
+## 🔍 Diagnostik & Audit Pengujian HP (Dev Only)
+
+Untuk menguji kompatibilitas WebView HP (Google App, in-app browser, datepicker Android) tanpa mengotori database produksi:
+
+- **URL Rahasia**: `/audit-webview-7k2x` (mis. `https://posyandunyawiji.my.id/audit-webview-7k2x` atau `http://localhost:3000/audit-webview-7k2x`)
+- **Keamanan Index**: Halaman dilindungi `robots: noindex, nofollow, nocache` sehingga tidak terindeks mesin pencari.
+- **Fitur Halaman**:
+  1. **Deteksi Lingkungan HP**: Menampilkan User-Agent riil dan badge jika dibuka lewat internal Google App (`GSA/`).
+  2. **Inspeksi Sesi**: Memeriksa cookie sesi login kader (`role`, `posyanduId`).
+  3. **Mode Dry-Run (Default)**: Menguji seluruh pipa validasi & lookup posyandu **tanpa menyimpan baris ke database**.
+  4. **Mode Real-Save**: Menyimpan pasien berlabel `[TEST-AUDIT]` dan langsung menyediakan tombol **"Hapus Pasien Ini Sekarang"** di layar HP.
+  5. **Konsol Respons Langsung**: Status HTTP (200/400/401/403/409/500) dan payload JSON ditampilkan langsung di layar HP.
+
+---
+
 ## 📚 Dokumentasi Teknis
 
 - `docs/ded/` — DED, DFD, ERD, flowchart, dan `RUNBOOK-MIGRASI-POSTGRESQL.md`

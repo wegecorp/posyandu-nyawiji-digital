@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET } from './route';
+import { GET, POST } from './route';
 import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/api-auth';
 import { resolvePatientScope } from '@/lib/patient-scope';
@@ -8,6 +8,11 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     patient: {
       findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+    },
+    posyandu: {
+      findUnique: vi.fn(),
     },
     measurement: {
       findMany: vi.fn(),
@@ -65,5 +70,19 @@ describe('GET /api/patients - pencarian pasien case-insensitive', () => {
     expect(andClauses[1].OR).toContainEqual({
       name: { contains: 'dhani', mode: 'insensitive' },
     });
+  });
+
+  it('POST /api/patients memvalidasi autentikasi dan meneruskan req ke getAuthSession', async () => {
+    vi.mocked(getAuthSession).mockResolvedValueOnce(null);
+
+    const req = new Request('http://localhost/api/patients', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Budi' }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+    expect(getAuthSession).toHaveBeenCalledWith(req);
   });
 });

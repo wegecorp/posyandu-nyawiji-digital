@@ -10,9 +10,9 @@ export function InAppBrowserWarning() {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof navigator === 'undefined') return;
 
-    // Cek apakah dibuka di in-app browser (WhatsApp, FB, Instagram, Line, TikTok)
+    // Cek apakah dibuka di in-app browser (WhatsApp, FB, Instagram, Line, TikTok, Google App)
     const ua = navigator.userAgent || '';
-    const isInsideApp = /WhatsApp|FBAN|FBAV|Instagram|Line|ByteLocale|TikTok/i.test(ua);
+    const isInsideApp = /WhatsApp|FBAN|FBAV|Instagram|Line|ByteLocale|TikTok|GSA\//i.test(ua);
     let wasDismissed = false;
     try {
       wasDismissed = sessionStorage.getItem('nyawiji_inapp_dismissed') === '1';

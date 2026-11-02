@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { PatientData } from '@/lib/types';
 import { addToSyncQueue, genClientId } from '@/lib/offline-sync';
@@ -32,6 +32,13 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
   const [duplicate, setDuplicate] = useState<{ regNumber: string; name: string } | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if ((errorMsg || duplicate) && formRef.current) {
+      formRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [errorMsg, duplicate]);
 
   useBackLayer(isOpen, onClose);
 
@@ -89,6 +96,8 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
       return;
     }
 
+    const activePosyanduId = user.posyanduId;
+
     setIsSubmitting(true);
     setErrorMsg('');
     setInfoMsg('');
@@ -103,12 +112,11 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
       guardianName: guardianName.trim() || undefined,
       phone: phone.trim() || undefined,
       isPregnant,
-      posyanduId: user.posyanduId,
+      posyanduId: activePosyanduId,
       force,
     };
 
-    // Offline: simpan ke antrean lokal, buat data pasien optimis, dan langsung buka form
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    const saveOptimistically = () => {
       addToSyncQueue({
         kind: 'patient',
         id: genClientId(),
@@ -129,7 +137,7 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
         guardianName: guardianName.trim() || undefined,
         phone: phone.trim() || undefined,
         isPregnant: gender === 'L' ? false : isPregnant,
-        posyanduId: user.posyanduId,
+        posyanduId: activePosyanduId,
         category: cat,
         ageYears: age.years,
         ageMonths: age.totalMonths,
@@ -139,12 +147,18 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
       resetForm();
       onSuccess(optimisticPatient);
       onClose();
+    };
+
+    // Offline: simpan ke antrean lokal, buat data pasien optimis, dan langsung buka form
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      saveOptimistically();
       return;
     }
 
     try {
       const res = await fetch('/api/patients', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: {
           'Content-Type': 'application/json',
           'x-user-role': user.role,
@@ -168,6 +182,17 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
       onSuccess(data.data);
       onClose();
     } catch (err) {
+      // Fallback offline bila koneksi putus / fetch gagal di webview
+      const isNetworkIssue =
+        err instanceof TypeError ||
+        (err instanceof Error && /network|fetch|offline|load failed/i.test(err.message)) ||
+        (typeof navigator !== 'undefined' && !navigator.onLine);
+
+      if (isNetworkIssue) {
+        saveOptimistically();
+        return;
+      }
+
       setErrorMsg(err instanceof Error ? err.message : 'Terjadi kesalahan saat menyimpan');
     } finally {
       setIsSubmitting(false);
@@ -197,7 +222,7 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-4 overflow-y-auto space-y-4 flex-1">
+        <form ref={formRef} onSubmit={handleSubmit} noValidate className="p-4 overflow-y-auto space-y-4 flex-1">
           {errorMsg && (
             <div className="p-3 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl text-xs text-[#ef4444] font-bold flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0 text-[#ef4444]" />
@@ -419,28 +444,35 @@ export const QuickRegisterModal: React.FC<QuickRegisterModalProps> = ({
           )}
 
           {/* Action Buttons */}
-          <div className="pt-2 flex gap-2.5">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-3 px-4 bg-[#f0f2f5] hover:bg-[#e9edef] text-[#111b21] font-bold rounded-full text-xs transition-all touch-press border border-[#e9edef]"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-2 py-3 px-6 bg-[#128c7e] hover:bg-[#075e54] text-white font-bold rounded-full text-xs transition-all shadow-md flex items-center justify-center gap-2 touch-press disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <span>Menyimpan...</span>
-              ) : (
-                <>
-                  <Check className="w-4 h-4" />
-                  <span>Daftar & Langsung Ukur</span>
-                </>
-              )}
-            </button>
+          <div className="pt-2 flex flex-col gap-2.5">
+            {errorMsg && (
+              <p className="text-xs text-[#ef4444] font-bold text-center animate-in fade-in">
+                {errorMsg}
+              </p>
+            )}
+            <div className="flex gap-2.5">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 py-3 px-4 bg-[#f0f2f5] hover:bg-[#e9edef] text-[#111b21] font-bold rounded-full text-xs transition-all touch-press border border-[#e9edef]"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-2 py-3 px-6 bg-[#128c7e] hover:bg-[#075e54] text-white font-bold rounded-full text-xs transition-all shadow-md flex items-center justify-center gap-2 touch-press disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <span>Menyimpan...</span>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>Daftar & Langsung Ukur</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </form>
       </div>

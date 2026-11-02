@@ -9,7 +9,7 @@ import { validateBirthDate, validatePhone, validateTextLength, measurementComple
 
 export async function GET(req: Request) {
   try {
-    const session = await getAuthSession();
+    const session = await getAuthSession(req);
     if (!session) {
       return NextResponse.json({ error: 'Tidak terautentikasi' }, { status: 401 });
     }
@@ -141,7 +141,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await getAuthSession();
+    const session = await getAuthSession(req);
     if (!session) {
       return NextResponse.json({ error: 'Tidak terautentikasi' }, { status: 401 });
     }

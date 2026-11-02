@@ -27,6 +27,7 @@ export default function DevAuditWebviewPage() {
   const [gender, setGender] = useState<'L' | 'P'>('L');
   const [isPregnant, setIsPregnant] = useState(false);
   const [dryRun, setDryRun] = useState(true);
+  const [mockKader, setMockKader] = useState(true);
 
   const [isRunning, setIsRunning] = useState(false);
   const [resultData, setResultData] = useState<Record<string, unknown> | null>(null);
@@ -64,6 +65,7 @@ export default function DevAuditWebviewPage() {
           isPregnant,
           posyanduId: user?.posyanduId,
           dryRun,
+          mockKader,
         }),
       });
 
@@ -188,9 +190,23 @@ export default function DevAuditWebviewPage() {
               )}
             </div>
           ) : (
-            <p className="text-xs text-rose-600">
-              Sesi kosong. Silakan buka halaman utama dan login akun Kader terlebih dahulu.
-            </p>
+            <div className="space-y-2">
+              <p className="text-xs text-rose-600 font-semibold">
+                Sesi kosong (Belum login di portal utama).
+              </p>
+              <div className="bg-sky-50 border border-sky-200 p-2.5 rounded-xl flex items-center justify-between text-xs">
+                <div>
+                  <span className="font-bold text-sky-900 block">Bypass Simulasi Sesi Kader (Dev)</span>
+                  <span className="text-[11px] text-sky-700">Simulasikan request seolah-olah sudah login sebagai kader</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={mockKader}
+                  onChange={(e) => setMockKader(e.target.checked)}
+                  className="w-4 h-4 accent-[#075e54] cursor-pointer"
+                />
+              </div>
+            </div>
           )}
         </div>
 

@@ -39,12 +39,30 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { name, birthDate, gender, posyanduId, isPregnant, dryRun = true } = body;
+    const { name, birthDate, gender, posyanduId, isPregnant, dryRun = true, mockKader = false } = body;
 
     const validationSteps: Record<string, { status: 'PASS' | 'FAIL'; detail?: string }> = {};
 
+    let effectiveSession = session;
+    if (!effectiveSession && mockKader && dryRun) {
+      const samplePos = await prisma.posyandu.findFirst({ select: { id: true, name: true } });
+      if (samplePos) {
+        effectiveSession = {
+          userId: 'dev-mock-kader',
+          username: 'kader_simulasi_dev',
+          name: 'Kader Simulasi Dev',
+          role: 'POSYANDU',
+          posyanduId: samplePos.id,
+        };
+        validationSteps.session = {
+          status: 'PASS',
+          detail: `[SIMULASI DEV] Menggunakan posyandu dummy: ${samplePos.name}`,
+        };
+      }
+    }
+
     // 1. Session check
-    if (!session) {
+    if (!effectiveSession) {
       validationSteps.session = { status: 'FAIL', detail: 'Sesi cookie tidak ditemukan atau kedaluwarsa' };
       return NextResponse.json(
         {
@@ -56,13 +74,15 @@ export async function POST(req: Request) {
         { status: 401 }
       );
     }
-    validationSteps.session = { status: 'PASS', detail: `Role: ${session.role}, User: ${session.username}` };
+    if (!validationSteps.session) {
+      validationSteps.session = { status: 'PASS', detail: `Role: ${effectiveSession.role}, User: ${effectiveSession.username}` };
+    }
 
     // 2. Role check
-    if (session.role !== 'POSYANDU') {
+    if (effectiveSession.role !== 'POSYANDU') {
       validationSteps.role = {
         status: 'FAIL',
-        detail: `Role saat ini '${session.role}'. Pendaftaran pasien hanya diizinkan untuk role 'POSYANDU'.`,
+        detail: `Role saat ini '${effectiveSession.role}'. Pendaftaran pasien hanya diizinkan untuk role 'POSYANDU'.`,
       };
       return NextResponse.json(
         {
@@ -77,11 +97,11 @@ export async function POST(req: Request) {
     validationSteps.role = { status: 'PASS', detail: 'Role POSYANDU valid' };
 
     // 3. Posyandu target check
-    const targetPosyanduId = posyanduId || session.posyanduId;
-    if (!targetPosyanduId || targetPosyanduId !== session.posyanduId) {
+    const targetPosyanduId = posyanduId || effectiveSession.posyanduId;
+    if (!targetPosyanduId || targetPosyanduId !== effectiveSession.posyanduId) {
       validationSteps.posyandu = {
         status: 'FAIL',
-        detail: `Target posyandu (${targetPosyanduId}) tidak cocok dengan sesi aktif (${session.posyanduId})`,
+        detail: `Target posyandu (${targetPosyanduId}) tidak cocok dengan sesi aktif (${effectiveSession.posyanduId})`,
       };
       return NextResponse.json(
         {

@@ -216,4 +216,34 @@ describe('cakupan KMS 0-60 bulan (N/T & 2T)', () => {
     expect(details[0]['TB/U']).toBe('');
     expect(details[0]['BB/TB']).toBe('');
   });
+
+  it('memfilter roster, detail, dan risiko berdasarkan allowedCategories', () => {
+    const mixedPatients: ExportPatient[] = [
+      { id: 'm-balita', regNumber: 'B1', name: 'Balita Budi', birthDate: '2023-01-01', gender: 'L', isPregnant: false },
+      { id: 'm-lansia', regNumber: 'L1', name: 'Mbah Slamet', birthDate: '1950-01-01', gender: 'L', isPregnant: false },
+    ];
+    const mixedMeas: ExportMeasurement[] = [
+      { patientId: 'm-balita', sessionDate: '2026-03-01', weight: 14, tbScreeningStatus: 'BERESIKO' },
+      { patientId: 'm-lansia', sessionDate: '2026-03-01', systolic: 160, diastolic: 95 },
+    ];
+
+    // Filter hanya LANSIA
+    const lansiaRoster = buildRoster(mixedPatients, mixedMeas, new Date('2026-04-01'), new Set(['LANSIA']));
+    expect(lansiaRoster).toHaveLength(1);
+    expect(lansiaRoster[0].Nama).toBe('Mbah Slamet');
+
+    const lansiaDetails = buildDetails(mixedPatients, mixedMeas, new Set(['LANSIA']));
+    expect(lansiaDetails).toHaveLength(1);
+    expect(lansiaDetails[0].Nama).toBe('Mbah Slamet');
+
+    const lansiaRisks = buildRiskList(mixedPatients, mixedMeas, new Set(['LANSIA']));
+    expect(lansiaRisks).toHaveLength(1);
+    expect(lansiaRisks[0].Nama).toBe('Mbah Slamet');
+    expect(lansiaRisks[0]['Jenis Risiko']).toBe('Tensi Tinggi (Hipertensi)');
+
+    // Filter hanya BALITA_APRAS
+    const balitaRoster = buildRoster(mixedPatients, mixedMeas, new Date('2026-04-01'), new Set(['BALITA_APRAS']));
+    expect(balitaRoster).toHaveLength(1);
+    expect(balitaRoster[0].Nama).toBe('Balita Budi');
+  });
 });

@@ -6,6 +6,15 @@ export type PatientCategory =
   | 'LANSIA'
   | 'BUMIL';
 
+export const ALL_PATIENT_CATEGORIES: PatientCategory[] = [
+  'BAYI',
+  'BALITA_APRAS',
+  'REMAJA',
+  'DEWASA',
+  'LANSIA',
+  'BUMIL',
+];
+
 export interface PatientData {
   id: string;
   regNumber: string;

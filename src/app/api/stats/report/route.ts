@@ -106,6 +106,20 @@ export async function GET(req: Request) {
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
+
+    // Pilihan sasaran (kategori). categories: 'BAYI,BALITA_APRAS,LANSIA...'
+    const categoriesParam = (searchParams.get('categories') ?? '')
+      .split(',')
+      .map((s) => s.trim().toUpperCase())
+      .filter(Boolean) as PatientCategory[];
+
+    const validCategories = new Set<PatientCategory>(['BAYI', 'BALITA_APRAS', 'REMAJA', 'DEWASA', 'LANSIA', 'BUMIL']);
+    const requestedCategories = categoriesParam.filter((c) => validCategories.has(c));
+    const selectedCategories =
+      requestedCategories.length > 0 && requestedCategories.length < validCategories.size
+        ? new Set<PatientCategory>(requestedCategories)
+        : null;
+
     // Data per pasien hanya untuk POSYANDU & PUSKESMAS.
     const canDetails = canViewPatientDetail(session.role);
     const wantRoster = canDetails && includeParam.includes('anggota');
@@ -173,7 +187,14 @@ export async function GET(req: Request) {
       }),
       prisma.patient.findMany({
         where: { posyanduId: { in: posyanduIds } },
-        select: { id: true, posyanduId: true, createdAt: true },
+        select: {
+          id: true,
+          posyanduId: true,
+          createdAt: true,
+          birthDate: true,
+          gender: true,
+          isPregnant: true,
+        },
       }),
       prisma.measurement.findMany({
         where: { posyanduId: { in: posyanduIds }, sessionDate: { gte: fromObj, lt: toExclusive } },
@@ -212,9 +233,17 @@ export async function GET(req: Request) {
       return r;
     };
 
+    const periodEnd = new Date(toExclusive.getTime() - 1);
+
     // Terdaftar: createdAt sebelum akhir periode (sama dgn memberSheets).
     for (const p of patients) {
-      if (p.createdAt.getTime() < toExclusive.getTime()) getPosRow(p.posyanduId).registered++;
+      if (p.createdAt.getTime() < toExclusive.getTime()) {
+        if (selectedCategories) {
+          const cat = getPatientCategory(p.birthDate, p.isPregnant, p.gender, periodEnd);
+          if (!selectedCategories.has(cat)) continue;
+        }
+        getPosRow(p.posyanduId).registered++;
+      }
     }
 
     // Pengukuran terakhir per pasien dalam periode.
@@ -225,11 +254,15 @@ export async function GET(req: Request) {
     }
 
     for (const m of latest.values()) {
-      const row = getPosRow(m.posyanduId);
-      row.measured++;
-
       const category = (m.category as PatientCategory) ??
         getPatientCategory(m.patient.birthDate, m.patient.isPregnant, m.patient.gender, m.sessionDate);
+
+      if (selectedCategories && !selectedCategories.has(category)) {
+        continue;
+      }
+
+      const row = getPosRow(m.posyanduId);
+      row.measured++;
 
       if (category === 'BAYI' || category === 'BALITA_APRAS') {
         row.balita.total++;
@@ -316,18 +349,35 @@ export async function GET(req: Request) {
     const global = emptyRow('global', 'Total');
     for (const r of rows) mergeRow(global, r);
 
+    const eligiblePatients = patients.filter((p) => {
+      if (p.createdAt.getTime() >= toExclusive.getTime()) return false;
+      if (!selectedCategories) return true;
+      const cat = getPatientCategory(p.birthDate, p.isPregnant, p.gender, periodEnd);
+      return selectedCategories.has(cat);
+    });
+
+    const eligibleMeasurements = meas.filter((m) => {
+      if (!selectedCategories) return true;
+      const category = (m.category as PatientCategory) ??
+        getPatientCategory(m.patient.birthDate, m.patient.isPregnant, m.patient.gender, m.sessionDate);
+      return selectedCategories.has(category);
+    });
+
     const estimates = {
       units: posyanduIds.length,
-      patients: patients.filter((p) => p.createdAt.getTime() < toExclusive.getTime()).length,
-      measurements: meas.length,
+      patients: eligiblePatients.length,
+      measurements: eligibleMeasurements.length,
     };
 
-    const payload = {
+    const categoriesLabel = selectedCategories ? [...selectedCategories].join('-') : '';
+
+    const payload: ReportPayload = {
       success: true,
       from: fromDate,
       to: toDate,
       role: session.role,
       unitLabel: session.role === 'DINKES' ? 'Puskesmas' : 'Posyandu',
+      categoriesLabel,
       global,
       units,
       estimates: { ...estimates, rows: estimates.patients + estimates.measurements },
@@ -357,10 +407,10 @@ export async function GET(req: Request) {
         const periodEnd = new Date(toExclusive.getTime() - 1);
         if (wantMembers) {
           members = {};
-          if (wantRoster) members.roster = buildRoster(data.patients, data.measurements, periodEnd);
-          if (wantDetails) members.details = buildDetails(data.patients, data.measurements);
+          if (wantRoster) members.roster = buildRoster(data.patients, data.measurements, periodEnd, selectedCategories ?? undefined);
+          if (wantDetails) members.details = buildDetails(data.patients, data.measurements, selectedCategories ?? undefined);
         }
-        if (wantRisk) risks = buildRiskList(data.patients, data.measurements);
+        if (wantRisk) risks = buildRiskList(data.patients, data.measurements, selectedCategories ?? undefined);
 
         // Hitung baris sebenarnya (berisiko bisa >1 baris/pasien).
         const rowCount =
@@ -407,12 +457,17 @@ function mergeRow(dst: ReportRow, src: ReportRow) {
 }
 
 type ReportPayload = {
+  success?: boolean;
   from: string;
   to: string;
   role: string;
   unitLabel: string;
+  categoriesLabel?: string;
   global: ReportRow;
   units: ReportRow[];
+  estimates?: { units: number; patients: number; measurements: number; rows: number };
+  limits?: { units: number; rows: number };
+  canDetails?: boolean;
 };
 
 function flatRow(no: number | string, r: ReportRow) {
@@ -535,7 +590,8 @@ function xlsxResponse(p: ReportPayload, members: MemberSheets | null, risks: Exp
   const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
   const scopeLabel =
     p.units.length === 1 ? sanitizeName(p.units[0].unitName) : sanitizeName(p.unitLabel);
-  const filename = `Rekap_${scopeLabel}_${p.from}_${p.to}.xlsx`;
+  const catLabel = p.categoriesLabel ? `_${sanitizeName(p.categoriesLabel)}` : '';
+  const filename = `Rekap_${scopeLabel}${catLabel}_${p.from}_${p.to}.xlsx`;
   return new NextResponse(buffer, {
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

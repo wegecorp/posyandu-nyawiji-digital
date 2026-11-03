@@ -6,8 +6,18 @@ import { useAuth } from '@/lib/auth-context';
 import { PeriodControl, periodToRange } from './analisis/PeriodControl';
 import { useBackLayer } from '@/lib/back-navigation';
 import { matchSearchQuery } from '@/lib/search';
+import { type PatientCategory, ALL_PATIENT_CATEGORIES } from '@/lib/types';
 
 type Include = 'anggota' | 'detail' | 'beresiko';
+
+const TARGET_CATEGORIES: { id: PatientCategory; label: string; sublabel: string }[] = [
+  { id: 'BAYI', label: 'Bayi', sublabel: '0-5 bln' },
+  { id: 'BALITA_APRAS', label: 'Balita & Apras', sublabel: '6 bln-6 th' },
+  { id: 'REMAJA', label: 'Remaja', sublabel: '7-17 th' },
+  { id: 'DEWASA', label: 'Dewasa', sublabel: '18-59 th' },
+  { id: 'LANSIA', label: 'Lansia', sublabel: '60+ th' },
+  { id: 'BUMIL', label: 'Ibu Hamil', sublabel: 'Bumil' },
+];
 
 interface PreviewShape {
   success: boolean;
@@ -31,6 +41,7 @@ export function ExportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 
   const [period, setPeriod] = useState('12m');
   const [include, setInclude] = useState<Set<Include>>(new Set());
+  const [selectedCats, setSelectedCats] = useState<Set<PatientCategory>>(new Set(ALL_PATIENT_CATEGORIES));
   const [scopeAll, setScopeAll] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [units, setUnits] = useState<{ id: string; name: string }[]>([]);
@@ -59,6 +70,7 @@ export function ExportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 
   const includeArr = useMemo(() => [...include], [include]);
   const selectedArr = useMemo(() => [...selected], [selected]);
+  const selectedCatsArr = useMemo(() => [...selectedCats], [selectedCats]);
 
   const filteredUnits = useMemo(() => {
     const q = unitSearch.trim();
@@ -69,11 +81,15 @@ export function ExportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
   const unitIdsQuery =
     role === 'PUSKESMAS' && !scopeAll && selectedArr.length > 0 ? `&unitIds=${selectedArr.join(',')}` : '';
   const includeQuery = includeArr.length > 0 ? `&include=${includeArr.join(',')}` : '';
-  const baseQuery = `from=${from}&to=${to}${includeQuery}${unitIdsQuery}`;
+  const catsQuery =
+    selectedCatsArr.length > 0 && selectedCatsArr.length < TARGET_CATEGORIES.length
+      ? `&categories=${selectedCatsArr.join(',')}`
+      : '';
+  const baseQuery = `from=${from}&to=${to}${includeQuery}${unitIdsQuery}${catsQuery}`;
 
   // Preview (angka ringkasan + estimasi baris).
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || selectedCats.size === 0) return;
     let active = true;
     const run = async () => {
       setLoading(true);
@@ -92,19 +108,31 @@ export function ExportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     return () => {
       active = false;
     };
-  }, [isOpen, baseQuery]);
+  }, [isOpen, baseQuery, selectedCats.size]);
 
+  const activePreview = selectedCats.size === 0 ? null : preview;
   const wantNames = include.has('anggota') || include.has('detail') || include.has('beresiko');
-  const overUnits = wantNames && !!preview && preview.estimates.units > preview.limits.units;
+  const overUnits = wantNames && !!activePreview && activePreview.estimates.units > activePreview.limits.units;
+  const noCats = selectedCats.size === 0;
   // Baris pasien tak dipakai sbg pengunci: angka ini perkiraan (sheet Berisiko bisa
   // >1 baris/pasien). Batas sesungguhnya dicek server saat unduh (413).
-  const blocked = overUnits || (wantNames && role === 'PUSKESMAS' && !scopeAll && selected.size === 0);
+  const blocked =
+    noCats || overUnits || (wantNames && role === 'PUSKESMAS' && !scopeAll && selected.size === 0);
 
   const toggleInclude = (key: Include) => {
     setInclude((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
+      return next;
+    });
+  };
+
+  const toggleCat = (cat: PatientCategory) => {
+    setSelectedCats((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
       return next;
     });
   };
@@ -189,10 +217,62 @@ export function ExportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             )}
           </section>
 
-          {/* 2. Cakupan */}
+          {/* 2. Sasaran */}
+          <section className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-black uppercase tracking-wider text-[#075e54]">2 · Sasaran</p>
+              <button
+                type="button"
+                onClick={() =>
+                  setSelectedCats(
+                    selectedCats.size === TARGET_CATEGORIES.length
+                      ? new Set()
+                      : new Set(ALL_PATIENT_CATEGORIES)
+                  )
+                }
+                className="text-[10px] font-bold text-[#128c7e] hover:underline"
+              >
+                {selectedCats.size === TARGET_CATEGORIES.length ? 'Batal Semua' : 'Pilih Semua'}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {TARGET_CATEGORIES.map((cat) => {
+                const active = selectedCats.has(cat.id);
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => toggleCat(cat.id)}
+                    className={`flex items-center justify-between p-2.5 rounded-xl border text-left transition-all ${
+                      active
+                        ? 'bg-[#e7fceb] border-[#25d366]/40 text-[#111b21]'
+                        : 'bg-white border-[#e9edef] text-[#54656f] hover:bg-[#f0f2f5]'
+                    }`}
+                  >
+                    <div className="min-w-0 pr-1">
+                      <p className="text-xs font-bold truncate leading-tight">{cat.label}</p>
+                      <p className="text-[10px] text-[#8696a0] font-medium leading-tight">{cat.sublabel}</p>
+                    </div>
+                    <span
+                      className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                        active ? 'bg-[#075e54] border-[#075e54]' : 'border-[#cbd5e1] bg-white'
+                      }`}
+                    >
+                      {active && <Check className="w-3 h-3 text-white" />}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {selectedCats.size === 0 && (
+              <p className="text-[10px] text-[#ef4444] font-bold">Pilih minimal 1 kelompok sasaran.</p>
+            )}
+          </section>
+
+          {/* 3. Cakupan */}
           {role === 'PUSKESMAS' && (
             <section className="space-y-2">
-              <p className="text-[11px] font-black uppercase tracking-wider text-[#075e54]">2 · Cakupan</p>
+              <p className="text-[11px] font-black uppercase tracking-wider text-[#075e54]">3 · Cakupan</p>
               <div className="flex bg-white p-1 rounded-xl border border-[#e9edef] text-xs font-semibold text-[#54656f]">
                 <button
                   onClick={() => setScopeAll(true)}
@@ -253,9 +333,11 @@ export function ExportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             </section>
           )}
 
-          {/* 3. Periode */}
+          {/* Periode */}
           <section className="space-y-2">
-            <p className="text-[11px] font-black uppercase tracking-wider text-[#075e54]">3 · Periode</p>
+            <p className="text-[11px] font-black uppercase tracking-wider text-[#075e54]">
+              {role === 'PUSKESMAS' ? '4 · Periode' : '3 · Periode'}
+            </p>
             <PeriodControl selected={period} onChange={setPeriod} />
           </section>
 
@@ -267,23 +349,23 @@ export function ExportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                 <RefreshCw className="w-5 h-5 animate-spin text-[#128c7e]" />
                 Memuat preview...
               </div>
-            ) : preview ? (
+            ) : activePreview ? (
               <div className="bg-[#f0f2f5] rounded-2xl border border-[#e9edef] p-3 space-y-2 text-[11px] text-[#54656f]">
                 <div className="grid grid-cols-3 gap-2 text-center">
-                  <PreviewStat label="Unit" value={preview.estimates.units} />
-                  <PreviewStat label="Pasien" value={preview.estimates.patients} />
-                  <PreviewStat label="Kunjungan" value={preview.estimates.measurements} />
+                  <PreviewStat label="Unit" value={activePreview.estimates.units} />
+                  <PreviewStat label="Pasien" value={activePreview.estimates.patients} />
+                  <PreviewStat label="Kunjungan" value={activePreview.estimates.measurements} />
                 </div>
                 <div className="flex justify-between pt-1 border-t border-[#e9edef]">
-                  <span>Terdaftar: <strong className="text-[#111b21]">{preview.global.registered}</strong></span>
-                  <span>Terukur: <strong className="text-[#111b21]">{preview.global.measured}</strong></span>
-                  <span>2T: <strong className="text-[#dc2626]">{preview.global.nt.duaT}</strong></span>
+                  <span>Terdaftar: <strong className="text-[#111b21]">{activePreview.global.registered}</strong></span>
+                  <span>Terukur: <strong className="text-[#111b21]">{activePreview.global.measured}</strong></span>
+                  <span>2T: <strong className="text-[#dc2626]">{activePreview.global.nt.duaT}</strong></span>
                 </div>
                 {wantNames && (
                   <p className={`font-bold ${overUnits ? 'text-[#dc2626]' : 'text-[#075e54]'}`}>
-                    Perkiraan baris: {preview.estimates.rows.toLocaleString('id-ID')} — batas{' '}
-                    {preview.limits.rows.toLocaleString('id-ID')} diperiksa saat unduh
-                    {overUnits && ` — posyandu melebihi batas ${preview.limits.units}`}
+                    Perkiraan baris: {activePreview.estimates.rows.toLocaleString('id-ID')} — batas{' '}
+                    {activePreview.limits.rows.toLocaleString('id-ID')} diperiksa saat unduh
+                    {overUnits && ` — posyandu melebihi batas ${activePreview.limits.units}`}
                   </p>
                 )}
               </div>

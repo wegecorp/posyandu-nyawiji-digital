@@ -151,6 +151,7 @@ export function buildRoster(
   patients: ExportPatient[],
   measurements: ExportMeasurement[],
   periodEnd: Date,
+  allowedCategories?: Set<PatientCategory>,
 ): ExportRow[] {
   const latest = new Map<string, ExportMeasurement>();
   const byPatient = new Map<string, ExportMeasurement[]>();
@@ -164,55 +165,59 @@ export function buildRoster(
     byPatient.set(m.patientId, list);
   }
 
-  return [...patients]
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .map((p) => {
-      const m = latest.get(p.id);
-      const age = calculateAge(p.birthDate, m ? new Date(m.sessionDate) : periodEnd);
-      const g = m ? growthFor(p, m) : undefined;
-      const twoT = Boolean(m && m.weightFaltering2T && kmsEligible(p, m));
-      const tension =
-        m?.systolic != null && m?.diastolic != null
-          ? `${m.systolic}/${m.diastolic}`
-          : m?.systolic != null
-            ? `${m.systolic}/-`
-            : BLANK;
+  const rows: ExportRow[] = [];
+  const sortedPatients = [...patients].sort((a, b) => a.name.localeCompare(b.name));
 
-      const row: ExportRow = {
-        Posyandu: p.unitName ?? BLANK,
-        Nama: p.name,
-        'Tgl Lahir': formatIndoDate(p.birthDate),
-        Umur: age.display,
-        'Kelompok Sasaran': categoryLabel(
-          m
-            ? measurementCategory(p, m)
-            : getPatientCategory(p.birthDate, p.isPregnant, p.gender, periodEnd),
-        ),
-        'L/P': p.gender ? (GENDER_LABEL[p.gender] ?? p.gender) : BLANK,
-        Alamat: p.address ?? BLANK,
-        Bumil: p.isPregnant ? 'Ya' : 'Tidak',
-        'Tgl Ukur Terakhir': m ? formatIndoMonth(m.sessionDate) : BLANK,
-        'ASI Eksklusif': asiSummary(byPatient.get(p.id) ?? []),
-        'Skrining TB': m?.tbScreeningStatus ?? BLANK,
-        'BB (kg)': m?.weight ?? BLANK,
-        'TB/PB (cm)': m?.height ?? BLANK,
-        'LiLA (cm)': m?.armCircumference ?? BLANK,
-        'LK (cm)': m?.headCircumference ?? BLANK,
-        IMT: m?.imt ?? BLANK,
-        'Status BB/U': m && kmsEligible(p, m) ? statusLabel('BB_U', m?.underweightStatus, g?.BB_U) : BLANK,
-        'Status TB/U': m && kmsEligible(p, m) ? statusLabel('TB_U', m?.stuntingStatus, g?.TB_U) : BLANK,
-        'Status BB/TB': m && kmsEligible(p, m) ? statusLabel('BB_TB', m?.wastingStatus, g?.BB_TB) : BLANK,
-        'Berat Naik/Tidak': m && kmsEligible(p, m) ? ntLabel(m.weightStatus) : BLANK,
-        '2T (rujuk)': twoT ? 'Ya' : BLANK,
-        'Tensi (mmHg)': tension,
-        'Gula Darah (mg/dL)': m?.bloodSugar ?? BLANK,
-        'Kolesterol (mg/dL)': m?.cholesterol ?? BLANK,
-        'Asam Urat (mg/dL)': m?.uricAcid ?? BLANK,
-        'HB (g/dL)': m?.hemoglobin ?? BLANK,
-        Catatan: m?.notes ?? BLANK,
-      };
-      return row;
+  for (const p of sortedPatients) {
+    const m = latest.get(p.id);
+    const cat = m
+      ? measurementCategory(p, m)
+      : getPatientCategory(p.birthDate, p.isPregnant, p.gender, periodEnd);
+
+    if (allowedCategories && !allowedCategories.has(cat)) continue;
+
+    const age = calculateAge(p.birthDate, m ? new Date(m.sessionDate) : periodEnd);
+    const g = m ? growthFor(p, m) : undefined;
+    const twoT = Boolean(m && m.weightFaltering2T && kmsEligible(p, m));
+    const tension =
+      m?.systolic != null && m?.diastolic != null
+        ? `${m.systolic}/${m.diastolic}`
+        : m?.systolic != null
+          ? `${m.systolic}/-`
+          : BLANK;
+
+    rows.push({
+      Posyandu: p.unitName ?? BLANK,
+      Nama: p.name,
+      'Tgl Lahir': formatIndoDate(p.birthDate),
+      Umur: age.display,
+      'Kelompok Sasaran': categoryLabel(cat),
+      'L/P': p.gender ? (GENDER_LABEL[p.gender] ?? p.gender) : BLANK,
+      Alamat: p.address ?? BLANK,
+      Bumil: p.isPregnant ? 'Ya' : 'Tidak',
+      'Tgl Ukur Terakhir': m ? formatIndoMonth(m.sessionDate) : BLANK,
+      'ASI Eksklusif': asiSummary(byPatient.get(p.id) ?? []),
+      'Skrining TB': m?.tbScreeningStatus ?? BLANK,
+      'BB (kg)': m?.weight ?? BLANK,
+      'TB/PB (cm)': m?.height ?? BLANK,
+      'LiLA (cm)': m?.armCircumference ?? BLANK,
+      'LK (cm)': m?.headCircumference ?? BLANK,
+      IMT: m?.imt ?? BLANK,
+      'Status BB/U': m && kmsEligible(p, m) ? statusLabel('BB_U', m?.underweightStatus, g?.BB_U) : BLANK,
+      'Status TB/U': m && kmsEligible(p, m) ? statusLabel('TB_U', m?.stuntingStatus, g?.TB_U) : BLANK,
+      'Status BB/TB': m && kmsEligible(p, m) ? statusLabel('BB_TB', m?.wastingStatus, g?.BB_TB) : BLANK,
+      'Berat Naik/Tidak': m && kmsEligible(p, m) ? ntLabel(m.weightStatus) : BLANK,
+      '2T (rujuk)': twoT ? 'Ya' : BLANK,
+      'Tensi (mmHg)': tension,
+      'Gula Darah (mg/dL)': m?.bloodSugar ?? BLANK,
+      'Kolesterol (mg/dL)': m?.cholesterol ?? BLANK,
+      'Asam Urat (mg/dL)': m?.uricAcid ?? BLANK,
+      'HB (g/dL)': m?.hemoglobin ?? BLANK,
+      Catatan: m?.notes ?? BLANK,
     });
+  }
+
+  return rows;
 }
 
 /**
@@ -222,10 +227,19 @@ export function buildRoster(
 export function buildDetails(
   patients: ExportPatient[],
   measurements: ExportMeasurement[],
+  allowedCategories?: Set<PatientCategory>,
 ): ExportRow[] {
   const byId = new Map(patients.map((p) => [p.id, p]));
   return measurements
-    .filter((m) => byId.has(m.patientId))
+    .filter((m) => {
+      const p = byId.get(m.patientId);
+      if (!p) return false;
+      if (allowedCategories) {
+        const cat = measurementCategory(p, m);
+        if (!allowedCategories.has(cat)) return false;
+      }
+      return true;
+    })
     .sort((a, b) => {
       const an = byId.get(a.patientId)!.name.localeCompare(byId.get(b.patientId)!.name);
       if (an !== 0) return an;
@@ -292,7 +306,11 @@ function riskValue(m: ExportMeasurement, ind: IndicatorDef): string {
  * TERAKHIR dalam periode. Jenis risiko = temuan indikator klinis (TB beresiko,
  * hipertensi, anemia, dll) + BB 2T. Menyertakan Posyandu & Alamat asal pasien.
  */
-export function buildRiskList(patients: ExportPatient[], measurements: ExportMeasurement[]): ExportRow[] {
+export function buildRiskList(
+  patients: ExportPatient[],
+  measurements: ExportMeasurement[],
+  allowedCategories?: Set<PatientCategory>,
+): ExportRow[] {
   const latest = new Map<string, ExportMeasurement>();
   for (const m of measurements) {
     const cur = latest.get(m.patientId);
@@ -312,6 +330,10 @@ export function buildRiskList(patients: ExportPatient[], measurements: ExportMea
     const category =
       (m.category as PatientCategory) ??
       getPatientCategory(p.birthDate, p.isPregnant, p.gender, session);
+
+    if (allowedCategories && !allowedCategories.has(category)) {
+      continue;
+    }
 
     const base: ExportRow = {
       Posyandu: p.unitName ?? BLANK,
